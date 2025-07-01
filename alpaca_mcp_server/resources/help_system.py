@@ -3,7 +3,8 @@ Help System Resource - Auto-generated tool documentation and introspection
 """
 
 import inspect
-from typing import Dict, Any, List, Optional
+from typing import Any
+
 from mcp.server.fastmcp import FastMCP
 
 
@@ -20,9 +21,9 @@ class HelpSystem:
 
     def __init__(self, mcp_server: FastMCP):
         self.mcp_server = mcp_server
-        self._tool_registry: Dict[str, Any] = {}
-        self._prompt_registry: Dict[str, Any] = {}
-        self._resource_registry: Dict[str, Any] = {}
+        self._tool_registry: dict[str, Any] = {}
+        self._prompt_registry: dict[str, Any] = {}
+        self._resource_registry: dict[str, Any] = {}
         self._build_registries()
 
     def _build_registries(self):
@@ -55,8 +56,8 @@ class HelpSystem:
             prompts = self.mcp_server._prompt_manager._prompts
             for prompt_name, prompt_obj in prompts.items():
                 if prompt_name not in self._prompt_registry:
-                    self._prompt_registry[prompt_name] = (
-                        self._extract_fastmcp_prompt_info(prompt_name, prompt_obj)
+                    self._prompt_registry[prompt_name] = self._extract_fastmcp_prompt_info(
+                        prompt_name, prompt_obj
                     )
 
     def _update_resource_registry(self):
@@ -64,13 +65,11 @@ class HelpSystem:
         if hasattr(self.mcp_server, "_resources") and self.mcp_server._resources:
             for resource_name, resource_info in self.mcp_server._resources.items():
                 if resource_name not in self._resource_registry:
-                    self._resource_registry[resource_name] = (
-                        self._extract_resource_info(resource_name, resource_info)
+                    self._resource_registry[resource_name] = self._extract_resource_info(
+                        resource_name, resource_info
                     )
 
-    def _extract_fastmcp_tool_info(
-        self, tool_name: str, tool_obj: Any
-    ) -> Dict[str, Any]:
+    def _extract_fastmcp_tool_info(self, tool_name: str, tool_obj: Any) -> dict[str, Any]:
         """Extract comprehensive information about a FastMCP tool object."""
         try:
             # FastMCP tool object has: fn, name, description, parameters, fn_metadata, is_async, context_kwarg, annotations
@@ -120,9 +119,7 @@ class HelpSystem:
                 "error": str(e),
             }
 
-    def _extract_fastmcp_prompt_info(
-        self, prompt_name: str, prompt_obj: Any
-    ) -> Dict[str, Any]:
+    def _extract_fastmcp_prompt_info(self, prompt_name: str, prompt_obj: Any) -> dict[str, Any]:
         """Extract information about a FastMCP prompt object."""
         try:
             func = prompt_obj.fn
@@ -134,17 +131,13 @@ class HelpSystem:
 
             for param_name, param in sig.parameters.items():
                 param_type = self._python_type_to_json_schema(param.annotation)
-                param_description = self._extract_param_description(
-                    description, param_name
-                )
+                param_description = self._extract_param_description(description, param_name)
 
                 parameters[param_name] = {
                     "type": param_type,
                     "description": param_description,
                     "required": param.default == inspect.Parameter.empty,
-                    "default": param.default
-                    if param.default != inspect.Parameter.empty
-                    else None,
+                    "default": param.default if param.default != inspect.Parameter.empty else None,
                 }
 
             return {
@@ -153,9 +146,7 @@ class HelpSystem:
                 "description": description,
                 "full_description": inspect.getdoc(func) or description,
                 "parameters": parameters,
-                "usage_examples": self._generate_prompt_examples(
-                    prompt_name, parameters
-                ),
+                "usage_examples": self._generate_prompt_examples(prompt_name, parameters),
                 "category": "workflow",
             }
 
@@ -168,7 +159,7 @@ class HelpSystem:
                 "error": str(e),
             }
 
-    def _extract_tool_info(self, tool_name: str, tool_info: Any) -> Dict[str, Any]:
+    def _extract_tool_info(self, tool_name: str, tool_info: Any) -> dict[str, Any]:
         """Extract comprehensive information about a tool following MCP specification."""
         try:
             func = tool_info.get("func") if isinstance(tool_info, dict) else tool_info
@@ -178,7 +169,7 @@ class HelpSystem:
                 return {
                     "name": tool_name,
                     "description": "Tool function not found",
-                    "inputSchema": {"type": "object", "properties": {}}
+                    "inputSchema": {"type": "object", "properties": {}},
                 }
             sig = inspect.signature(func)
 
@@ -195,9 +186,7 @@ class HelpSystem:
                     continue
 
                 param_type = self._python_type_to_json_schema(param.annotation)
-                param_description = self._extract_param_description(
-                    docstring, param_name
-                )
+                param_description = self._extract_param_description(docstring, param_name)
 
                 json_schema_properties[param_name] = {
                     "type": param_type,
@@ -230,16 +219,14 @@ class HelpSystem:
             return {
                 "name": tool_name,
                 "type": "tool",
-                "description": docstring.split("\n")[0]
-                if docstring
-                else "No description available",
+                "description": (
+                    docstring.split("\n")[0] if docstring else "No description available"
+                ),
                 "full_description": docstring,
                 "input_schema": input_schema,
                 "annotations": annotations,
                 "return_type": return_type,
-                "usage_examples": self._generate_usage_examples(
-                    tool_name, json_schema_properties
-                ),
+                "usage_examples": self._generate_usage_examples(tool_name, json_schema_properties),
                 "related_tools": self._find_related_tools(tool_name),
                 "category": self._categorize_tool(tool_name),
                 # Legacy format for backward compatibility
@@ -281,11 +268,9 @@ class HelpSystem:
         else:
             return "string"  # Default fallback
 
-    def _generate_tool_annotations(
-        self, tool_name: str, docstring: str
-    ) -> Dict[str, Any]:
+    def _generate_tool_annotations(self, tool_name: str, docstring: str) -> dict[str, Any]:
         """Generate MCP-compliant tool annotations based on tool analysis."""
-        annotations: Dict[str, Any] = {
+        annotations: dict[str, Any] = {
             "title": self._generate_human_title(tool_name),
         }
 
@@ -320,16 +305,11 @@ class HelpSystem:
 
         # Determine if tool is destructive
         destructive_indicators = ["cancel_", "close_", "delete_", "clear_"]
-        if any(
-            name_lower.startswith(indicator) for indicator in destructive_indicators
-        ):
+        if any(name_lower.startswith(indicator) for indicator in destructive_indicators):
             annotations["destructiveHint"] = True
 
         # Determine if tool involves external entities (open world)
-        if any(
-            word in name_lower
-            for word in ["market", "stock", "order", "position", "stream"]
-        ):
+        if any(word in name_lower for word in ["market", "stock", "order", "position", "stream"]):
             annotations["openWorldHint"] = True
         else:
             annotations["openWorldHint"] = False
@@ -348,8 +328,8 @@ class HelpSystem:
         return " ".join(word.capitalize() for word in words)
 
     def _convert_schema_to_legacy_params(
-        self, properties: Dict, required: List[str]
-    ) -> Dict[str, Any]:
+        self, properties: dict, required: list[str]
+    ) -> dict[str, Any]:
         """Convert JSON Schema properties to legacy parameter format for backward compatibility."""
         legacy_params = {}
         for param_name, param_schema in properties.items():
@@ -358,27 +338,16 @@ class HelpSystem:
                 "type": param_schema.get("type", "string"),
                 "required": param_name in required,
                 "default": param_schema.get("default"),
-                "description": param_schema.get(
-                    "description", "No description available"
-                ),
+                "description": param_schema.get("description", "No description available"),
             }
         return legacy_params
 
-    def _extract_prompt_info(
-        self, prompt_name: str, prompt_info: Any
-    ) -> Dict[str, Any]:
+    def _extract_prompt_info(self, prompt_name: str, prompt_info: Any) -> dict[str, Any]:
         """Extract information about a prompt/workflow."""
         try:
-            func = (
-                prompt_info.get("func")
-                if isinstance(prompt_info, dict)
-                else prompt_info
-            )
+            func = prompt_info.get("func") if isinstance(prompt_info, dict) else prompt_info
             if func is None:
-                return {
-                    "name": prompt_name,
-                    "description": "Prompt function not found"
-                }
+                return {"name": prompt_name, "description": "Prompt function not found"}
             sig = inspect.signature(func)
             docstring = inspect.getdoc(func) or "No description available"
 
@@ -386,30 +355,28 @@ class HelpSystem:
             for param_name, param in sig.parameters.items():
                 param_info = {
                     "name": param_name,
-                    "type": str(param.annotation)
-                    if param.annotation != inspect.Parameter.empty
-                    else "Any",
-                    "required": param.default == inspect.Parameter.empty,
-                    "default": str(param.default)
-                    if param.default != inspect.Parameter.empty
-                    else None,
-                    "description": self._extract_param_description(
-                        docstring, param_name
+                    "type": (
+                        str(param.annotation)
+                        if param.annotation != inspect.Parameter.empty
+                        else "Any"
                     ),
+                    "required": param.default == inspect.Parameter.empty,
+                    "default": (
+                        str(param.default) if param.default != inspect.Parameter.empty else None
+                    ),
+                    "description": self._extract_param_description(docstring, param_name),
                 }
                 parameters[param_name] = param_info
 
             return {
                 "name": prompt_name,
                 "type": "prompt",
-                "description": docstring.split("\n")[0]
-                if docstring
-                else "No description available",
+                "description": (
+                    docstring.split("\n")[0] if docstring else "No description available"
+                ),
                 "full_description": docstring,
                 "parameters": parameters,
-                "usage_examples": self._generate_prompt_examples(
-                    prompt_name, parameters
-                ),
+                "usage_examples": self._generate_prompt_examples(prompt_name, parameters),
                 "category": "workflow",
             }
 
@@ -422,9 +389,7 @@ class HelpSystem:
                 "error": str(e),
             }
 
-    def _extract_resource_info(
-        self, resource_name: str, resource_info: Any
-    ) -> Dict[str, Any]:
+    def _extract_resource_info(self, resource_name: str, resource_info: Any) -> dict[str, Any]:
         """Extract information about a resource."""
         return {
             "name": resource_name,
@@ -441,8 +406,7 @@ class HelpSystem:
         lines = docstring.split("\n")
         for i, line in enumerate(lines):
             if param_name in line and (
-                "Args:" in lines[max(0, i - 5) : i]
-                or "Parameters:" in lines[max(0, i - 5) : i]
+                "Args:" in lines[max(0, i - 5) : i] or "Parameters:" in lines[max(0, i - 5) : i]
             ):
                 # Try to extract description after parameter name
                 if ":" in line:
@@ -450,9 +414,7 @@ class HelpSystem:
 
         return "No description available"
 
-    def _generate_usage_examples(
-        self, tool_name: str, parameters: Dict[str, Any]
-    ) -> List[str]:
+    def _generate_usage_examples(self, tool_name: str, parameters: dict[str, Any]) -> list[str]:
         """Generate usage examples for a tool (handles both formats)."""
         examples = []
 
@@ -523,9 +485,7 @@ class HelpSystem:
 
         return examples if examples else [f"{tool_name}()"]
 
-    def _generate_prompt_examples(
-        self, prompt_name: str, parameters: Dict[str, Any]
-    ) -> List[str]:
+    def _generate_prompt_examples(self, prompt_name: str, parameters: dict[str, Any]) -> list[str]:
         """Generate usage examples for a prompt/workflow."""
         examples = []
 
@@ -554,16 +514,13 @@ class HelpSystem:
 
         return examples
 
-    def _find_related_tools(self, tool_name: str) -> List[str]:
+    def _find_related_tools(self, tool_name: str) -> list[str]:
         """Find related tools based on naming patterns and categories."""
         related = []
         category = self._categorize_tool(tool_name)
 
-        for other_tool in self._tool_registry.keys():
-            if (
-                other_tool != tool_name
-                and self._categorize_tool(other_tool) == category
-            ):
+        for other_tool in self._tool_registry:
+            if other_tool != tool_name and self._categorize_tool(other_tool) == category:
                 related.append(other_tool)
 
         return related[:5]  # Limit to 5 related tools
@@ -635,15 +592,15 @@ Use get_all_tools_help() to see all available tools.
 """
 
         if annotations.get("readOnlyHint") is not None:
-            help_text += (
-                f"  • Read-only: {'Yes' if annotations['readOnlyHint'] else 'No'}\n"
-            )
+            help_text += f"  • Read-only: {'Yes' if annotations['readOnlyHint'] else 'No'}\n"
         if annotations.get("destructiveHint"):
             help_text += "  • Destructive: Yes ⚠️\n"
         if annotations.get("idempotentHint"):
             help_text += "  • Idempotent: Yes (safe to retry)\n"
         if annotations.get("openWorldHint") is not None:
-            help_text += f"  • External interactions: {'Yes' if annotations['openWorldHint'] else 'No'}\n"
+            help_text += (
+                f"  • External interactions: {'Yes' if annotations['openWorldHint'] else 'No'}\n"
+            )
 
         help_text += "\n**Usage Examples**:\n"
         for example in tool_info["usage_examples"]:
@@ -666,9 +623,7 @@ Use get_all_tools_help() to see all available tools.
                 help_text += f"    {param_schema.get('description', 'No description available')}\n"
 
         if tool_info["related_tools"]:
-            help_text += (
-                f"\n**Related Tools**: {', '.join(tool_info['related_tools'])}\n"
-            )
+            help_text += f"\n**Related Tools**: {', '.join(tool_info['related_tools'])}\n"
 
         help_text += f"\n**Returns**: {tool_info['return_type']}\n"
 
@@ -714,9 +669,7 @@ Use get_all_prompts_help() to see all available prompts.
                     if param_info["required"]
                     else f" (default: {param_info['default']})"
                 )
-                help_text += (
-                    f"  • **{param_name}** ({param_info['type']}){required_marker}\n"
-                )
+                help_text += f"  • **{param_name}** ({param_info['type']}){required_marker}\n"
                 help_text += f"    {param_info['description']}\n"
 
         if prompt_info["full_description"] != prompt_info["description"]:
@@ -729,9 +682,9 @@ Use get_all_prompts_help() to see all available prompts.
         # Refresh registries to get latest tools
         self._update_tool_registry()
 
-        categories: Dict[str, List[Any]] = {}
+        categories: dict[str, list[Any]] = {}
 
-        for tool_name, tool_info in self._tool_registry.items():
+        for _tool_name, tool_info in self._tool_registry.items():
             category = tool_info["category"]
             if category not in categories:
                 categories[category] = []
@@ -806,17 +759,13 @@ Found {len(matches)} matching tools:
 """
 
         for tool in sorted(matches, key=lambda x: x["name"]):
-            help_text += (
-                f"  • **{tool['name']}** ({tool['category']}) - {tool['description']}\n"
-            )
+            help_text += f"  • **{tool['name']}** ({tool['category']}) - {tool['description']}\n"
 
-        help_text += (
-            '\n**Usage**: Use get_tool_help("tool_name") for detailed information.\n'
-        )
+        help_text += '\n**Usage**: Use get_tool_help("tool_name") for detailed information.\n'
 
         return help_text
 
-    def get_mcp_tool_schema(self, tool_name: str) -> Optional[Dict[str, Any]]:
+    def get_mcp_tool_schema(self, tool_name: str) -> dict[str, Any] | None:
         """Get MCP-compliant tool schema for tools/list response."""
         self._update_tool_registry()
 
@@ -838,7 +787,7 @@ Found {len(matches)} matching tools:
 
         return mcp_tool
 
-    def get_all_mcp_tool_schemas(self) -> List[Dict[str, Any]]:
+    def get_all_mcp_tool_schemas(self) -> list[dict[str, Any]]:
         """Get all tools in MCP-compliant format for tools/list response."""
         self._update_tool_registry()
 
@@ -850,13 +799,13 @@ Found {len(matches)} matching tools:
 
         return mcp_tools
 
-    def export_mcp_tools_list(self) -> Dict[str, Any]:
+    def export_mcp_tools_list(self) -> dict[str, Any]:
         """Export complete MCP tools/list response format."""
         return {"tools": self.get_all_mcp_tool_schemas()}
 
 
 # Global help system instance (will be initialized when server starts)
-_help_system: Optional[HelpSystem] = None
+_help_system: HelpSystem | None = None
 
 
 def initialize_help_system(mcp_server: FastMCP):
@@ -868,9 +817,7 @@ def initialize_help_system(mcp_server: FastMCP):
 def get_help_system() -> HelpSystem:
     """Get the global help system instance."""
     if _help_system is None:
-        raise RuntimeError(
-            "Help system not initialized. Call initialize_help_system() first."
-        )
+        raise RuntimeError("Help system not initialized. Call initialize_help_system() first.")
     return _help_system
 
 
@@ -940,7 +887,7 @@ def with_help_support(tool_name: str):
     return decorator
 
 
-def check_help_parameter(**kwargs) -> Optional[str]:
+def check_help_parameter(**kwargs) -> str | None:
     """
     Utility function to check for help parameter in tool calls.
 
@@ -957,9 +904,6 @@ def check_help_parameter(**kwargs) -> Optional[str]:
             import inspect
 
             frame = inspect.currentframe()
-            if frame and frame.f_back:
-                tool_name = frame.f_back.f_code.co_name
-            else:
-                tool_name = "unknown_tool"
+            tool_name = frame.f_back.f_code.co_name if frame and frame.f_back else "unknown_tool"
             return get_help_system().get_tool_help(tool_name)
     return None

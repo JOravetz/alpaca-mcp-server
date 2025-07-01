@@ -74,19 +74,13 @@ async def test_plotting_tool():
         if "ERROR" in result:
             print(f"   ⚠️  Expected error (API/dependencies): {result[:150]}...")
             if "API CREDENTIALS NOT CONFIGURED" in result:
-                print(
-                    "   💡 Configure APCA_API_KEY_ID and APCA_API_SECRET_KEY for full testing"
-                )
+                print("   💡 Configure APCA_API_KEY_ID and APCA_API_SECRET_KEY for full testing")
             elif "PLOTTING NOT AVAILABLE" in result:
-                print(
-                    "   💡 Install matplotlib and scipy: pip install matplotlib scipy"
-                )
+                print("   💡 Install matplotlib and scipy: pip install matplotlib scipy")
         else:
             assert "AAPL" in result
             assert "ANALYSIS COMPLETE" in result
-            print(
-                f"   ✅ PASSED - Single symbol plot ({duration:.2f}s, {len(result):,} chars)"
-            )
+            print(f"   ✅ PASSED - Single symbol plot ({duration:.2f}s, {len(result):,} chars)")
 
         tests_passed += 1
 
@@ -97,9 +91,7 @@ async def test_plotting_tool():
     print("\n4. Testing multi-symbol plotting...")
     tests_total += 1
     try:
-        result = await generate_peak_trough_plots(
-            symbols="AAPL,SPY", plot_mode="combined"
-        )
+        result = await generate_peak_trough_plots(symbols="AAPL,SPY", plot_mode="combined")
 
         assert isinstance(result, str)
         assert len(result) > 300
@@ -107,9 +99,7 @@ async def test_plotting_tool():
         if "ERROR" not in result:
             symbol_count = result.count("AAPL") + result.count("SPY")
             assert symbol_count >= 1
-            print(
-                f"   ✅ PASSED - Multi-symbol plot (symbols mentioned: {symbol_count})"
-            )
+            print(f"   ✅ PASSED - Multi-symbol plot (symbols mentioned: {symbol_count})")
         else:
             print(f"   ⚠️  Expected error: {result[:150]}...")
 
@@ -175,8 +165,8 @@ async def test_plotting_tool():
     tests_total += 1
     try:
         import matplotlib.pyplot as plt
-        import scipy.signal
         import numpy as np
+        import scipy.signal
 
         tests_passed += 1
         print("   ✅ PASSED - All plotting dependencies available")

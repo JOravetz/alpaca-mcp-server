@@ -3,15 +3,18 @@ Plot.py MCP Tool Integration
 Registers the standalone plot.py script as an MCP tool with proper ImageMagick display.
 """
 
-import os
-import sys
 import asyncio
 import logging
+import os
+import sys
 from pathlib import Path
 
 # Add project root to path to import plot.py
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
+
+# Import global configuration
+from ..config import get_technical_config
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +23,8 @@ async def generate_stock_plot(
     symbols: str,
     timeframe: str = "1Min",
     days: int = 1,
-    window: int = 21,
-    lookahead: int = 1,
+    window: int = None,
+    lookahead: int = None,
     feed: str = "sip",
     no_plot: bool = False,
     verbose: bool = False,
@@ -43,7 +46,7 @@ async def generate_stock_plot(
     Args:
         symbols: Comma-separated stock symbols (e.g., "AAPL,MSFT,TSLA")
         timeframe: Bar timeframe - "1Min", "5Min", "15Min", "30Min", "1Hour", "1Day"
-        days: Number of trading days to analyze (1-30)
+        days: Number of trading days to analyze (1-30 for intraday, 1-2520 for daily)
         window: Hanning filter window length (3-101, must be odd)
         lookahead: Peak detection sensitivity (1-50, higher = more sensitive)
         feed: Data feed - "sip", "iex", or "otc"
@@ -55,9 +58,23 @@ async def generate_stock_plot(
     """
 
     try:
-        # Validate parameters
-        if days < 1 or days > 30:
-            return "❌ Days must be between 1 and 30"
+        # Load global config defaults for None parameters
+        tech_config = get_technical_config()
+        if window is None:
+            window = tech_config.hanning_window_samples
+        if lookahead is None:
+            lookahead = tech_config.peak_trough_lookahead
+
+        # Validate parameters - timeframe-aware limits
+        if timeframe == "1Day":
+            max_days = 2520  # ~10 years for daily analysis
+        elif timeframe in ["1Hour", "2Hour", "4Hour"]:
+            max_days = 90  # 3 months for hourly
+        else:  # Intraday timeframes (1Min, 5Min, etc.)
+            max_days = 30  # Current limit for intraday
+
+        if days < 1 or days > max_days:
+            return f"❌ Days must be between 1 and {max_days} for {timeframe} timeframe"
 
         if window < 3 or window > 101:
             return "❌ Window length must be between 3 and 101"
@@ -89,22 +106,30 @@ Please set environment variables:
 • APCA_API_KEY_ID
 • APCA_API_SECRET_KEY
 
-Current paper trading status: """ + str(os.environ.get('PAPER', 'Not set'))
+Current paper trading status: """ + str(
+                os.environ.get("PAPER", "Not set")
+            )
 
         # Construct command for plot.py script
-        plot_script = project_root / "plot.py"
+        plot_script = Path(__file__).parent / "plot.py"
         if not plot_script.exists():
             return f"❌ Plot script not found at {plot_script}"
 
         cmd = [
             "python",
             str(plot_script),
-            "--symbols", symbols,
-            "--timeframe", timeframe,
-            "--days", str(days),
-            "--window", str(window),
-            "--lookahead", str(lookahead),
-            "--feed", feed,
+            "--symbols",
+            symbols,
+            "--timeframe",
+            timeframe,
+            "--days",
+            str(days),
+            "--window",
+            str(window),
+            "--lookahead",
+            str(lookahead),
+            "--feed",
+            feed,
         ]
 
         if no_plot:
@@ -126,8 +151,8 @@ Current paper trading status: """ + str(os.environ.get('PAPER', 'Not set'))
         stdout, stderr = await process.communicate()
 
         # Decode output
-        stdout_text = stdout.decode('utf-8') if stdout else ""
-        stderr_text = stderr.decode('utf-8') if stderr else ""
+        stdout_text = stdout.decode("utf-8") if stdout else ""
+        stderr_text = stderr.decode("utf-8") if stderr else ""
 
         # Check for errors
         if process.returncode != 0:
@@ -157,8 +182,8 @@ Use get_stock_peak_trough_analysis() for text-based analysis
         # Parse output for plot information
         plot_files_generated = []
         temp_dir = ""
-        
-        for line in stdout_text.split('\n'):
+
+        for line in stdout_text.split("\n"):
             if "Plot generated and displayed:" in line:
                 plot_file = line.split(":")[-1].strip()
                 plot_files_generated.append(plot_file)
@@ -168,7 +193,7 @@ Use get_stock_peak_trough_analysis() for text-based analysis
         # Generate success response
         symbol_count = len(symbol_list)
         plot_count = len(plot_files_generated)
-        
+
         success_msg = f"""
 🎯 STOCK PLOT GENERATION SUCCESSFUL
 

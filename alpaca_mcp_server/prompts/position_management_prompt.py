@@ -1,10 +1,9 @@
 """Position management prompt implementation."""
 
-from typing import Optional
 from ..config.settings import get_trading_client
 
 
-async def position_management(symbol: Optional[str] = None) -> str:
+async def position_management(symbol: str | None = None) -> str:
     """Strategic position review and optimization with actionable guidance."""
 
     try:
@@ -140,14 +139,18 @@ Losers: {len(losers)} positions (>5% loss)
             if winners:
                 result += "## Top Performers\n"
                 for pos, pnl_pct in winners[:5]:
-                    result += f"• {pos.symbol}: {pnl_pct:+.1f}% (${float(pos.unrealized_pl):,.2f})\n"
+                    result += (
+                        f"• {pos.symbol}: {pnl_pct:+.1f}% (${float(pos.unrealized_pl):,.2f})\n"
+                    )
                 result += "\n"
 
             # Analyze losers
             if losers:
                 result += "## Underperformers\n"
                 for pos, pnl_pct in losers[:5]:
-                    result += f"• {pos.symbol}: {pnl_pct:+.1f}% (${float(pos.unrealized_pl):,.2f})\n"
+                    result += (
+                        f"• {pos.symbol}: {pnl_pct:+.1f}% (${float(pos.unrealized_pl):,.2f})\n"
+                    )
                 result += "\n"
 
             # Strategic recommendations
@@ -157,15 +160,11 @@ Immediate Actions:"""
 
             if len(winners) > 0:
                 best_winner = winners[0]
-                result += (
-                    f"\n• Review top winner {best_winner[0].symbol} for profit-taking"
-                )
+                result += f"\n• Review top winner {best_winner[0].symbol} for profit-taking"
 
             if len(losers) > 0:
                 worst_loser = losers[0]
-                result += (
-                    f"\n• Analyze worst performer {worst_loser[0].symbol} for stop loss"
-                )
+                result += f"\n• Analyze worst performer {worst_loser[0].symbol} for stop loss"
 
             result += """
 

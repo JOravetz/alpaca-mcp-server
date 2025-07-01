@@ -1,7 +1,8 @@
 """Extended hours order validation and placement tools."""
 
 from datetime import time
-from ..tools.enhanced_market_clock import get_eastern_time
+
+from ..utils.timezone_utils import get_eastern_time
 
 
 async def validate_extended_hours_order(
@@ -9,7 +10,7 @@ async def validate_extended_hours_order(
 ) -> dict:
     """Validate if order can be placed in current market session."""
     try:
-        now_et = get_eastern_time()
+        now_et, tz_name = get_eastern_time()
         current_time = now_et.time()
 
         # Session detection
@@ -43,18 +44,12 @@ async def validate_extended_hours_order(
 
         elif in_extended_hours:
             if order_type.upper() == "MARKET":
-                warnings.append(
-                    "Market orders may have poor execution in extended hours"
-                )
+                warnings.append("Market orders may have poor execution in extended hours")
                 recommendations.append("Consider using LIMIT orders for better fills")
 
             if extended_hours is False:
-                warnings.append(
-                    "extended_hours=False but currently in extended hours session"
-                )
-                recommendations.append(
-                    "Set extended_hours=True to trade in current session"
-                )
+                warnings.append("extended_hours=False but currently in extended hours session")
+                recommendations.append("Set extended_hours=True to trade in current session")
                 can_place_order = False
 
             # Additional extended hours warnings
@@ -83,9 +78,7 @@ async def validate_extended_hours_order(
         ]
         if symbol.upper() not in major_symbols:
             warnings.append(f"{symbol} may have very limited extended hours liquidity")
-            recommendations.append(
-                "Check recent volume before placing extended hours orders"
-            )
+            recommendations.append("Check recent volume before placing extended hours orders")
 
         # Order type recommendations
         order_type_recommendations = {
@@ -140,9 +133,7 @@ async def place_extended_hours_order(
 
     try:
         # Validate the order first
-        validation = await validate_extended_hours_order(
-            symbol, order_type, extended_hours
-        )
+        validation = await validate_extended_hours_order(symbol, order_type, extended_hours)
 
         # Auto-detect extended hours if not specified
         if extended_hours is None:
@@ -162,7 +153,16 @@ Current Session: {validation.get("session_info", {}).get("session", "unknown")}
             """
 
         # Import the original order placement function
-        from ..tools.order_tools import place_stock_order
+        from ..tools.order_tools import (
+            format_price_for_alpaca,
+            get_current_stock_price,
+            place_stock_order,
+        )
+
+        # Format limit price properly for penny stocks
+        if limit_price is not None:
+            current_price = await get_current_stock_price(symbol)
+            limit_price = format_price_for_alpaca(limit_price, current_price)
 
         # Place the order with extended hours flag
         result = await place_stock_order(
@@ -179,9 +179,7 @@ Current Session: {validation.get("session_info", {}).get("session", "unknown")}
         # Format warnings and recommendations
         warning_text = ""
         if validation.get("warnings"):
-            warning_text = "⚠️ Warnings:\n" + "\n".join(
-                f"• {w}" for w in validation["warnings"]
-            )
+            warning_text = "⚠️ Warnings:\n" + "\n".join(f"• {w}" for w in validation["warnings"])
 
         rec_text = ""
         if validation.get("recommendations"):
@@ -226,12 +224,12 @@ Session Information:
 async def get_extended_hours_info() -> str:
     """Get comprehensive information about extended hours trading."""
 
-    now_et = get_eastern_time()
+    now_et, tz_name = get_eastern_time()
 
     return f"""
 Extended Hours Trading Information
 =================================
-Current Time: {now_et.strftime("%Y-%m-%d %H:%M:%S ET")}
+Current Time: {now_et.strftime("%Y-%m-%d %H:%M:%S")} {tz_name}
 
 Trading Sessions:
 • Pre-market:  4:00 AM - 9:30 AM ET

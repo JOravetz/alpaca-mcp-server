@@ -1,12 +1,13 @@
-import os
-import requests
 import argparse
-from datetime import datetime, timedelta
-import numpy as np
 import asyncio
+import os
+from datetime import datetime, timedelta
+
 import aiohttp
-import pandas_market_calendars as mcal  # type: ignore
+import numpy as np
 import pandas as pd
+import pandas_market_calendars as mcal  # type: ignore
+import requests
 
 # Load Alpaca API credentials from the environment variables
 API_KEY_ID = os.environ.get("APCA_API_KEY_ID")
@@ -117,9 +118,7 @@ class StockAnalyzer:
 
             volatility = true_range / max(prev_close, 0.01) * 100
             intraday_volatility = (daily_high - daily_low) / max(daily_open, 0.01) * 100
-            price_velocity = abs(daily_close - daily_open) / max(
-                daily_high - daily_low, 0.01
-            )
+            price_velocity = abs(daily_close - daily_open) / max(daily_high - daily_low, 0.01)
 
             return {
                 "volatility": volatility,
@@ -149,9 +148,7 @@ class StockAnalyzer:
             trades_zscore = self.calculate_zscore(trades, historical_trades)
             avg_historical_volume = np.mean(historical_volumes)
             if avg_historical_volume < 1:
-                avg_historical_volume = (
-                    1  # Prevent division by zero or very small numbers
-                )
+                avg_historical_volume = 1  # Prevent division by zero or very small numbers
             vol_ratio = daily_vol / avg_historical_volume
             vol_zscore = self.calculate_zscore(daily_vol, historical_volumes)
 
@@ -208,9 +205,7 @@ class StockAnalyzer:
             minute_trades = int(snapshot.minute_bar.trades or 0)
             daily_trades = int(snapshot.daily_bar.trades or 0)
 
-            trade_acceleration = (
-                minute_trades / (max(daily_trades / 390, 1)) if daily_trades else 0
-            )
+            trade_acceleration = minute_trades / (max(daily_trades / 390, 1)) if daily_trades else 0
 
             return {
                 "range_size": range_size,
@@ -244,9 +239,7 @@ class StockAnalyzer:
 
             minute_vol = float(snapshot.minute_bar.volume or 0)
             daily_vol = float(snapshot.daily_bar.volume or 0)
-            volume_exhaustion = (
-                minute_vol / (max(daily_vol / 390, 1)) if daily_vol else 0
-            )
+            volume_exhaustion = minute_vol / (max(daily_vol / 390, 1)) if daily_vol else 0
 
             return {
                 "price_position": price_position,
@@ -284,16 +277,10 @@ class StockAnalyzer:
 
             # Momentum signals
             if velocity_data and volume_data:
-                if (
-                    velocity_data["minute_velocity"] > 0.01
-                    and volume_data["vol_ratio"] > 1.5
-                ):
+                if velocity_data["minute_velocity"] > 0.01 and volume_data["vol_ratio"] > 1.5:
                     signals.append("STRONG_UPWARD_MOMENTUM")
                     signal_strength += 2
-                elif (
-                    velocity_data["minute_velocity"] < -0.01
-                    and volume_data["vol_ratio"] > 1.5
-                ):
+                elif velocity_data["minute_velocity"] < -0.01 and volume_data["vol_ratio"] > 1.5:
                     signals.append("STRONG_DOWNWARD_MOMENTUM")
                     signal_strength -= 2
 
@@ -302,9 +289,7 @@ class StockAnalyzer:
                 if volume_data and volume_data["trades_zscore"] > 2.0:
                     signals.append("HIGH_VOLATILITY_WITH_VOLUME")
                     signal_strength += (
-                        abs(velocity_data["minute_velocity"] * 2)
-                        if velocity_data
-                        else 1
+                        abs(velocity_data["minute_velocity"] * 2) if velocity_data else 1
                     )
 
             # Pattern signals
@@ -356,9 +341,7 @@ async def fetch_historical_data(symbols, timeframe="1Day", trading_days=15):
 
         nyse = mcal.get_calendar("NYSE")
         today = pd.Timestamp(datetime.now().date())
-        schedule = nyse.valid_days(
-            start_date=today - timedelta(days=5000), end_date=today
-        )
+        schedule = nyse.valid_days(start_date=today - timedelta(days=5000), end_date=today)
         end_date = schedule[-1] if today in schedule else schedule[-1]
         start_date = schedule[-trading_days]
 
@@ -373,17 +356,13 @@ async def fetch_historical_data(symbols, timeframe="1Day", trading_days=15):
         }
 
         chunk_size = max(1, 200 // trading_days)
-        symbol_chunks = [
-            symbols[i : i + chunk_size] for i in range(0, len(symbols), chunk_size)
-        ]
+        symbol_chunks = [symbols[i : i + chunk_size] for i in range(0, len(symbols), chunk_size)]
 
         async with aiohttp.ClientSession() as session:
             tasks = []
             for chunk in symbol_chunks:
                 params["symbols"] = ",".join(chunk)
-                tasks.append(
-                    fetch_symbol_data(session, base_url, params.copy(), headers)
-                )
+                tasks.append(fetch_symbol_data(session, base_url, params.copy(), headers))
 
             results = await asyncio.gather(*tasks)
 
@@ -440,10 +419,8 @@ def run(args):
 
     if symbol_list:
         try:
-            with open(symbol_list, "r") as file:
-                universe = [
-                    row.strip().split()[0].upper() for row in file if row.strip() != ""
-                ]
+            with open(symbol_list) as file:
+                universe = [row.strip().split()[0].upper() for row in file if row.strip() != ""]
             print(f"Read {len(universe)} symbols from {symbol_list}")
         except Exception as e:
             print(f"Error reading {symbol_list}: {e}")

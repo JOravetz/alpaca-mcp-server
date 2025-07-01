@@ -4,28 +4,31 @@ Multi-Symbol Peak Detection Test Script with Plotting
 Clean version with all functionality preserved
 """
 
+import logging
 import os
 import sys
-import logging
-import numpy as np
-import requests
 from datetime import datetime, timedelta
-from scipy.signal import filtfilt
-from scipy.signal.windows import hann as hanning
-import matplotlib.pyplot as plt
+
 import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
+import pytz
+import requests
 from dateutil import parser as date_parser
 from dateutil import tz
-import pytz
+from scipy.signal import filtfilt
+from scipy.signal.windows import hann as hanning
 
-# Add current directory to path to import peakdetect
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from peakdetect import peakdetect
+# Import peakdetect with fallback
+try:
+    from .peakdetect import peakdetect
+except ImportError:
+    # Fallback for when running as script
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    from peakdetect import peakdetect
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +56,7 @@ def convert_to_nyc_timezone(timestamp_str):
                 if isinstance(timestamp_str, str)
                 else timestamp_str
             )
-        except:
+        except (ValueError, TypeError, AttributeError, OverflowError) as e:
             # Last resort: return current time in NYC timezone
             return datetime.now(pytz.timezone("America/New_York"))
 
@@ -137,9 +140,7 @@ class HistoricalDataFetcher:
             logger.error("Error retrieving trading calendar: %s", e)
             return []
 
-    def fetch_historical_bars(
-        self, symbols, timeframe, start_date, end_date, feed="sip"
-    ):
+    def fetch_historical_bars(self, symbols, timeframe, start_date, end_date, feed="sip"):
         """Fetch historical bar data for multiple symbols in one API call"""
         if not symbols:
             logger.warning("No symbols provided for historical data fetch")
@@ -221,9 +222,7 @@ def process_bars_for_peaks(symbol, bars, window_len=11, lookahead=1):
         timestamps = [bar["t"] for bar in bars]
 
         logger.info("Processing %d bars for %s", len(close_prices), symbol)
-        logger.info(
-            "Close price range: %.4f - %.4f", close_prices.min(), close_prices.max()
-        )
+        logger.info("Close price range: %.4f - %.4f", close_prices.min(), close_prices.max())
 
         filtered_prices = zero_phase_filter(close_prices, window_len)
         time_axis = np.arange(len(close_prices))
@@ -365,7 +364,7 @@ def print_latest_signals_table(all_results):
     ]
 
     header_line = ""
-    for i, (header, width) in enumerate(zip(header_items, col_widths)):
+    for i, (header, width) in enumerate(zip(header_items, col_widths, strict=False)):
         if i == 0:
             header_line += header.rjust(width)
         else:
@@ -396,7 +395,7 @@ def print_latest_signals_table(all_results):
                     formatted_timestamp = nyc_timestamp.strftime("%H:%M:%S %Z")
                 else:
                     formatted_timestamp = raw_timestamp
-            except:
+            except (ValueError, AttributeError, TypeError) as e:
                 formatted_timestamp = raw_timestamp
 
             change_indicator = "+" if price_change >= 0 else "-"
@@ -407,12 +406,10 @@ def print_latest_signals_table(all_results):
                 symbol.rjust(col_widths[0]),
                 signal_indicator.rjust(col_widths[1]),
                 str(samples_ago).rjust(col_widths[2]),
-                "{:.4f}".format(signal_price).rjust(col_widths[3]),
-                "{:.4f}".format(current_price).rjust(col_widths[4]),
-                "{}{}".format(
-                    change_indicator, "{:.4f}".format(abs(price_change))
-                ).rjust(col_widths[5]),
-                "{:.2f}%".format(price_change_pct).rjust(col_widths[6]),
+                f"{signal_price:.4f}".rjust(col_widths[3]),
+                f"{current_price:.4f}".rjust(col_widths[4]),
+                "{}{}".format(change_indicator, f"{abs(price_change):.4f}").rjust(col_widths[5]),
+                f"{price_change_pct:.2f}%".rjust(col_widths[6]),
                 formatted_timestamp.rjust(col_widths[7]),
             ]
 
@@ -433,7 +430,7 @@ def print_latest_signals_table(all_results):
             print(" ".join(cols))
 
     print("-" * 115)
-    print("Signals found: {}/{} symbols".format(signals_found, len(all_results)))
+    print(f"Signals found: {signals_found}/{len(all_results)} symbols")
     print("=" * 115)
 
 
@@ -510,23 +507,23 @@ def plot_single_symbol(results, save_plot=False, output_dir=".", dpi=400):
             color="#F18F01",
             s=80,
             marker="^",
-            label="Peaks ({})".format(len(peaks)),
+            label=f"Peaks ({len(peaks)})",
             zorder=4,
             edgecolors="none",
             linewidths=0,
         )
 
         # Add peak annotations with actual prices
-        for i, (time, price) in enumerate(zip(peak_times, peak_original_prices)):
+        for i, (time, price) in enumerate(zip(peak_times, peak_original_prices, strict=False)):
             ax.annotate(
-                "P{}: ${:.4f}".format(i + 1, price),
+                f"P{i + 1}: ${price:.4f}",
                 (time, price),
                 xytext=(5, 15),
                 textcoords="offset points",
                 fontsize=9,
                 fontweight="bold",
                 color="#F18F01",
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8),
+                bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "alpha": 0.8},
             )
 
     # Plot troughs at original prices with actual price annotations
@@ -547,23 +544,23 @@ def plot_single_symbol(results, save_plot=False, output_dir=".", dpi=400):
             color="#C73E1D",
             s=80,
             marker="v",
-            label="Troughs ({})".format(len(troughs)),
+            label=f"Troughs ({len(troughs)})",
             zorder=4,
             edgecolors="none",
             linewidths=0,
         )
 
         # Add trough annotations with actual prices
-        for i, (time, price) in enumerate(zip(trough_times, trough_original_prices)):
+        for i, (time, price) in enumerate(zip(trough_times, trough_original_prices, strict=False)):
             ax.annotate(
-                "T{}: ${:.4f}".format(i + 1, price),
+                f"T{i + 1}: ${price:.4f}",
                 (time, price),
                 xytext=(5, -20),
                 textcoords="offset points",
                 fontsize=9,
                 fontweight="bold",
                 color="#C73E1D",
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8),
+                bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "alpha": 0.8},
             )
 
     # Styling
@@ -576,10 +573,10 @@ def plot_single_symbol(results, save_plot=False, output_dir=".", dpi=400):
     lookahead = results["filter_params"]["lookahead"]
 
     title = (
-        "{} - Peak & Trough Detection\n"
-        "Bars: {} | Filter: Hanning(w={}) | "
-        "Lookahead: {} | Peaks: {} | Troughs: {}"
-    ).format(symbol, total_bars, window_len, lookahead, len(peaks), len(troughs))
+        f"{symbol} - Peak & Trough Detection\n"
+        f"Bars: {total_bars} | Filter: Hanning(w={window_len}) | "
+        f"Lookahead: {lookahead} | Peaks: {len(peaks)} | Troughs: {len(troughs)}"
+    )
 
     ax.set_title(title, fontsize=14, fontweight="bold", pad=20)
 
@@ -606,26 +603,16 @@ def plot_single_symbol(results, save_plot=False, output_dir=".", dpi=400):
     # Calculate stats for text box
     price_min = original_prices.min()
     price_max = original_prices.max()
-    noise_reduction = (
-        (original_prices.std() - filtered_prices.std()) / original_prices.std() * 100
-    )
+    noise_reduction = (original_prices.std() - filtered_prices.std()) / original_prices.std() * 100
 
     stats_text = (
-        "Price Range: ${:.4f} - ${:.4f}\n"
-        "Filter Smoothing: {:.1f}%\n"
-        "Peak/Trough Ratio: {}/{}"
-    ).format(price_min, price_max, noise_reduction, len(peaks), len(troughs))
+        f"Price Range: ${price_min:.4f} - ${price_max:.4f}\n"
+        f"Filter Smoothing: {noise_reduction:.1f}%\n"
+        f"Peak/Trough Ratio: {len(peaks)}/{len(troughs)}"
+    )
 
     # Auto-position legend and stats box to avoid overlap
     # Try different legend positions and find best fit
-    legend_positions = [
-        ("upper left", (0.02, 0.98)),  # Legend upper left, stats lower left
-        ("upper right", (0.02, 0.98)),  # Legend upper right, stats upper left
-        ("lower left", (0.02, 0.35)),  # Legend lower left, stats upper left
-        ("lower right", (0.02, 0.98)),  # Legend lower right, stats upper left
-        ("center left", (0.02, 0.98)),  # Legend center left, stats upper left
-        ("center right", (0.02, 0.98)),  # Legend center right, stats upper left
-    ]
 
     # Determine which corner has least data density for better positioning
     data_density = {
@@ -694,7 +681,7 @@ def plot_single_symbol(results, save_plot=False, output_dir=".", dpi=400):
         transform=ax.transAxes,
         fontsize=10,
         verticalalignment="top",
-        bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
+        bbox={"boxstyle": "round", "facecolor": "wheat", "alpha": 0.8},
     )
 
     # Additional check: if legend and stats would still overlap, move stats to opposite corner
@@ -729,7 +716,7 @@ def plot_single_symbol(results, save_plot=False, output_dir=".", dpi=400):
             transform=ax.transAxes,
             fontsize=10,
             verticalalignment="top",
-            bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
+            bbox={"boxstyle": "round", "facecolor": "wheat", "alpha": 0.8},
         )
 
     plt.tight_layout()
@@ -737,9 +724,7 @@ def plot_single_symbol(results, save_plot=False, output_dir=".", dpi=400):
     # Save plot if requested
     if save_plot:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = os.path.join(
-            output_dir, "{}_peak_detection_{}.png".format(symbol, timestamp)
-        )
+        filename = os.path.join(output_dir, f"{symbol}_peak_detection_{timestamp}.png")
         plt.savefig(filename, dpi=dpi, bbox_inches="tight", facecolor="white")
         logger.info("Plot saved as %s", filename)
 
@@ -765,12 +750,7 @@ def plot_combined_subplots(all_results, save_plot=False, output_dir=".", dpi=400
     plt.style.use("seaborn-v0_8-darkgrid")
     fig, axes = plt.subplots(rows, cols, figsize=(16, 6 * rows))
 
-    if num_symbols == 1:
-        axes = [axes]
-    elif rows == 1:
-        axes = [axes]
-    else:
-        axes = axes.flatten()
+    axes = [axes] if num_symbols == 1 or rows == 1 else axes.flatten()
 
     # Set timezone for all subplots
     nyc_tz = tz.gettz("America/New_York")
@@ -787,7 +767,7 @@ def plot_combined_subplots(all_results, save_plot=False, output_dir=".", dpi=400
             # Verify we have the right number of timestamps
             if len(timestamps) != len(results["original_prices"]):
                 timestamps = range(len(results["original_prices"]))
-        except:
+        except (KeyError, ValueError, TypeError) as e:
             timestamps = range(len(results["original_prices"]))
 
         # Extract data
@@ -805,9 +785,7 @@ def plot_combined_subplots(all_results, save_plot=False, output_dir=".", dpi=400
             alpha=0.7,
             label="Original",
         )
-        ax.plot(
-            timestamps, filtered_prices, color="#A23B72", linewidth=2, label="Filtered"
-        )
+        ax.plot(timestamps, filtered_prices, color="#A23B72", linewidth=2, label="Filtered")
 
         # Plot peaks and troughs at original prices with price annotations
         if peaks:
@@ -826,16 +804,16 @@ def plot_combined_subplots(all_results, save_plot=False, output_dir=".", dpi=400
                 color="#F18F01",
                 s=60,
                 marker="^",
-                label="Peaks ({})".format(len(peaks)),
+                label=f"Peaks ({len(peaks)})",
                 zorder=4,
                 edgecolors="none",
                 linewidths=0,
             )
 
             # Add price annotations for peaks
-            for i, (time, price) in enumerate(zip(peak_times, peak_original_prices)):
+            for _i, (time, price) in enumerate(zip(peak_times, peak_original_prices, strict=False)):
                 ax.annotate(
-                    "${:.4f}".format(price),
+                    f"${price:.4f}",
                     (time, price),
                     xytext=(0, 10),
                     textcoords="offset points",
@@ -860,18 +838,18 @@ def plot_combined_subplots(all_results, save_plot=False, output_dir=".", dpi=400
                 color="#C73E1D",
                 s=60,
                 marker="v",
-                label="Troughs ({})".format(len(troughs)),
+                label=f"Troughs ({len(troughs)})",
                 zorder=4,
                 edgecolors="none",
                 linewidths=0,
             )
 
             # Add price annotations for troughs
-            for i, (time, price) in enumerate(
-                zip(trough_times, trough_original_prices)
+            for _i, (time, price) in enumerate(
+                zip(trough_times, trough_original_prices, strict=False)
             ):
                 ax.annotate(
-                    "${:.4f}".format(price),
+                    f"${price:.4f}",
                     (time, price),
                     xytext=(0, -15),
                     textcoords="offset points",
@@ -882,9 +860,7 @@ def plot_combined_subplots(all_results, save_plot=False, output_dir=".", dpi=400
 
         # Styling
         symbol = results["symbol"]
-        ax.set_title(
-            "{} (P:{} T:{})".format(symbol, len(peaks), len(troughs)), fontweight="bold"
-        )
+        ax.set_title(f"{symbol} (P:{len(peaks)} T:{len(troughs)})", fontweight="bold")
         ax.set_ylabel("Price ($)")
         ax.grid(True, linestyle="--", alpha=0.5)
         ax.legend(fontsize=9)
@@ -904,9 +880,7 @@ def plot_combined_subplots(all_results, save_plot=False, output_dir=".", dpi=400
     window_len = all_results[0]["filter_params"]["window_len"]
     lookahead = all_results[0]["filter_params"]["lookahead"]
     fig.suptitle(
-        "Multi-Symbol Peak Detection (Hanning w={}, Lookahead={})".format(
-            window_len, lookahead
-        ),
+        f"Multi-Symbol Peak Detection (Hanning w={window_len}, Lookahead={lookahead})",
         fontsize=16,
         fontweight="bold",
     )
@@ -917,9 +891,7 @@ def plot_combined_subplots(all_results, save_plot=False, output_dir=".", dpi=400
     if save_plot:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         symbols_str = "_".join([r["symbol"] for r in all_results])
-        filename = os.path.join(
-            output_dir, "multi_symbol_{}_{}.png".format(symbols_str, timestamp)
-        )
+        filename = os.path.join(output_dir, f"multi_symbol_{symbols_str}_{timestamp}.png")
         plt.savefig(filename, dpi=dpi, bbox_inches="tight", facecolor="white")
         logger.info("Combined plot saved as %s", filename)
 
@@ -957,7 +929,7 @@ def plot_overlay(all_results, save_plot=False, output_dir=".", dpi=400):
             # Verify we have the right number of timestamps
             if len(timestamps) != len(results["original_prices"]):
                 timestamps = range(len(results["original_prices"]))
-        except:
+        except (KeyError, ValueError, TypeError) as e:
             timestamps = range(len(results["original_prices"]))
 
         # Normalize prices to percentage change from first price
@@ -974,14 +946,14 @@ def plot_overlay(all_results, save_plot=False, output_dir=".", dpi=400):
             color=color,
             linewidth=1.5,
             alpha=0.7,
-            label="{} Original".format(symbol),
+            label=f"{symbol} Original",
         )
         ax.plot(
             timestamps,
             normalized_filtered,
             color=color,
             linewidth=2.5,
-            label="{} Filtered".format(symbol),
+            label=f"{symbol} Filtered",
             linestyle="--",
         )
 
@@ -999,8 +971,7 @@ def plot_overlay(all_results, save_plot=False, output_dir=".", dpi=400):
                 for peak in peaks
             ]
             peak_normalized = [
-                (peak["original_price"] / original_prices[0] - 1) * 100
-                for peak in peaks
+                (peak["original_price"] / original_prices[0] - 1) * 100 for peak in peaks
             ]
             ax.scatter(
                 peak_times,
@@ -1014,11 +985,11 @@ def plot_overlay(all_results, save_plot=False, output_dir=".", dpi=400):
             )
 
             # Add actual price annotations
-            for i, (time, norm_price, actual_price) in enumerate(
-                zip(peak_times, peak_normalized, [p["original_price"] for p in peaks])
+            for _i, (time, norm_price, actual_price) in enumerate(
+                zip(peak_times, peak_normalized, [p["original_price"] for p in peaks], strict=False)
             ):
                 ax.annotate(
-                    "${:.4f}".format(actual_price),
+                    f"${actual_price:.4f}",
                     (time, norm_price),
                     xytext=(5, 10),
                     textcoords="offset points",
@@ -1036,8 +1007,7 @@ def plot_overlay(all_results, save_plot=False, output_dir=".", dpi=400):
                 for trough in troughs
             ]
             trough_normalized = [
-                (trough["original_price"] / original_prices[0] - 1) * 100
-                for trough in troughs
+                (trough["original_price"] / original_prices[0] - 1) * 100 for trough in troughs
             ]
             ax.scatter(
                 trough_times,
@@ -1051,15 +1021,16 @@ def plot_overlay(all_results, save_plot=False, output_dir=".", dpi=400):
             )
 
             # Add actual price annotations
-            for i, (time, norm_price, actual_price) in enumerate(
+            for _i, (time, norm_price, actual_price) in enumerate(
                 zip(
                     trough_times,
                     trough_normalized,
                     [t["original_price"] for t in troughs],
+                    strict=False,
                 )
             ):
                 ax.annotate(
-                    "${:.4f}".format(actual_price),
+                    f"${actual_price:.4f}",
                     (time, norm_price),
                     xytext=(5, -15),
                     textcoords="offset points",
@@ -1081,14 +1052,12 @@ def plot_overlay(all_results, save_plot=False, output_dir=".", dpi=400):
     # Format x-axis with NYC/EDT timezone
     if len(all_results) > 0:
         try:
-            timestamps = [
-                convert_to_nyc_timezone(ts) for ts in all_results[0]["timestamps"]
-            ]
+            timestamps = [convert_to_nyc_timezone(ts) for ts in all_results[0]["timestamps"]]
             # Timezone already set above, just format
             ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz=nyc_tz))
             plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
             ax.set_xlabel("Time (NYC/EDT)", fontsize=12, fontweight="bold")
-        except:
+        except (ImportError, AttributeError, ValueError) as e:
             ax.set_xlabel("Time", fontsize=12, fontweight="bold")
 
     plt.tight_layout()
@@ -1097,9 +1066,7 @@ def plot_overlay(all_results, save_plot=False, output_dir=".", dpi=400):
     if save_plot:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         symbols_str = "_".join([r["symbol"] for r in all_results])
-        filename = os.path.join(
-            output_dir, "overlay_{}_{}.png".format(symbols_str, timestamp)
-        )
+        filename = os.path.join(output_dir, f"overlay_{symbols_str}_{timestamp}.png")
         plt.savefig(filename, dpi=dpi, bbox_inches="tight", facecolor="white")
         logger.info("Overlay plot saved as %s", filename)
 
@@ -1113,7 +1080,7 @@ def print_summary(results):
         return
 
     symbol = results["symbol"]
-    print("\n📊 RESULTS SUMMARY for {}:".format(symbol))
+    print(f"\n📊 RESULTS SUMMARY for {symbol}:")
     print("   • Total bars processed: {}".format(results["total_bars"]))
     print(
         "   • Filter parameters: window_len={}, lookahead={}".format(
@@ -1126,16 +1093,8 @@ def print_summary(results):
             min(results["original_prices"]), max(results["original_prices"])
         )
     )
-    print(
-        "   • Peaks detected: {} (at original close prices)".format(
-            len(results["peaks"])
-        )
-    )
-    print(
-        "   • Troughs detected: {} (at original close prices)".format(
-            len(results["troughs"])
-        )
-    )
+    print("   • Peaks detected: {} (at original close prices)".format(len(results["peaks"])))
+    print("   • Troughs detected: {} (at original close prices)".format(len(results["troughs"])))
 
     if results["peaks"] or results["troughs"]:
         if results["peaks"]:
@@ -1204,7 +1163,7 @@ def main():
         "-d",
         type=int,
         default=1,
-        help="Number of trading days to fetch (1-30)",
+        help="Number of trading days to fetch (1-30 for intraday, 1-2520 for daily)",
     )
 
     parser.add_argument(
@@ -1261,9 +1220,7 @@ def main():
         help="Skip plotting (useful for batch processing)",
     )
 
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 
@@ -1271,9 +1228,16 @@ def main():
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    # Validate arguments
-    if args.days < 1 or args.days > 30:
-        logger.error("Days must be between 1 and 30")
+    # Validate arguments - timeframe-aware limits
+    if args.timeframe == "1Day":
+        max_days = 2520  # ~10 years for daily analysis
+    elif args.timeframe in ["1Hour", "2Hour", "4Hour"]:
+        max_days = 90  # 3 months for hourly
+    else:  # Intraday timeframes (1Min, 5Min, etc.)
+        max_days = 30  # Current limit for intraday
+
+    if args.days < 1 or args.days > max_days:
+        logger.error(f"Days must be between 1 and {max_days} for {args.timeframe} timeframe")
         sys.exit(1)
 
     if args.window < 3 or args.window > 101:
@@ -1294,9 +1258,7 @@ def main():
     api_secret = os.environ.get("APCA_API_SECRET_KEY")
 
     if not api_key or not api_secret:
-        logger.error(
-            "APCA_API_KEY_ID and APCA_API_SECRET_KEY environment variables must be set"
-        )
+        logger.error("APCA_API_KEY_ID and APCA_API_SECRET_KEY environment variables must be set")
         sys.exit(1)
 
     # Extract and validate symbols
@@ -1305,9 +1267,7 @@ def main():
         sys.exit(1)
 
     # Parse comma-delimited symbols and convert to uppercase
-    test_symbols = [
-        symbol.strip().upper() for symbol in args.symbols.split(",") if symbol.strip()
-    ]
+    test_symbols = [symbol.strip().upper() for symbol in args.symbols.split(",") if symbol.strip()]
 
     if not test_symbols:
         logger.error("No valid symbols found")
@@ -1397,43 +1357,27 @@ def main():
                         results, save_plot=args.save_plots, output_dir=args.output_dir
                     )
 
-            if (args.plot_mode == "combined" or args.plot_mode == "all") and len(
-                all_results
-            ) > 1:
+            if (args.plot_mode == "combined" or args.plot_mode == "all") and len(all_results) > 1:
                 logger.info("Creating combined subplot...")
                 plot_combined_subplots(
                     all_results, save_plot=args.save_plots, output_dir=args.output_dir
                 )
 
-            if (args.plot_mode == "overlay" or args.plot_mode == "all") and len(
-                all_results
-            ) > 1:
+            if (args.plot_mode == "overlay" or args.plot_mode == "all") and len(all_results) > 1:
                 logger.info("Creating overlay plot...")
-                plot_overlay(
-                    all_results, save_plot=args.save_plots, output_dir=args.output_dir
-                )
+                plot_overlay(all_results, save_plot=args.save_plots, output_dir=args.output_dir)
         else:
             logger.info("Plotting skipped")
 
         # Print overall summary
         print("\n🎯 OVERALL SUMMARY:")
-        print(
-            "   • Symbols processed: {}/{}".format(len(all_results), len(test_symbols))
-        )
-        print(
-            "   • Total peaks found: {}".format(
-                sum(len(r["peaks"]) for r in all_results)
-            )
-        )
-        print(
-            "   • Total troughs found: {}".format(
-                sum(len(r["troughs"]) for r in all_results)
-            )
-        )
+        print(f"   • Symbols processed: {len(all_results)}/{len(test_symbols)}")
+        print("   • Total peaks found: {}".format(sum(len(r["peaks"]) for r in all_results)))
+        print("   • Total troughs found: {}".format(sum(len(r["troughs"]) for r in all_results)))
 
         if all_results:
             avg_bars = np.mean([r["total_bars"] for r in all_results])
-            print("   • Average bars per symbol: {:.0f}".format(avg_bars))
+            print(f"   • Average bars per symbol: {avg_bars:.0f}")
 
         logger.info("Multi-symbol peak detection test completed")
 

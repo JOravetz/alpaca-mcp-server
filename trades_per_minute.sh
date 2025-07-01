@@ -1,0 +1,1 @@
+./scripts/trades_per_minute.sh

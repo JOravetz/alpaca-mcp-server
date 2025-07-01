@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  alpaca-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: alpaca-mcp-server
+    restart: unless-stopped
+    environment:
+      - PAPER=true
+      - APCA_API_BASE_URL=https://paper-api.alpaca.markets
+      - ALPACA_API_KEY=${ALPACA_API_KEY}
+      - ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+    volumes:
+      - ./monitoring_data:/app/monitoring_data
+      - ./logs:/app/logs
+      - ./data:/app/data
+    ports:
+      - "8000:8000"  # FastAPI monitoring service
+    networks:
+      - alpaca-network
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "python", "-c", "import alpaca_mcp_server; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  alpaca-mcp-server-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: alpaca-mcp-server-dev
+    restart: "no"
+    environment:
+      - PAPER=true
+      - APCA_API_BASE_URL=https://paper-api.alpaca.markets
+      - ALPACA_API_KEY=${ALPACA_API_KEY}
+      - ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+    volumes:
+      - .:/app
+      - ./monitoring_data:/app/monitoring_data
+      - ./logs:/app/logs
+    ports:
+      - "8001:8000"  # Dev server on different port
+    networks:
+      - alpaca-network
+    profiles:
+      - dev
+
+  redis:
+    image: redis:7-alpine
+    container_name: alpaca-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-alpaca123}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - alpaca-network
+
+  monitoring:
+    image: prom/prometheus:latest
+    container_name: alpaca-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - alpaca-network
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: alpaca-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3000:3000"
+    networks:
+      - alpaca-network
+    depends_on:
+      - monitoring
+    profiles:
+      - monitoring
+
+networks:
+  alpaca-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  prometheus_data:
+  grafana_data:

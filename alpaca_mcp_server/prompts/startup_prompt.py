@@ -9,7 +9,11 @@ from ..config.global_config import get_global_config
 from ..tools.account_tools import get_positions
 from ..tools.day_trading_scanner import scan_day_trading_opportunities
 from ..tools.streaming_tools import start_global_stock_stream
-from ..utils.timezone_utils import get_eastern_time, get_eastern_time_string, get_market_time_display
+from ..utils.timezone_utils import (
+    get_eastern_time,
+    get_eastern_time_string,
+    get_market_time_display,
+)
 
 
 async def startup() -> str:
@@ -148,53 +152,55 @@ async def startup() -> str:
     position_count = 0
     total_position_value = 0.0
     total_unrealized_pnl = 0.0
-    
+
     try:
         positions_result = await get_positions()
-        
+
         if "No open positions found" in positions_result:
             positions_status = "✅ No open positions"
             positions_summary = "Account is currently flat - ready for new trades"
         else:
             # Parse position details for summary
-            lines = positions_result.split('\n')
+            lines = positions_result.split("\n")
             current_position = {}
-            
+
             for line in lines:
                 line = line.strip()
-                if line.startswith('Symbol:'):
+                if line.startswith("Symbol:"):
                     if current_position:  # Save previous position
                         position_count += 1
-                        total_position_value += current_position.get('market_value', 0.0)
-                        total_unrealized_pnl += current_position.get('unrealized_pl', 0.0)
-                    current_position = {'symbol': line.split(': ')[1]}
-                elif line.startswith('Market Value: $'):
+                        total_position_value += current_position.get("market_value", 0.0)
+                        total_unrealized_pnl += current_position.get("unrealized_pl", 0.0)
+                    current_position = {"symbol": line.split(": ")[1]}
+                elif line.startswith("Market Value: $"):
                     try:
-                        current_position['market_value'] = float(line.split('$')[1])
+                        current_position["market_value"] = float(line.split("$")[1])
                     except (IndexError, ValueError):
-                        current_position['market_value'] = 0.0
-                elif line.startswith('Unrealized P/L: $'):
+                        current_position["market_value"] = 0.0
+                elif line.startswith("Unrealized P/L: $"):
                     try:
                         # Extract the P/L amount (before the percentage)
-                        pnl_part = line.split('$')[1].split(' ')[0]
-                        current_position['unrealized_pl'] = float(pnl_part)
+                        pnl_part = line.split("$")[1].split(" ")[0]
+                        current_position["unrealized_pl"] = float(pnl_part)
                     except (IndexError, ValueError):
-                        current_position['unrealized_pl'] = 0.0
-            
+                        current_position["unrealized_pl"] = 0.0
+
             # Don't forget the last position
             if current_position:
                 position_count += 1
-                total_position_value += current_position.get('market_value', 0.0)
-                total_unrealized_pnl += current_position.get('unrealized_pl', 0.0)
-            
+                total_position_value += current_position.get("market_value", 0.0)
+                total_unrealized_pnl += current_position.get("unrealized_pl", 0.0)
+
             if position_count > 0:
                 pnl_emoji = "🟢" if total_unrealized_pnl >= 0 else "🔴"
-                positions_status = f"✅ {position_count} open position{'s' if position_count != 1 else ''}"
+                positions_status = (
+                    f"✅ {position_count} open position{'s' if position_count != 1 else ''}"
+                )
                 positions_summary = f"{pnl_emoji} Total Value: ${total_position_value:,.2f} | P/L: ${total_unrealized_pnl:+,.2f}"
             else:
                 positions_status = "✅ No open positions"
                 positions_summary = "Account is currently flat - ready for new trades"
-                
+
     except Exception as e:
         positions_status = f"❌ Error checking positions: {str(e)[:50]}"
         positions_summary = "Unable to retrieve position data"
@@ -281,7 +287,9 @@ async def startup() -> str:
 
             report.append(f"{symbol:<6} {trades:>10}  {pct:+8.2f}%{emoji}")
     else:
-        report.append(f"No active stocks found meeting criteria ({config.trading.trades_per_minute_threshold}+ trades/min)")
+        report.append(
+            f"No active stocks found meeting criteria ({config.trading.trades_per_minute_threshold}+ trades/min)"
+        )
 
     report.append("```")
 
@@ -360,84 +368,100 @@ async def startup() -> str:
             positions_result = await get_positions()
             if "No open positions found" not in positions_result:
                 # Format positions into a nice table
-                lines = positions_result.split('\n')
+                lines = positions_result.split("\n")
                 current_position = {}
                 positions_data = []
-                
+
                 for line in lines:
                     line = line.strip()
-                    if line.startswith('Symbol:'):
+                    if line.startswith("Symbol:"):
                         if current_position:  # Save previous position
                             positions_data.append(current_position)
-                        current_position = {'symbol': line.split(': ')[1]}
-                    elif line.startswith('Quantity:'):
-                        current_position['quantity'] = line.split(': ')[1]
-                    elif line.startswith('Current Price: $'):
+                        current_position = {"symbol": line.split(": ")[1]}
+                    elif line.startswith("Quantity:"):
+                        current_position["quantity"] = line.split(": ")[1]
+                    elif line.startswith("Current Price: $"):
                         try:
-                            current_position['current_price'] = float(line.split('$')[1])
+                            current_position["current_price"] = float(line.split("$")[1])
                         except (IndexError, ValueError):
-                            current_position['current_price'] = 0.0
-                    elif line.startswith('Market Value: $'):
+                            current_position["current_price"] = 0.0
+                    elif line.startswith("Market Value: $"):
                         try:
-                            current_position['market_value'] = float(line.split('$')[1])
+                            current_position["market_value"] = float(line.split("$")[1])
                         except (IndexError, ValueError):
-                            current_position['market_value'] = 0.0
-                    elif line.startswith('Unrealized P/L: $'):
+                            current_position["market_value"] = 0.0
+                    elif line.startswith("Unrealized P/L: $"):
                         try:
                             # Extract P/L and percentage
-                            pnl_text = line.split('$')[1]
-                            if '(' in pnl_text:
-                                pnl_amount = float(pnl_text.split(' ')[0])
-                                pnl_percent = pnl_text.split('(')[1].split(')')[0]
-                                current_position['unrealized_pl'] = pnl_amount
-                                current_position['unrealized_pl_percent'] = pnl_percent
+                            pnl_text = line.split("$")[1]
+                            if "(" in pnl_text:
+                                pnl_amount = float(pnl_text.split(" ")[0])
+                                pnl_percent = pnl_text.split("(")[1].split(")")[0]
+                                current_position["unrealized_pl"] = pnl_amount
+                                current_position["unrealized_pl_percent"] = pnl_percent
                             else:
-                                current_position['unrealized_pl'] = float(pnl_text)
-                                current_position['unrealized_pl_percent'] = "0.00%"
+                                current_position["unrealized_pl"] = float(pnl_text)
+                                current_position["unrealized_pl_percent"] = "0.00%"
                         except (IndexError, ValueError):
-                            current_position['unrealized_pl'] = 0.0
-                            current_position['unrealized_pl_percent'] = "0.00%"
-                
+                            current_position["unrealized_pl"] = 0.0
+                            current_position["unrealized_pl_percent"] = "0.00%"
+
                 # Don't forget the last position
                 if current_position:
                     positions_data.append(current_position)
-                
+
                 if positions_data:
                     report.append("```")
-                    report.append(f"{'Symbol':<8} {'Qty':<12} {'Price':<10} {'Value':<12} {'P/L':<12} {'%':<8}")
-                    report.append(f"{'------':<8} {'---':<12} {'-----':<10} {'-----':<12} {'---':<12} {'---':<8}")
-                    
+                    report.append(
+                        f"{'Symbol':<8} {'Qty':<12} {'Price':<10} {'Value':<12} {'P/L':<12} {'%':<8}"
+                    )
+                    report.append(
+                        f"{'------':<8} {'---':<12} {'-----':<10} {'-----':<12} {'---':<12} {'---':<8}"
+                    )
+
                     for pos in positions_data:
-                        symbol = pos.get('symbol', 'N/A')
-                        quantity = pos.get('quantity', 'N/A')
+                        symbol = pos.get("symbol", "N/A")
+                        quantity = pos.get("quantity", "N/A")
                         price = f"${pos.get('current_price', 0):.2f}"
                         value = f"${pos.get('market_value', 0):,.2f}"
                         pnl = f"${pos.get('unrealized_pl', 0):+.2f}"
-                        pnl_pct = pos.get('unrealized_pl_percent', '0.00%')
-                        
+                        pnl_pct = pos.get("unrealized_pl_percent", "0.00%")
+
                         # Add emoji for P/L status
-                        pnl_emoji = "🟢" if pos.get('unrealized_pl', 0) >= 0 else "🔴"
-                        
-                        report.append(f"{symbol:<8} {quantity:<12} {price:<10} {value:<12} {pnl:<12} {pnl_pct:<8} {pnl_emoji}")
-                    
+                        pnl_emoji = "🟢" if pos.get("unrealized_pl", 0) >= 0 else "🔴"
+
+                        report.append(
+                            f"{symbol:<8} {quantity:<12} {price:<10} {value:<12} {pnl:<12} {pnl_pct:<8} {pnl_emoji}"
+                        )
+
                     report.append("```")
-                    
+
                     # Add portfolio summary
-                    avg_return_pct = (total_unrealized_pnl / total_position_value * 100) if total_position_value > 0 else 0
+                    avg_return_pct = (
+                        (total_unrealized_pnl / total_position_value * 100)
+                        if total_position_value > 0
+                        else 0
+                    )
                     portfolio_emoji = "🟢" if total_unrealized_pnl >= 0 else "🔴"
-                    
+
                     report.append(f"\n**Portfolio Summary:** {portfolio_emoji}")
                     report.append(f"- **Total Value:** ${total_position_value:,.2f}")
-                    report.append(f"- **Total P/L:** ${total_unrealized_pnl:+,.2f} ({avg_return_pct:+.2f}%)")
+                    report.append(
+                        f"- **Total P/L:** ${total_unrealized_pnl:+,.2f} ({avg_return_pct:+.2f}%)"
+                    )
                     report.append(f"- **Position Count:** {position_count}")
-                    
+
                     # Add risk warning if significant positions
                     if total_position_value > 10000:
-                        report.append(f"\n⚠️ **LARGE POSITIONS ALERT:** ${total_position_value:,.0f} at risk")
+                        report.append(
+                            f"\n⚠️ **LARGE POSITIONS ALERT:** ${total_position_value:,.0f} at risk"
+                        )
                         report.append("- Monitor closely for profit-taking opportunities")
                         report.append("- Follow NEVER SELL FOR LOSS discipline")
                         if total_unrealized_pnl > 1000:
-                            report.append(f"- **${total_unrealized_pnl:,.0f} profit** - Consider scaling out at peaks")
+                            report.append(
+                                f"- **${total_unrealized_pnl:,.0f} profit** - Consider scaling out at peaks"
+                            )
         except Exception as e:
             report.append(f"❌ Error displaying position details: {str(e)[:100]}")
 
@@ -448,8 +472,8 @@ async def startup() -> str:
     current_time_et = get_market_time_display()
 
     # Parse trading hours from config
-    start_hour, start_minute = map(int, config.market_hours.trading_hours_start.split(':'))
-    end_hour, end_minute = map(int, config.market_hours.trading_hours_end.split(':'))
+    start_hour, start_minute = map(int, config.market_hours.trading_hours_start.split(":"))
+    end_hour, end_minute = map(int, config.market_hours.trading_hours_end.split(":"))
 
     if start_hour <= hour < 9 or (hour == 9 and minute < 30):
         market_status = (
@@ -471,18 +495,34 @@ async def startup() -> str:
 
     # Trading rules reminder
     report.append("\n### 🚨 TRADING RULES")
-    report.append(f"- **Orders**: {config.trading.default_order_type.title()} orders only (never market orders)")
-    report.append(f"- **Price Limit**: Maximum ${config.trading.max_stock_price} per share (global filter)")
-    report.append(f"- **Precision**: {config.trading.price_decimal_places} decimal places for penny stocks")
-    report.append(f"- **Liquidity**: Minimum {config.trading.trades_per_minute_threshold} trades/minute for active stocks")
-    report.append(f"- **Exits**: {'Never sell for loss' if config.trading.never_sell_for_loss else 'Stop-loss orders allowed'}")
-    report.append(f"- **Speed**: React within {config.trading.order_timeout_seconds} seconds when profit appears")
+    report.append(
+        f"- **Orders**: {config.trading.default_order_type.title()} orders only (never market orders)"
+    )
+    report.append(
+        f"- **Price Limit**: Maximum ${config.trading.max_stock_price} per share (global filter)"
+    )
+    report.append(
+        f"- **Precision**: {config.trading.price_decimal_places} decimal places for penny stocks"
+    )
+    report.append(
+        f"- **Liquidity**: Minimum {config.trading.trades_per_minute_threshold} trades/minute for active stocks"
+    )
+    report.append(
+        f"- **Exits**: {'Never sell for loss' if config.trading.never_sell_for_loss else 'Stop-loss orders allowed'}"
+    )
+    report.append(
+        f"- **Speed**: React within {config.trading.order_timeout_seconds} seconds when profit appears"
+    )
     report.append("- **Auto-Trading**: DISABLED BY DEFAULT - User must explicitly enable")
 
     # High-liquidity scanner command reference
     report.append("\n### 🎯 HIGH-LIQUIDITY SCANNER")
-    report.append(f"**Command:** `cd scripts && ./trades_per_minute.sh -f combined.lis -t {config.trading.trades_per_minute_threshold}`")
-    report.append(f"**Purpose:** Find stocks with {config.trading.trades_per_minute_threshold}+ trades/minute for optimal liquidity")
+    report.append(
+        f"**Command:** `./trades_per_minute.sh -f combined.lis -t {config.trading.trades_per_minute_threshold}`"
+    )
+    report.append(
+        f"**Purpose:** Find stocks with {config.trading.trades_per_minute_threshold}+ trades/minute for optimal liquidity"
+    )
     report.append("**Status:** ✅ Script path fixed - now runs from correct directory")
     report.append("**Note:** During pre-market/closed hours, scanner shows no results (expected)")
 

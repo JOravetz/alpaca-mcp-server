@@ -31,9 +31,7 @@ async def market_session_workflow(session_type: str = "full_day") -> str:
 
         # 1. Enhanced Market Clock Analysis
         session_results.append("\n🕐 ENHANCED MARKET TIMING ANALYSIS")
-        session_results.append(
-            "- Analyzing current market session and optimal trading windows..."
-        )
+        session_results.append("- Analyzing current market session and optimal trading windows...")
 
         try:
             from ..tools.market_info_tools import get_extended_market_clock
@@ -44,20 +42,14 @@ async def market_session_workflow(session_type: str = "full_day") -> str:
             session_results.append(
                 "- Market clock: Analyzing pre-market, regular, and extended hours..."
             )
-            session_results.append(
-                "- Session timing: Optimal entry/exit windows identified"
-            )
+            session_results.append("- Session timing: Optimal entry/exit windows identified")
 
         # 2. Session-Specific Analysis
-        session_results.append(
-            f"\n📈 SESSION-SPECIFIC STRATEGY: {session_type.upper()}"
-        )
+        session_results.append(f"\n📈 SESSION-SPECIFIC STRATEGY: {session_type.upper()}")
 
         if session_type in ["pre_market", "full_day"]:
             session_results.append("\n🌅 PRE-MARKET SESSION (4:00-9:30 AM ET)")
-            session_results.append(
-                "- Analyzing overnight news and earnings reactions..."
-            )
+            session_results.append("- Analyzing overnight news and earnings reactions...")
 
             try:
                 from ..tools.after_hours_scanner import scan_after_hours_opportunities
@@ -68,22 +60,16 @@ async def market_session_workflow(session_type: str = "full_day") -> str:
                     max_symbols=10,
                     sort_by="percent_change",
                 )
-                session_results.append(
-                    f"✅ Pre-market Opportunities:\n{premarket_scan}"
-                )
+                session_results.append(f"✅ Pre-market Opportunities:\n{premarket_scan}")
             except Exception:
-                session_results.append(
-                    "- Pre-market scanner: Identifying overnight movers..."
-                )
+                session_results.append("- Pre-market scanner: Identifying overnight movers...")
                 session_results.append(
                     "- News catalyst analysis: Earnings and announcement impacts"
                 )
 
         if session_type in ["market_open", "full_day"]:
             session_results.append("\n🚀 MARKET OPEN SESSION (9:30-10:30 AM ET)")
-            session_results.append(
-                "- High volatility momentum and gap trading strategies..."
-            )
+            session_results.append("- High volatility momentum and gap trading strategies...")
 
             # Market open specific analysis
             open_strategy = """
@@ -134,9 +120,7 @@ EXECUTION CONSIDERATIONS:
 
         if session_type in ["power_hour", "full_day"]:
             session_results.append("\n⚡ POWER HOUR SESSION (3:00-4:00 PM ET)")
-            session_results.append(
-                "- Institutional rebalancing and closing momentum..."
-            )
+            session_results.append("- Institutional rebalancing and closing momentum...")
 
             power_hour_strategy = """
 POWER HOUR CHARACTERISTICS:
@@ -161,9 +145,7 @@ TIMING CONSIDERATIONS:
 
         if session_type in ["after_hours", "full_day"]:
             session_results.append("\n🌙 AFTER-HOURS SESSION (4:00-8:00 PM ET)")
-            session_results.append(
-                "- Extended hours opportunities and risk assessment..."
-            )
+            session_results.append("- Extended hours opportunities and risk assessment...")
 
             ah_strategy = """
 AFTER-HOURS CHARACTERISTICS:
@@ -196,12 +178,8 @@ RISK MANAGEMENT:
             eh_info = await get_extended_hours_info()
             session_results.append(f"✅ Extended Hours Rules:\n{eh_info}")
         except Exception:
-            session_results.append(
-                "- Extended hours: Limit orders validated for pre/post market"
-            )
-            session_results.append(
-                "- Order types: Market orders restricted outside regular hours"
-            )
+            session_results.append("- Extended hours: Limit orders validated for pre/post market")
+            session_results.append("- Order types: Market orders restricted outside regular hours")
 
         # 4. Session Transition Analysis
         session_results.append("\n🔄 SESSION TRANSITION STRATEGY")

@@ -2,7 +2,7 @@
 
 # Parse command line arguments with prefixes
 SYMBOLS_FILE="combined.lis"
-TRADES_THRESHOLD="500"
+TRADES_THRESHOLD="1000"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -16,9 +16,9 @@ while [[ $# -gt 0 ]]; do
             ;;
         -h|--help)
             echo "Usage: $0 [-f|--file symbols_file] [-t|--threshold trades_threshold]"
-            echo "Defaults: -f combined.lis -t 500"
+            echo "Defaults: -f combined.lis -t 1000"
             echo "Examples:"
-            echo "  $0                              # Use defaults"
+            echo "  $0                             # Use defaults"
             echo "  $0 -f test.lis                 # Custom file, default threshold"
             echo "  $0 -t 1000                     # Default file, custom threshold"
             echo "  $0 -f test.lis -t 1000         # Custom file and threshold"

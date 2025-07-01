@@ -3,10 +3,10 @@ Day Trading Workflow - Complete Agentic Trading Analysis
 Following IndyDevDan's pattern for composing tools into intelligent workflows.
 """
 
-from typing import Optional
+from ..config.global_config import get_global_config
 
 
-async def day_trading_workflow(symbol: Optional[str] = None) -> str:
+async def day_trading_workflow(symbol: str | None = None) -> str:
     """
     Complete day trading analysis and setup workflow.
 
@@ -26,6 +26,9 @@ async def day_trading_workflow(symbol: Optional[str] = None) -> str:
     """
 
     try:
+        # Load global configuration
+        config = get_global_config()
+
         workflow_results = []
 
         # Header
@@ -45,22 +48,16 @@ async def day_trading_workflow(symbol: Optional[str] = None) -> str:
         # Step 3: Symbol Analysis or Discovery
         if symbol:
             workflow_results.append(f"\nSTEP 3: ANALYZING {symbol.upper()}")
-            workflow_results.append(
-                f"- Fetching comprehensive market data for {symbol.upper()}"
-            )
-            workflow_results.append(
-                "- Running technical analysis (peak/trough detection)"
-            )
+            workflow_results.append(f"- Fetching comprehensive market data for {symbol.upper()}")
+            workflow_results.append("- Running technical analysis (peak/trough detection)")
             workflow_results.append("- Calculating support/resistance levels")
-            workflow_results.append(
-                "- Technical analysis: Entry/exit levels identified"
-            )
+            workflow_results.append("- Technical analysis: Entry/exit levels identified")
 
             # Analysis results
             analysis_summary = f"""
 TECHNICAL ANALYSIS SUMMARY FOR {symbol.upper()}:
 - Current Price: Ready for live data fetch
-- Support Level: Will calculate from recent troughs  
+- Support Level: Will calculate from recent troughs
 - Resistance Level: Will calculate from recent peaks
 - Momentum: Technical indicators will be analyzed
 - Volume: Activity levels will be assessed
@@ -75,10 +72,10 @@ TECHNICAL ANALYSIS SUMMARY FOR {symbol.upper()}:
             workflow_results.append("- Scanner complete: Top opportunities identified")
 
             # Scanner results placeholder
-            scanner_summary = """
+            scanner_summary = f"""
 TOP DAY TRADING OPPORTUNITIES:
-- Will scan for 500+ trades/minute symbols
-- Filter by 5%+ momentum moves  
+- Will scan for {config.trading.trades_per_minute_threshold}+ trades/minute symbols
+- Filter by {config.trading.min_percent_change_threshold}%+ momentum moves
 - Identify breakout patterns
 - Rank by volume and volatility
 """
@@ -141,14 +138,14 @@ SESSION MANAGEMENT:
         safety_info = """
 RISK MANAGEMENT CHECKLIST:
 - Position sizing calculated (1-2% account risk)
-- Stop loss levels identified  
+- Stop loss levels identified
 - Profit targets established
 - Market conditions validated
 - Account capacity confirmed
 
 IMMEDIATE NEXT STEPS:
 - Use individual tools for live data (get_stock_snapshots, etc.)
-- Set up streaming feeds for real-time monitoring  
+- Set up streaming feeds for real-time monitoring
 - Execute trades using place_stock_order() with calculated levels
 - Monitor positions actively throughout trading session
 
@@ -172,7 +169,7 @@ TROUBLESHOOTING STEPS:
 
 FALLBACK TOOLS:
 - get_account_info() - Check account status
-- scan_day_trading_opportunities() - Find active symbols  
+- scan_day_trading_opportunities() - Find active symbols
 - get_stock_snapshots("SYMBOL") - Get real-time data
 - get_market_clock() - Verify market status
 

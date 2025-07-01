@@ -1,17 +1,19 @@
 """Configuration settings for Alpaca MCP Server."""
 
 import os
-from dotenv import load_dotenv
-from typing import Optional, Any
-import time
 import threading
-from collections import deque, defaultdict
+import time
+from collections import defaultdict, deque
+from datetime import UTC
+from typing import Any, Dict, Optional, Set, Union
 
-# Alpaca imports
-from alpaca.trading.client import TradingClient
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.historical.option import OptionHistoricalDataClient
 from alpaca.data.live.stock import StockDataStream
+
+# Alpaca imports
+from alpaca.trading.client import TradingClient
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
@@ -20,22 +22,20 @@ load_dotenv()
 class Settings:
     """Configuration settings for Alpaca MCP Server."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # API credentials - support both naming conventions
         self.api_key = os.getenv("APCA_API_KEY_ID") or os.getenv("ALPACA_API_KEY")
-        self.api_secret = os.getenv("APCA_API_SECRET_KEY") or os.getenv(
-            "ALPACA_SECRET_KEY"
-        )
+        self.api_secret = os.getenv("APCA_API_SECRET_KEY") or os.getenv("ALPACA_SECRET_KEY")
 
         # Paper trading flag
         self.paper = os.getenv("PAPER", "true").lower() in ["true", "1", "yes"]
         self.paper_trading = self.paper  # Alias for compatibility
 
         # Optional URL overrides
-        self.trade_api_url = os.getenv("trade_api_url")
-        self.trade_api_wss = os.getenv("trade_api_wss")
-        self.data_api_url = os.getenv("data_api_url")
-        self.stream_data_wss = os.getenv("stream_data_wss")
+        self.trade_api_url = os.getenv("TRADE_API_URL")
+        self.trade_api_wss = os.getenv("TRADE_API_WSS")
+        self.data_api_url = os.getenv("DATA_API_URL")
+        self.stream_data_wss = os.getenv("STREAM_DATA_WSS")
 
         # Server configuration
         self.server_name = "alpaca-trading"
@@ -43,9 +43,7 @@ class Settings:
 
         # Validate required credentials
         if not self.api_key or not self.api_secret:
-            raise ValueError(
-                "Alpaca API credentials not found in environment variables."
-            )
+            raise ValueError("Alpaca API credentials not found in environment variables.")
 
 
 # Global settings instance
@@ -55,10 +53,10 @@ settings = Settings()
 # Client Factory Functions (Singleton Pattern)
 # ============================================================================
 
-_trading_client = None
-_stock_historical_client = None
-_stock_data_stream_client = None
-_option_historical_client = None
+_trading_client: Optional[TradingClient] = None
+_stock_historical_client: Optional[StockHistoricalDataClient] = None
+_stock_data_stream_client: Optional[StockDataStream] = None
+_option_historical_client: Optional[OptionHistoricalDataClient] = None
 
 
 def get_trading_client() -> TradingClient:
@@ -89,7 +87,9 @@ def get_stock_stream_client() -> StockDataStream:
     global _stock_data_stream_client
     if _stock_data_stream_client is None:
         _stock_data_stream_client = StockDataStream(
-            settings.api_key, settings.api_secret, url_override=settings.stream_data_wss
+            api_key=settings.api_key or "", 
+            secret_key=settings.api_secret or "", 
+            url_override=settings.stream_data_wss
         )
     return _stock_data_stream_client
 
@@ -108,10 +108,10 @@ def get_option_historical_client() -> OptionHistoricalDataClient:
 # Global Stock Streaming State (Alpaca allows only ONE stream connection)
 # ============================================================================
 
-_global_stock_stream = None
-_stock_stream_thread = None
-_stock_stream_active = False
-_stock_stream_subscriptions: dict[str, set[str]] = {
+_global_stock_stream: Optional[Any] = None
+_stock_stream_thread: Optional[Any] = None
+_stock_stream_active: bool = False
+_stock_stream_subscriptions: Dict[str, Set[str]] = {
     "trades": set(),
     "quotes": set(),
     "bars": set(),
@@ -121,11 +121,11 @@ _stock_stream_subscriptions: dict[str, set[str]] = {
 }
 
 # Configurable stock data buffers - no artificial limits for active stocks
-_stock_data_buffers: dict[str, Any] = {}
+_stock_data_buffers: Dict[str, Any] = {}
 _stock_stream_stats: defaultdict[str, int] = defaultdict(int)
-_stock_stream_start_time = None
-_stock_stream_end_time = None
-_stock_stream_config = {
+_stock_stream_start_time: Optional[float] = None
+_stock_stream_end_time: Optional[float] = None
+_stock_stream_config: Dict[str, Any] = {
     "feed": "sip",
     "buffer_size": None,  # Unlimited by default
     "duration_seconds": None,  # No time limit by default
@@ -139,7 +139,7 @@ _stock_stream_config = {
 class ConfigurableStockDataBuffer:
     """Thread-safe buffer with configurable size limits for stock market data"""
 
-    def __init__(self, max_size: Optional[int] = None):
+    def __init__(self, max_size: Optional[int] = None) -> None:
         """
         Initialize buffer with optional size limit.
 
@@ -158,13 +158,13 @@ class ConfigurableStockDataBuffer:
         self.max_size = max_size
         self.total_items_added = 0  # Track total even if some are dropped
 
-    def add(self, item):
+    def add(self, item: Any) -> None:
         with self.lock:
             self.data.append(item)
             self.last_update = time.time()
             self.total_items_added += 1
 
-    def get_recent(self, seconds: int = 60):
+    def get_recent(self, seconds: int = 60) -> list[Any]:
         with self.lock:
             cutoff = time.time() - seconds
             result = []
@@ -174,21 +174,21 @@ class ConfigurableStockDataBuffer:
                 if isinstance(timestamp, str):
                     try:
                         # Try parsing ISO format with proper timezone handling
-                        from datetime import datetime, timezone
                         import re
-                        
+                        from datetime import datetime
+
                         # Parse timestamp correctly based on timezone info
-                        if timestamp.endswith('Z'):
+                        if timestamp.endswith("Z"):
                             # UTC timestamp with Z suffix
                             timestamp_clean = timestamp[:-1]
-                            dt = datetime.fromisoformat(timestamp_clean).replace(tzinfo=timezone.utc)
-                        elif re.search(r'[+-]\d{2}:\d{2}$', timestamp):
+                            dt = datetime.fromisoformat(timestamp_clean).replace(tzinfo=UTC)
+                        elif re.search(r"[+-]\d{2}:\d{2}$", timestamp):
                             # Timezone-aware timestamp
                             dt = datetime.fromisoformat(timestamp)
                         else:
                             # No timezone info, assume local time
                             dt = datetime.fromisoformat(timestamp)
-                        
+
                         # Convert to UTC timestamp
                         timestamp = dt.timestamp()
                     except (ValueError, TypeError):
@@ -202,16 +202,16 @@ class ConfigurableStockDataBuffer:
                     pass
                 else:
                     continue  # Skip invalid types
-                
+
                 if timestamp > cutoff:
                     result.append(item)
             return result
 
-    def get_all(self):
+    def get_all(self) -> list[Any]:
         with self.lock:
             return list(self.data)
 
-    def get_stats(self):
+    def get_stats(self) -> Dict[str, Any]:
         with self.lock:
             return {
                 "current_size": len(self.data),
@@ -221,7 +221,7 @@ class ConfigurableStockDataBuffer:
                 "is_unlimited": self.max_size is None,
             }
 
-    def clear(self):
+    def clear(self) -> None:
         with self.lock:
             self.data.clear()
             self.total_items_added = 0
@@ -234,18 +234,22 @@ def get_or_create_stock_buffer(
     buffer_key = f"{symbol}_{data_type}"
     if buffer_key not in _stock_data_buffers:
         effective_size = (
-            buffer_size
-            if buffer_size is not None
-            else _stock_stream_config.get("buffer_size")
+            buffer_size if buffer_size is not None else _stock_stream_config.get("buffer_size")
         )
         # Ensure effective_size is None or int
         if effective_size is not None and not isinstance(effective_size, int):
             effective_size = int(effective_size) if str(effective_size).isdigit() else None
         _stock_data_buffers[buffer_key] = ConfigurableStockDataBuffer(effective_size)
-    return _stock_data_buffers[buffer_key]
+    
+    buffer = _stock_data_buffers[buffer_key]
+    if not isinstance(buffer, ConfigurableStockDataBuffer):
+        # This should never happen but let's be safe
+        buffer = ConfigurableStockDataBuffer(buffer_size)
+        _stock_data_buffers[buffer_key] = buffer
+    return buffer
 
 
-def check_stock_stream_duration_limit():
+def check_stock_stream_duration_limit() -> bool:
     """Check if stock stream should stop due to duration limit"""
     if _stock_stream_config["duration_seconds"] and _stock_stream_start_time:
         elapsed = time.time() - _stock_stream_start_time
@@ -255,7 +259,7 @@ def check_stock_stream_duration_limit():
 
 
 # Global handler functions for stock streaming
-async def handle_stock_trade(trade):
+async def handle_stock_trade(trade: Any) -> None:
     """Global handler for stock trade data"""
     try:
         if check_stock_stream_duration_limit():
@@ -283,7 +287,7 @@ async def handle_stock_trade(trade):
         print(f"Error handling trade: {e}")
 
 
-async def handle_stock_quote(quote):
+async def handle_stock_quote(quote: Any) -> None:
     """Global handler for stock quote data"""
     try:
         if check_stock_stream_duration_limit():
@@ -313,7 +317,7 @@ async def handle_stock_quote(quote):
         print(f"Error handling quote: {e}")
 
 
-async def handle_stock_bar(bar):
+async def handle_stock_bar(bar: Any) -> None:
     """Global handler for stock bar data"""
     try:
         if check_stock_stream_duration_limit():

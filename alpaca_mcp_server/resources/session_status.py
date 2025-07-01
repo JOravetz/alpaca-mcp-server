@@ -1,8 +1,10 @@
 """Market session status resource with extended hours awareness."""
 
 from datetime import datetime, time
+
 import pandas as pd
 import pandas_market_calendars as mcal  # type: ignore
+
 from ..config.settings import get_trading_client
 
 
@@ -51,9 +53,9 @@ async def get_session_status() -> dict:
             if len(next_trading_days) > 0:
                 next_trading_day = next_trading_days[0].date()
                 next_event = "market_open"
-                next_event_time = pd.Timestamp(
-                    next_trading_day, tz="America/New_York"
-                ).replace(hour=9, minute=30, second=0, microsecond=0)
+                next_event_time = pd.Timestamp(next_trading_day, tz="America/New_York").replace(
+                    hour=9, minute=30, second=0, microsecond=0
+                )
             else:
                 # Fallback if no trading days found in next week
                 next_event = "market_open"
@@ -99,14 +101,12 @@ async def get_session_status() -> dict:
             if current_time >= postmarket_end:
                 # After 8 PM - next is pre-market tomorrow (if it's a trading day)
                 tomorrow = today + pd.Timedelta(days=1)
-                tomorrow_schedule = nyse.schedule(
-                    start_date=tomorrow, end_date=tomorrow
-                )
+                tomorrow_schedule = nyse.schedule(start_date=tomorrow, end_date=tomorrow)
                 if len(tomorrow_schedule) > 0:
                     next_event = "premarket_open"
-                    next_event_time = pd.Timestamp(
-                        tomorrow, tz="America/New_York"
-                    ).replace(hour=4, minute=0, second=0, microsecond=0)
+                    next_event_time = pd.Timestamp(tomorrow, tz="America/New_York").replace(
+                        hour=4, minute=0, second=0, microsecond=0
+                    )
                 else:
                     # Tomorrow is not a trading day, find next trading day
                     next_trading_days = nyse.valid_days(
@@ -124,16 +124,12 @@ async def get_session_status() -> dict:
             else:
                 # Before 4 AM - next is pre-market today
                 next_event = "premarket_open"
-                next_event_time = now_et.replace(
-                    hour=4, minute=0, second=0, microsecond=0
-                )
+                next_event_time = now_et.replace(hour=4, minute=0, second=0, microsecond=0)
 
         # Calculate time to next event
         time_to_next = next_event_time - now_et
         time_to_next_minutes = int(time_to_next.total_seconds() / 60)
-        time_to_next_formatted = (
-            f"{time_to_next_minutes // 60}h {time_to_next_minutes % 60}m"
-        )
+        time_to_next_formatted = f"{time_to_next_minutes // 60}h {time_to_next_minutes % 60}m"
 
         # Session phase for regular market
         if current_session == "regular_market" and progress_percent is not None:

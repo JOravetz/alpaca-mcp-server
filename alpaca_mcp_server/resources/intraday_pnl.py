@@ -1,9 +1,11 @@
 """Intraday P&L resource with configurable parameters."""
 
 from datetime import datetime, time, timedelta
-from ..config.settings import get_trading_client
-from alpaca.trading.requests import GetOrdersRequest
+
 from alpaca.trading.enums import QueryOrderStatus
+from alpaca.trading.requests import GetOrdersRequest
+
+from ..config.settings import get_trading_client
 
 
 async def get_intraday_pnl(
@@ -24,16 +26,17 @@ async def get_intraday_pnl(
         client = get_trading_client()
         account = client.get_account()
 
-        # Calculate date range
+        # Calculate date range - Include full trading day with pre-market and extended hours
         target_date = datetime.now().date() - timedelta(days=days_back)
-        market_open = datetime.combine(target_date, time(9, 30))
-        market_close = datetime.combine(target_date, time(16, 0))
+        # Start at 4:00 AM (pre-market open) and end at 8:00 PM (post-market close)
+        day_start = datetime.combine(target_date, time(4, 0))
+        day_end = datetime.combine(target_date, time(20, 0))
 
         # Get orders for the specified period
         orders_request = GetOrdersRequest(
             status=QueryOrderStatus.CLOSED,
-            after=market_open,
-            until=market_close,
+            after=day_start,
+            until=day_end,
             limit=500,  # Increased limit for active traders
         )
 
@@ -44,15 +47,16 @@ async def get_intraday_pnl(
             orders = [
                 order
                 for order in orders
-                if hasattr(order, 'symbol') and order.symbol.upper() == symbol_filter.upper()
+                if hasattr(order, "symbol") and order.symbol.upper() == symbol_filter.upper()
             ]
 
         # Calculate realized P&L from filled orders
         realized_pnl = 0
         trade_count = 0
         day_trades = 0
-        from typing import Dict, Any, List
-        trades_by_symbol: Dict[str, Dict[str, Any]] = {}
+        from typing import Any
+
+        trades_by_symbol: dict[str, dict[str, Any]] = {}
         total_volume = 0
         largest_win = 0
         largest_loss = 0
@@ -62,9 +66,7 @@ async def get_intraday_pnl(
         for order in orders:
             if order.filled_at and order.filled_at.date() == target_date:
                 if order.filled_avg_price and order.filled_qty:
-                    trade_value = float(order.filled_avg_price) * float(
-                        order.filled_qty
-                    )
+                    trade_value = float(order.filled_avg_price) * float(order.filled_qty)
 
                     # Apply minimum trade value filter
                     if trade_value < min_trade_value:
@@ -148,7 +150,7 @@ async def get_intraday_pnl(
                 positions = [
                     pos
                     for pos in positions
-                    if hasattr(pos, 'symbol') and pos.symbol.upper() == symbol_filter.upper()
+                    if hasattr(pos, "symbol") and pos.symbol.upper() == symbol_filter.upper()
                 ]
 
             unrealized_pnl = sum(float(pos.unrealized_pl or 0) for pos in positions)
@@ -166,20 +168,14 @@ async def get_intraday_pnl(
         )
         avg_win = largest_win / winning_trades if winning_trades > 0 else 0
         avg_loss = abs(largest_loss) / losing_trades if losing_trades > 0 else 0
-        profit_factor = (
-            avg_win / avg_loss if avg_loss > 0 else float("inf") if avg_win > 0 else 0
-        )
+        profit_factor = avg_win / avg_loss if avg_loss > 0 else float("inf") if avg_win > 0 else 0
 
         return {
             "analysis_date": target_date.isoformat(),
             "days_back": days_back,
             "realized_pnl": round(realized_pnl, 2),
-            "unrealized_pnl": (
-                round(unrealized_pnl, 2) if include_open_positions else None
-            ),
-            "total_pnl": round(
-                realized_pnl + (unrealized_pnl if include_open_positions else 0), 2
-            ),
+            "unrealized_pnl": (round(unrealized_pnl, 2) if include_open_positions else None),
+            "total_pnl": round(realized_pnl + (unrealized_pnl if include_open_positions else 0), 2),
             "trade_count": trade_count,
             "winning_trades": winning_trades,
             "losing_trades": losing_trades,
@@ -188,9 +184,7 @@ async def get_intraday_pnl(
             "largest_loss": round(largest_loss, 2),
             "avg_win": round(avg_win, 2),
             "avg_loss": round(avg_loss, 2),
-            "profit_factor": (
-                round(profit_factor, 2) if profit_factor != float("inf") else "inf"
-            ),
+            "profit_factor": (round(profit_factor, 2) if profit_factor != float("inf") else "inf"),
             "total_volume": round(total_volume, 2),
             "day_trades_used": day_trades,
             "remaining_day_trades": remaining_day_trades,
@@ -209,9 +203,7 @@ async def get_intraday_pnl(
     except Exception as e:
         return {
             "error": str(e),
-            "analysis_date": (
-                datetime.now().date() - timedelta(days=days_back)
-            ).isoformat(),
+            "analysis_date": (datetime.now().date() - timedelta(days=days_back)).isoformat(),
             "parameters": {
                 "days_back": days_back,
                 "include_open_positions": include_open_positions,

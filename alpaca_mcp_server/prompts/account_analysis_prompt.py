@@ -1,8 +1,9 @@
 """Account analysis prompt implementation."""
 
 from datetime import datetime
-from ..tools.account_tools import get_account_info, get_positions
+
 from ..config.settings import get_trading_client
+from ..tools.account_tools import get_account_info, get_positions
 
 
 async def account_analysis() -> str:
@@ -72,7 +73,7 @@ async def account_analysis() -> str:
 
         # 6. Format comprehensive response
         result = f"""# Portfolio Health Check
-        
+
 ## Account Overview
 Portfolio Value: ${total_portfolio_value:,.2f}
 Cash Available: ${cash_balance:,.2f} ({cash_balance / total_portfolio_value * 100:.1f}%)

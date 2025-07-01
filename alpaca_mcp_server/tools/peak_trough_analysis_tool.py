@@ -1,23 +1,22 @@
-"""Peak and trough analysis tool for day trading signals - Enhanced Version"""
+"""Peak and trough analysis tool for day trading signals - Enhanced Version with plot.py integration"""
 
 import logging
-import numpy as np
-from datetime import datetime, timedelta
-import sys
 import os
-import requests
 import re
+import sys
+from datetime import datetime, timedelta
+
+import numpy as np
+import pytz
+import requests
 from scipy.signal import filtfilt
 from scipy.signal.windows import hann as hanning
-import pytz
 
 # Import global configuration
 from ..config import get_technical_config
 
 # Add parent directory to path to import peakdetect
-project_root = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
 try:
@@ -93,9 +92,7 @@ def convert_to_nyc_timezone(timestamp_str):
 
         return dt_nyc
     except Exception as e:
-        logger.warning(
-            f"Failed to convert timestamp {timestamp_str} to NYC timezone: {e}"
-        )
+        logger.warning(f"Failed to convert timestamp {timestamp_str} to NYC timezone: {e}")
         # Return a fallback datetime object in NYC timezone
         try:
             # If all else fails, assume it's a UTC timestamp and manually convert
@@ -194,9 +191,7 @@ class HistoricalDataFetcher:
             logger.error("Error retrieving trading calendar: %s", e)
             return []
 
-    def fetch_historical_bars(
-        self, symbols, timeframe, start_date, end_date, feed="sip"
-    ):
+    def fetch_historical_bars(self, symbols, timeframe, start_date, end_date, feed="sip"):
         """Fetch historical bar data for multiple symbols in one API call"""
         if not symbols:
             logger.warning("No symbols provided for historical data fetch")
@@ -283,9 +278,7 @@ def process_bars_for_peaks(symbol, bars, window_len=None, lookahead=None):
         timestamps = [bar["t"] for bar in bars]
 
         logger.debug("Processing %d bars for %s", len(close_prices), symbol)
-        logger.debug(
-            "Close price range: %.4f - %.4f", close_prices.min(), close_prices.max()
-        )
+        logger.debug("Close price range: %.4f - %.4f", close_prices.min(), close_prices.max())
 
         filtered_prices = zero_phase_filter(close_prices, window_len)
         time_axis = np.arange(len(close_prices))
@@ -345,11 +338,7 @@ def process_bars_for_peaks(symbol, bars, window_len=None, lookahead=None):
                 "price_std": float(close_prices.std()),
                 "filtered_std": float(filtered_prices.std()),
                 "noise_reduction_pct": float(
-                    (
-                        (close_prices.std() - filtered_prices.std())
-                        / close_prices.std()
-                        * 100
-                    )
+                    (close_prices.std() - filtered_prices.std()) / close_prices.std() * 100
                 ),
             },
         }
@@ -442,7 +431,7 @@ async def analyze_peaks_and_troughs(
     Args:
         symbols: Stock symbols - use "AUTO" for current scanner results, or comma-separated list (e.g., "AAPL,MSFT,NVDA")
         timeframe: Bar timeframe - "1Min", "5Min", "15Min", "30Min", "1Hour" (default: "1Min")
-        days: Number of trading days of historical data (default: 1, max: 30)
+        days: Number of trading days of historical data (default: 1, max: 30 for intraday, 2520 for daily)
         limit: Maximum number of bars to fetch (default: 1000, max: 10000)
         window_len: Hanning filter window length - controls smoothing (default: 21, must be odd, range: 3-101)
         lookahead: Peak detection lookahead parameter (default: 1, range: 1-50)
@@ -468,56 +457,67 @@ async def analyze_peaks_and_troughs(
         if symbols.upper() == "AUTO":
             try:
                 # Import the day trading scanner function
-                from .day_trading_scanner import scan_day_trading_opportunities
-                
                 # Get current active stocks from scanner using global config
-                from ..config import get_trading_config, get_scanner_config
+                from ..config import get_scanner_config, get_trading_config
+                from .day_trading_scanner import scan_day_trading_opportunities
+
                 trading_config = get_trading_config()
                 scanner_config = get_scanner_config()
-                
+
                 scanner_result = await scan_day_trading_opportunities(
                     symbols="ALL",
                     min_trades_per_minute=trading_config.trades_per_minute_threshold,
-                    min_percent_change=1.0,     # Lower threshold to get more symbols for analysis
+                    min_percent_change=1.0,  # Lower threshold to get more symbols for analysis
                     max_symbols=scanner_config.max_watchlist_size,
-                    sort_by=scanner_config.scanner_sort_method
+                    sort_by=scanner_config.scanner_sort_method,
                 )
-                
+
                 # Extract symbols from scanner output using improved regex pattern
                 # Look for lines like "   1 SRM        9,004 +   297.2% $  5.760"
-                symbol_pattern = r'^\s*\d+\s+([A-Z]{2,5})\s+'
+                symbol_pattern = r"^\s*\d+\s+([A-Z]{2,5})\s+"
                 symbol_list = []
-                
-                for line in scanner_result.split('\n'):
+
+                for line in scanner_result.split("\n"):
                     match = re.match(symbol_pattern, line)
                     if match:
                         symbol_list.append(match.group(1))
-                
+
                 if not symbol_list:
                     # Fallback to parse different format if needed
-                    logger.warning("Failed to extract symbols from scanner, trying alternative parsing")
+                    logger.warning(
+                        "Failed to extract symbols from scanner, trying alternative parsing"
+                    )
                     # Look for mentions of symbols in various formats
-                    symbol_mentions = re.findall(r'\b([A-Z]{2,5})\b', scanner_result)
+                    symbol_mentions = re.findall(r"\b([A-Z]{2,5})\b", scanner_result)
                     # Filter to likely stock symbols (2-5 chars, common patterns)
-                    likely_symbols = [s for s in symbol_mentions if 2 <= len(s) <= 5 and s not in ['SELL', 'STRONG', 'ACTIVE', 'READY', 'MARKET', 'SCAN', 'DAY']]
-                    symbol_list = list(dict.fromkeys(likely_symbols))[:20]  # Remove duplicates, limit to 20
-                
+                    likely_symbols = [
+                        s
+                        for s in symbol_mentions
+                        if 2 <= len(s) <= 5
+                        and s not in ["SELL", "STRONG", "ACTIVE", "READY", "MARKET", "SCAN", "DAY"]
+                    ]
+                    symbol_list = list(dict.fromkeys(likely_symbols))[
+                        :20
+                    ]  # Remove duplicates, limit to 20
+
                 if symbol_list:
-                    logger.info(f"AUTO mode: Extracted {len(symbol_list)} symbols from scanner: {symbol_list}")
+                    logger.info(
+                        f"AUTO mode: Extracted {len(symbol_list)} symbols from scanner: {symbol_list}"
+                    )
                     symbols = ",".join(symbol_list)  # Convert back to comma-separated string
                     # Add debug info to output
                     debug_info = f"AUTO mode detected {len(symbol_list)} symbols: {symbol_list[:5]}{'...' if len(symbol_list) > 5 else ''}\n\n"
                 else:
                     logger.warning("AUTO mode: No symbols found in scanner results")
                     # Debug: show scanner output format for troubleshooting
-                    sample_lines = scanner_result.split('\n')[:10]
-                    debug_lines = '\n'.join(sample_lines)
+                    sample_lines = scanner_result.split("\n")[:10]
+                    debug_lines = "\n".join(sample_lines)
                     return f"Error: AUTO mode failed - no active symbols found in scanner results.\n\nDebug - Scanner output sample:\n{debug_lines}\n\nPlease run scanner first or specify symbols manually."
-                    
+
             except Exception as e:
                 logger.error(f"AUTO mode failed: {e}")
                 return f"Error: AUTO mode failed - {str(e)}. Please specify symbols manually."
-        
+
         # Parse symbols (now resolved from AUTO or provided manually)
         symbol_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
         if not symbol_list:
@@ -536,8 +536,16 @@ async def analyze_peaks_and_troughs(
         if limit < 1 or limit > 10000:
             limit = min(max(limit, 1), 10000)
 
-        if days < 1 or days > 30:
-            days = min(max(days, 1), 30)
+        # Timeframe-aware days validation
+        if timeframe == "1Day":
+            max_days = 2520  # ~10 years for daily analysis
+        elif timeframe in ["1Hour", "2Hour", "4Hour"]:
+            max_days = 90  # 3 months for hourly
+        else:  # Intraday timeframes (1Min, 5Min, etc.)
+            max_days = 30  # Current limit for intraday
+
+        if days < 1 or days > max_days:
+            days = min(max(days, 1), max_days)
 
         if window_len < 3 or window_len > 101:
             window_len = config.hanning_window_samples
@@ -578,9 +586,7 @@ async def analyze_peaks_and_troughs(
             end_date = trading_days[0]  # Most recent day
 
         # Fetch bars using enhanced API method
-        bars_data = fetcher.fetch_historical_bars(
-            symbol_list, timeframe, start_date, end_date
-        )
+        bars_data = fetcher.fetch_historical_bars(symbol_list, timeframe, start_date, end_date)
 
         if not bars_data:
             return "Error: No historical data received from API"
@@ -588,11 +594,11 @@ async def analyze_peaks_and_troughs(
         # Process each symbol
         results = []
         results.append("# Peak and Trough Analysis for Day Trading\n")
-        
+
         # Add AUTO mode debug info if applicable
-        if 'debug_info' in locals():
+        if "debug_info" in locals():
             results.append(debug_info)
-            
+
         results.append(
             f"Parameters: {timeframe} bars, {days} days, Window: {window_len}, Lookahead: {lookahead}\n"
         )
@@ -600,6 +606,7 @@ async def analyze_peaks_and_troughs(
         # Show analysis time in NYC timezone - FORCE timezone conversion
         try:
             from datetime import datetime
+
             import pytz
 
             utc_now = datetime.now(pytz.UTC)
@@ -608,9 +615,7 @@ async def analyze_peaks_and_troughs(
 
             # Force EDT/EST display
             tz_name = nyc_now.strftime("%Z")  # This will be EDT or EST
-            results.append(
-                f"Analysis Time: {nyc_now.strftime('%Y-%m-%d %H:%M:%S')} {tz_name}\n"
-            )
+            results.append(f"Analysis Time: {nyc_now.strftime('%Y-%m-%d %H:%M:%S')} {tz_name}\n")
         except Exception as e:
             logger.warning(f"Failed to format analysis time with timezone: {e}")
             # Fallback with manual EDT calculation
@@ -620,9 +625,7 @@ async def analyze_peaks_and_troughs(
             # EDT is UTC-4, EST is UTC-5. In June, it's EDT
             edt_hour = (utc_now.hour - 4) % 24
             edt_time = utc_now.replace(hour=edt_hour)
-            results.append(
-                f"Analysis Time: {edt_time.strftime('%Y-%m-%d %H:%M:%S')} EDT\n"
-            )
+            results.append(f"Analysis Time: {edt_time.strftime('%Y-%m-%d %H:%M:%S')} EDT\n")
         results.append("=" * 80 + "\n")
 
         for symbol in symbol_list:
@@ -654,9 +657,7 @@ async def analyze_peaks_and_troughs(
                 continue
 
             results.append(f"Total bars analyzed: {len(close_prices)}\n")
-            results.append(
-                f"Price range: ${min(close_prices):.4f} - ${max(close_prices):.4f}\n"
-            )
+            results.append(f"Price range: ${min(close_prices):.4f} - ${max(close_prices):.4f}\n")
             results.append(f"Current price: ${close_prices[-1]:.4f}\n\n")
 
             # Apply zero-phase Hanning filter
@@ -705,18 +706,14 @@ async def analyze_peaks_and_troughs(
                                 dt = date_parser.parse(raw_ts)
                                 if dt.tzinfo is None:
                                     dt = dt.replace(tzinfo=pytz.UTC)
-                                nyc_dt = dt.astimezone(
-                                    pytz.timezone("America/New_York")
-                                )
+                                nyc_dt = dt.astimezone(pytz.timezone("America/New_York"))
                                 peak_time = nyc_dt.strftime("%H:%M:%S")
                             else:
                                 # Handle datetime objects
                                 if hasattr(raw_ts, "tzinfo"):
                                     if raw_ts.tzinfo is None:
                                         raw_ts = raw_ts.replace(tzinfo=pytz.UTC)
-                                    nyc_dt = raw_ts.astimezone(
-                                        pytz.timezone("America/New_York")
-                                    )
+                                    nyc_dt = raw_ts.astimezone(pytz.timezone("America/New_York"))
                                     peak_time = nyc_dt.strftime("%H:%M:%S")
                                 else:
                                     peak_time = f"Bar_{idx}"
@@ -760,18 +757,14 @@ async def analyze_peaks_and_troughs(
                                 dt = date_parser.parse(raw_ts)
                                 if dt.tzinfo is None:
                                     dt = dt.replace(tzinfo=pytz.UTC)
-                                nyc_dt = dt.astimezone(
-                                    pytz.timezone("America/New_York")
-                                )
+                                nyc_dt = dt.astimezone(pytz.timezone("America/New_York"))
                                 trough_time = nyc_dt.strftime("%H:%M:%S")
                             else:
                                 # Handle datetime objects
                                 if hasattr(raw_ts, "tzinfo"):
                                     if raw_ts.tzinfo is None:
                                         raw_ts = raw_ts.replace(tzinfo=pytz.UTC)
-                                    nyc_dt = raw_ts.astimezone(
-                                        pytz.timezone("America/New_York")
-                                    )
+                                    nyc_dt = raw_ts.astimezone(pytz.timezone("America/New_York"))
                                     trough_time = nyc_dt.strftime("%H:%M:%S")
                                 else:
                                     trough_time = f"Bar_{idx}"
@@ -789,9 +782,7 @@ async def analyze_peaks_and_troughs(
                 # Latest trough analysis
                 if min_peaks:
                     latest_trough_idx = int(min_peaks[-1][0])
-                    latest_trough_price = close_prices[
-                        latest_trough_idx
-                    ]  # ORIGINAL price
+                    latest_trough_price = close_prices[latest_trough_idx]  # ORIGINAL price
                     current_price = close_prices[-1]
                     trough_distance = len(close_prices) - 1 - latest_trough_idx
 
@@ -822,21 +813,15 @@ async def analyze_peaks_and_troughs(
                     )
 
                     if bars_since_peak <= 3 and abs(price_from_peak) <= 2.0:
-                        results.append(
-                            "🔴 SELL/SHORT Signal - Near recent peak, good exit point\n"
-                        )
+                        results.append("🔴 SELL/SHORT Signal - Near recent peak, good exit point\n")
                     elif price_from_peak < -2.0:
-                        results.append(
-                            "⚠️ Watch - Price declining from peak, potential reversal\n"
-                        )
+                        results.append("⚠️ Watch - Price declining from peak, potential reversal\n")
                     else:
                         results.append("➡️ Neutral - Monitor for direction\n")
                 else:
                     # Last signal was a trough - use ORIGINAL price
                     trough_price = close_prices[latest_trough_idx]
-                    price_from_trough = (
-                        (current_price - trough_price) / trough_price
-                    ) * 100
+                    price_from_trough = ((current_price - trough_price) / trough_price) * 100
                     bars_since_trough = len(close_prices) - 1 - latest_trough_idx
 
                     results.append(
@@ -851,9 +836,7 @@ async def analyze_peaks_and_troughs(
                             "🟢 BUY/LONG Signal - Near recent trough, good entry point\n"
                         )
                     elif price_from_trough > 2.0:
-                        results.append(
-                            "⚠️ Watch - Price rising from trough, potential reversal\n"
-                        )
+                        results.append("⚠️ Watch - Price rising from trough, potential reversal\n")
                     else:
                         results.append("➡️ Neutral - Monitor for direction\n")
 
@@ -880,3 +863,105 @@ async def analyze_peaks_and_troughs(
     except Exception as e:
         logger.error(f"Error in analyze_peaks_and_troughs: {e}")
         return f"Error analyzing peaks and troughs: {str(e)}"
+
+
+async def analyze_peaks_and_troughs_with_plot_py(
+    symbols: str,
+    timeframe: str = "1Min",
+    days: int = 1,
+    window_len: int = None,
+    lookahead: int = None,
+    delta: float = 0.0,
+    min_peak_distance: int = 5,
+) -> str:
+    """
+    Use plot.py with --no-plot option for accurate peak/trough analysis.
+
+    This function uses the same data source and analysis as the plotting tool
+    to fix the data synchronization issue where charts show fresh signals
+    but analysis tools don't detect them.
+
+    Args:
+        symbols: Comma-separated symbols (e.g., "AAPL,MSFT")
+        timeframe: Bar timeframe ("1Min", "5Min", etc.)
+        days: Number of trading days to analyze
+        window_len: Hanning filter window length (uses global config if None)
+        lookahead: Peak detection sensitivity (uses global config if None)
+        delta: Minimum peak amplitude (default: 0.0)
+        min_peak_distance: Minimum bars between peaks (default: 5)
+
+    Returns:
+        Analysis result string with peak/trough signals
+    """
+    try:
+        # Get current global config if parameters not provided
+        if window_len is None or lookahead is None:
+            tech_config = get_technical_config()
+            if window_len is None:
+                window_len = tech_config.hanning_window_samples
+            if lookahead is None:
+                lookahead = tech_config.peak_trough_lookahead
+
+        # Path to plot.py
+        os.path.join(os.path.dirname(__file__), "plot.py")
+
+        # Build command
+        cmd = [
+            sys.executable,
+            "-m",
+            "alpaca_mcp_server.tools.plot",
+            "--symbols",
+            symbols,
+            "--timeframe",
+            timeframe,
+            "--days",
+            str(days),
+            "--window",
+            str(window_len),
+            "--lookahead",
+            str(lookahead),
+            "--no-plot",  # Skip plotting, only analysis
+            "--verbose",  # Get detailed output
+        ]
+
+        logger.info(f"Running plot.py analysis: {' '.join(cmd)}")
+
+        # Execute plot.py with --no-plot using asyncio subprocess
+        import asyncio
+
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=os.path.dirname(os.path.dirname(os.path.dirname(__file__))),  # Project root
+        )
+
+        try:
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(), timeout=30
+            )  # Reduced timeout
+            result_stdout = stdout.decode() if stdout else ""
+            result_stderr = stderr.decode() if stderr else ""
+            returncode = proc.returncode
+        except TimeoutError:
+            proc.kill()
+            await proc.wait()
+            logger.error("plot.py analysis timed out after 30 seconds")
+            return "Error: Analysis timed out"
+
+        if returncode != 0:
+            error_msg = f"plot.py failed with return code {returncode}"
+            if result_stderr:
+                error_msg += f": {result_stderr}"
+            logger.error(error_msg)
+            return f"Error running plot.py analysis: {error_msg}"
+
+        # Return the analysis output
+        analysis_output = result_stdout
+
+        logger.info(f"plot.py analysis completed successfully for {symbols}")
+        return analysis_output
+
+    except Exception as e:
+        logger.error(f"Error running plot.py analysis: {e}")
+        return f"Error running plot.py analysis: {str(e)}"

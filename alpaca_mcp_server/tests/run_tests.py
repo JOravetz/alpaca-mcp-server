@@ -14,33 +14,33 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import test modules
-from tests.unit.test_workflows import (
-    TestMasterScanningWorkflow,
-    TestProTechnicalWorkflow,
-    TestMarketSessionWorkflow,
-    TestDayTradingWorkflow,
-    TestListTradingCapabilities,
-    TestWorkflowIntegration,
-)
-from tests.unit.test_error_handling import (
-    TestErrorHandling,
-    TestFallbackScenarios,
-    TestEdgeCases,
-    TestDataValidation,
-    TestRecoveryMechanisms,
-)
 from tests.integration.test_mcp_server import (
     TestMCPServerIntegration,
-    TestWorkflowExecution,
-    TestRealDataIntegration,
     TestPerformanceIntegration,
+    TestRealDataIntegration,
+    TestWorkflowExecution,
 )
 from tests.performance.test_performance import (
-    TestWorkflowPerformance,
     TestConcurrentPerformance,
+    TestPerformanceBenchmarks,
     TestResourceUsage,
     TestScalabilityLimits,
-    TestPerformanceBenchmarks,
+    TestWorkflowPerformance,
+)
+from tests.unit.test_error_handling import (
+    TestDataValidation,
+    TestEdgeCases,
+    TestErrorHandling,
+    TestFallbackScenarios,
+    TestRecoveryMechanisms,
+)
+from tests.unit.test_workflows import (
+    TestDayTradingWorkflow,
+    TestListTradingCapabilities,
+    TestMarketSessionWorkflow,
+    TestMasterScanningWorkflow,
+    TestProTechnicalWorkflow,
+    TestWorkflowIntegration,
 )
 
 
@@ -66,9 +66,7 @@ class TestRunner:
         print("=" * 50)
 
         instance = test_class()
-        test_methods = [
-            method for method in dir(instance) if method.startswith("test_")
-        ]
+        test_methods = [method for method in dir(instance) if method.startswith("test_")]
 
         class_results = {"passed": 0, "failed": 0, "tests": []}
 
@@ -121,9 +119,7 @@ class TestRunner:
                 if "--verbose" in sys.argv:
                     print(f"       {traceback.format_exc()}")
 
-        success_rate = (
-            (class_results["passed"] / len(test_methods)) * 100 if test_methods else 0
-        )
+        success_rate = (class_results["passed"] / len(test_methods)) * 100 if test_methods else 0
         print(
             f"\n{class_name} Results: {class_results['passed']}/{len(test_methods)} passed ({success_rate:.1f}%)"
         )

@@ -1,6 +1,7 @@
 """Portfolio analytics resources implementation."""
 
 from datetime import datetime
+
 from ..config.settings import get_trading_client
 
 
@@ -34,13 +35,9 @@ async def get_portfolio_performance() -> dict:
             "day_change": total_unrealized_pnl,
             "day_change_pct": day_change_pct,
             "positions_count": len(positions),
-            "cash_percentage": (
-                (cash_value / total_value * 100) if total_value > 0 else 0
-            ),
+            "cash_percentage": ((cash_value / total_value * 100) if total_value > 0 else 0),
             "invested_percentage": (
-                ((total_value - cash_value) / total_value * 100)
-                if total_value > 0
-                else 0
+                ((total_value - cash_value) / total_value * 100) if total_value > 0 else 0
             ),
             "last_updated": datetime.now().isoformat(),
         }
@@ -61,9 +58,7 @@ async def get_portfolio_allocation() -> dict:
         allocations = {
             "cash": {
                 "value": cash_value,
-                "percentage": (
-                    (cash_value / total_value * 100) if total_value > 0 else 0
-                ),
+                "percentage": ((cash_value / total_value * 100) if total_value > 0 else 0),
                 "type": "cash",
             }
         }
@@ -79,9 +74,7 @@ async def get_portfolio_allocation() -> dict:
 
             allocation_data = {
                 "value": market_value,
-                "percentage": (
-                    (market_value / total_value * 100) if total_value > 0 else 0
-                ),
+                "percentage": ((market_value / total_value * 100) if total_value > 0 else 0),
                 "quantity": float(pos.qty),
                 "unrealized_pnl": unrealized_pnl,
                 "unrealized_pnl_pct": unrealized_pnl_pct,
@@ -140,9 +133,7 @@ async def get_portfolio_risk() -> dict:
         # Calculate concentration risk
         position_values = [float(pos.market_value) for pos in positions]
         max_position = max(position_values) if position_values else 0
-        concentration_risk = (
-            (max_position / total_value * 100) if total_value > 0 else 0
-        )
+        concentration_risk = (max_position / total_value * 100) if total_value > 0 else 0
 
         # Calculate leverage
         total_invested = total_value - cash_value
@@ -165,11 +156,7 @@ async def get_portfolio_risk() -> dict:
             "risk_level": (
                 "HIGH"
                 if concentration_risk > 20 or leverage_ratio > 0.8
-                else (
-                    "MEDIUM"
-                    if concentration_risk > 10 or leverage_ratio > 0.6
-                    else "LOW"
-                )
+                else ("MEDIUM" if concentration_risk > 10 or leverage_ratio > 0.6 else "LOW")
             ),
             "pattern_day_trader": account.pattern_day_trader,
             "last_updated": datetime.now().isoformat(),

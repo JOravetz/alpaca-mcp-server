@@ -1,10 +1,11 @@
 """Streaming resources implementation."""
 
-from datetime import datetime
 import sys
+from datetime import datetime
 from typing import Any
+
 # Get the actual module from sys.modules to avoid the Settings instance shadowing
-_settings_module = sys.modules['alpaca_mcp_server.config.settings']
+_settings_module = sys.modules["alpaca_mcp_server.config.settings"]
 
 
 async def get_stream_status() -> dict:
@@ -101,32 +102,34 @@ async def get_stream_health_monitor() -> dict:
         # Critical health metrics for single stream
         current_time = datetime.now().timestamp()
         stream_age = current_time - _settings_module._stock_stream_start_time
-        
+
         # Check for data staleness (critical for trading)
         freshest_data_time = 0
         stale_symbols = []
         healthy_symbols = []
-        
+
         for buffer_key, buffer in _settings_module._stock_data_buffers.items():
             symbol, data_type = buffer_key.rsplit("_", 1)
             stats = buffer.get_stats()
-            
+
             if stats["last_update"]:
                 data_age = current_time - stats["last_update"]
                 freshest_data_time = max(freshest_data_time, stats["last_update"])
-                
+
                 if data_age > 30:  # Stale if >30 seconds old
                     stale_symbols.append(f"{symbol}_{data_type}")
                 else:
                     healthy_symbols.append(f"{symbol}_{data_type}")
-        
+
         # Overall stream latency
-        overall_latency = current_time - freshest_data_time if freshest_data_time > 0 else float('inf')
-        
+        overall_latency = (
+            current_time - freshest_data_time if freshest_data_time > 0 else float("inf")
+        )
+
         # Health assessment
         critical_alerts = []
         health_status = "healthy"
-        
+
         if overall_latency > 60:
             critical_alerts.append("CRITICAL: No data received in 60+ seconds")
             health_status = "critical"
@@ -136,31 +139,35 @@ async def get_stream_health_monitor() -> dict:
         elif len(stale_symbols) > len(healthy_symbols):
             critical_alerts.append("WARNING: More stale buffers than fresh")
             health_status = "degraded"
-        
+
         # Event rate analysis
         total_events = sum(_settings_module._stock_stream_stats.values())
         events_per_second = total_events / stream_age if stream_age > 0 else 0
-        
+
         if events_per_second < 0.1:  # Very low activity
             critical_alerts.append("Low activity: <0.1 events/second")
-        
+
         # Recommendations
         recommendations = []
         if health_status == "critical":
-            recommendations.extend([
-                "IMMEDIATE: Restart stream with start_global_stock_stream()",
-                "Check network connectivity",
-                "Verify API credentials"
-            ])
+            recommendations.extend(
+                [
+                    "IMMEDIATE: Restart stream with start_global_stock_stream()",
+                    "Check network connectivity",
+                    "Verify API credentials",
+                ]
+            )
         elif health_status == "degraded":
-            recommendations.extend([
-                "Monitor stream performance closely",
-                "Consider restarting if issues persist",
-                "Check symbol liquidity during market hours"
-            ])
+            recommendations.extend(
+                [
+                    "Monitor stream performance closely",
+                    "Consider restarting if issues persist",
+                    "Check symbol liquidity during market hours",
+                ]
+            )
         else:
             recommendations.append("Stream operating normally")
-        
+
         return {
             "health_status": health_status,
             "stream_reliability": "excellent" if health_status == "healthy" else "compromised",
@@ -182,6 +189,7 @@ async def get_stream_health_monitor() -> dict:
             "critical_alerts": [f"Health monitoring error: {str(e)}"],
             "last_updated": datetime.now().isoformat(),
         }
+
 
 async def get_stream_performance() -> dict:
     """Streaming performance metrics and health indicators."""
@@ -223,15 +231,9 @@ async def get_stream_performance() -> dict:
         # Performance assessment
         if total_symbols == 0:
             performance_level = "idle"
-        elif (
-            total_symbols <= 10 and estimated_memory_mb < 50 and events_per_second < 100
-        ):
+        elif total_symbols <= 10 and estimated_memory_mb < 50 and events_per_second < 100:
             performance_level = "optimal"
-        elif (
-            total_symbols <= 50
-            and estimated_memory_mb < 200
-            and events_per_second < 500
-        ):
+        elif total_symbols <= 50 and estimated_memory_mb < 200 and events_per_second < 500:
             performance_level = "good"
         else:
             performance_level = "heavy"

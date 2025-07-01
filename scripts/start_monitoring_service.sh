@@ -83,6 +83,7 @@ if ps -p "$PID" > /dev/null 2>&1; then
     echo -e "${BLUE}📊 Service Information:${NC}"
     echo "  • Health Check: http://localhost:$SERVICE_PORT/health"
     echo "  • Status: http://localhost:$SERVICE_PORT/status"
+    echo "  • HTML Dashboard: http://localhost:$SERVICE_PORT/status/html"
     echo "  • Watchlist: http://localhost:$SERVICE_PORT/watchlist"
     echo "  • Positions: http://localhost:$SERVICE_PORT/positions"
     echo "  • Signals: http://localhost:$SERVICE_PORT/signals"
@@ -104,6 +105,16 @@ if ps -p "$PID" > /dev/null 2>&1; then
         # Show initial status
         echo -e "${BLUE}📈 Initial Status:${NC}"
         curl -s "http://localhost:$SERVICE_PORT/health" | python -m json.tool 2>/dev/null || echo "Status check failed"
+        
+        # Auto-open HTML dashboard in browser
+        echo -e "${BLUE}🌐 Opening HTML dashboard in browser...${NC}"
+        if command -v xdg-open > /dev/null; then
+            xdg-open "http://localhost:$SERVICE_PORT/status/html" 2>/dev/null &
+            echo -e "${GREEN}✅ Dashboard opened in browser${NC}"
+        else
+            echo -e "${YELLOW}⚠️  Browser auto-open not available (xdg-open missing)${NC}"
+            echo "Manually open: http://localhost:$SERVICE_PORT/status/html"
+        fi
     else
         echo -e "${YELLOW}⚠️  Health check failed, but service may still be starting...${NC}"
     fi

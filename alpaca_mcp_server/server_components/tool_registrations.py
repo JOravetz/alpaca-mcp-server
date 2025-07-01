@@ -1,28 +1,29 @@
 """Tool registration module for MCP server."""
 
-from typing import Optional
+from ..resources import help_system, server_health, session_status
 from ..tools import (
     account_tools,
-    position_tools,
-    order_tools,
-    market_data_tools,
-    market_info_tools,
-    options_tools,
-    watchlist_tools,
     asset_tools,
     corporate_action_tools,
-    streaming_tools,
-    monitoring_tools,
     fastapi_monitoring_tools,
+    market_data_tools,
+    market_info_tools,
+    monitoring_tools,
+    options_tools,
+    order_tools,
+    position_tools,
+    streaming_tools,
+    watchlist_tools,
 )
-from ..tools.peak_trough_analysis_tool import analyze_peaks_and_troughs as peak_trough_analysis
-from ..tools.cleanup_tool import cleanup_server, list_cleanup_candidates
-from ..resources import help_system, server_health, session_status
+from ..tools.cleanup_tool import cleanup_server
+from ..tools.peak_trough_analysis_tool import (
+    analyze_peaks_and_troughs_with_plot_py as peak_trough_analysis,
+)
 
 
 def register_account_tools(mcp):
     """Register account and position management tools."""
-    
+
     @mcp.tool()
     async def get_account_info() -> str:
         """Get current account information including balances and status."""
@@ -51,7 +52,7 @@ def register_account_tools(mcp):
 
 def register_market_data_tools(mcp):
     """Register market data tools."""
-    
+
     def get_safe_help_system():
         """Get help system, initializing if needed."""
         try:
@@ -60,7 +61,7 @@ def register_market_data_tools(mcp):
             # Help system not initialized, initialize it now
             help_system.initialize_help_system(mcp)
             return help_system.get_help_system()
-    
+
     @mcp.tool()
     async def get_stock_quote(symbol: str, help: str = None) -> str:
         """Get latest quote for a stock."""
@@ -109,7 +110,7 @@ def register_market_data_tools(mcp):
 
 def register_market_info_tools(mcp):
     """Register market info tools."""
-    
+
     @mcp.tool()
     async def get_market_clock() -> str:
         """Get current market status and next open/close times."""
@@ -123,7 +124,7 @@ def register_market_info_tools(mcp):
 
 def register_options_tools(mcp):
     """Register options trading tools."""
-    
+
     @mcp.tool()
     async def get_option_contracts(
         underlying_symbol: str,
@@ -158,7 +159,7 @@ def register_options_tools(mcp):
 
 def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
     """Register technical analysis tools."""
-    
+
     @mcp.tool()
     async def get_stock_peak_trough_analysis(
         symbols: str = "AUTO",
@@ -196,41 +197,42 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
         Returns detailed analysis with BUY/LONG and SELL/SHORT signals.
         """
         return await peak_trough_analysis(
-            symbols, timeframe, days, limit, window_len, lookahead, delta, min_peak_distance
+            symbols, timeframe, days, window_len, lookahead, delta, min_peak_distance
         )
 
 
 def register_scanner_tools(mcp):
     """Register market scanner tools."""
-    
+
     @mcp.tool()
     async def scan_day_trading_opportunities(
         symbols: str = "ALL",
-        min_trades_per_minute: int = 500,
-        min_percent_change: float = 10.0,
-        max_symbols: int = 20,
-        sort_by: str = "trades",
+        min_trades_per_minute: int = None,
+        min_percent_change: float = None,
+        max_symbols: int = None,
+        sort_by: str = None,
     ) -> str:
         """
         Scan for EXPLOSIVE UP-ONLY day-trading opportunities with extreme volatility.
 
         UPDATED FILTER CRITERIA:
         1. ONLY UP STOCKS - No negative movers ever
-        2. Minimum +10% daily gain for consideration  
-        3. Minimum 500 trades/minute for extreme liquidity
+        2. Minimum gain threshold from global config (min_percent_change_threshold)
+        3. Minimum trades/minute from global config (trades_per_minute_threshold)
         4. EXPLOSIVE VOLATILITY FOCUS - Penny stocks and rocket ships preferred
 
         Args:
             symbols: Comma-separated symbols to scan (default: ALL tradeable assets)
-            min_trades_per_minute: Minimum trades in current minute bar (default: 500 for extreme liquidity)
-            min_percent_change: Minimum % change from reference (default: 10.0% for explosive moves)
-            max_symbols: Maximum results to return (default: 20)
-            sort_by: Sort results by "trades", "percent_change", or "volume"
+            min_trades_per_minute: IGNORED - Always uses global config value
+            min_percent_change: IGNORED - Always uses global config value
+            max_symbols: Maximum results to return (default: from global config)
+            sort_by: Sort results by "trades", "percent_change", or "volume" (default: from global config)
 
         Returns:
             Formatted analysis with EXPLOSIVE UP-ONLY trading opportunities.
         """
         from ..tools.day_trading_scanner import scan_day_trading_opportunities as scanner_func
+
         return await scanner_func(
             symbols, min_trades_per_minute, min_percent_change, max_symbols, sort_by
         )
@@ -254,6 +256,7 @@ def register_scanner_tools(mcp):
             Top explosive momentum opportunities sorted by % change.
         """
         from ..tools.day_trading_scanner import scan_explosive_momentum as explosive_func
+
         return await explosive_func(symbols, min_percent_change)
 
     @mcp.tool()
@@ -284,9 +287,8 @@ def register_scanner_tools(mcp):
             Formatted analysis of after-hours opportunities
         """
         from ..tools.after_hours_scanner import scan_after_hours_opportunities as scanner_func
-        return await scanner_func(
-            symbols, min_volume, min_percent_change, max_symbols, sort_by
-        )
+
+        return await scanner_func(symbols, min_volume, min_percent_change, max_symbols, sort_by)
 
     @mcp.tool()
     async def get_enhanced_streaming_analytics(
@@ -311,12 +313,13 @@ def register_scanner_tools(mcp):
             Comprehensive real-time analytics
         """
         from ..tools.after_hours_scanner import get_enhanced_streaming_analytics as analytics_func
+
         return await analytics_func(symbol, analysis_minutes, include_orderbook)
 
 
 def register_watchlist_tools(mcp):
     """Register watchlist management tools."""
-    
+
     @mcp.tool()
     async def create_watchlist(name: str, symbols: list) -> str:
         """Create a new watchlist with specified symbols."""
@@ -328,16 +331,14 @@ def register_watchlist_tools(mcp):
         return await watchlist_tools.get_watchlists()
 
     @mcp.tool()
-    async def update_watchlist(
-        watchlist_id: str, name: str = None, symbols: list = None
-    ) -> str:
+    async def update_watchlist(watchlist_id: str, name: str = None, symbols: list = None) -> str:
         """Update an existing watchlist."""
         return await watchlist_tools.update_watchlist(watchlist_id, name, symbols)
 
 
 def register_asset_tools(mcp):
     """Register asset information tools."""
-    
+
     @mcp.tool()
     async def get_all_assets(
         status: str = None,
@@ -348,7 +349,9 @@ def register_asset_tools(mcp):
         max_symbol_length: int = 4,
     ) -> str:
         """Get all available assets with optional filtering."""
-        return await asset_tools.get_all_assets(status, asset_class, exchange, attributes, tradable_only, max_symbol_length)
+        return await asset_tools.get_all_assets(
+            status, asset_class, exchange, attributes, tradable_only, max_symbol_length
+        )
 
     @mcp.tool()
     async def get_asset_info(symbol: str) -> str:
@@ -358,13 +361,13 @@ def register_asset_tools(mcp):
 
 def register_corporate_action_tools(mcp):
     """Register corporate action tools."""
-    
+
     @mcp.tool()
     async def get_corporate_announcements(
         ca_types: list,
         since: str,
         until: str,
-        symbol: Optional[str] = None,
+        symbol: str | None = None,
         cusip: str = None,
         date_type: str = None,
     ) -> str:
@@ -376,17 +379,19 @@ def register_corporate_action_tools(mcp):
 
 def register_streaming_tools(mcp):
     """Register real-time streaming tools."""
-    
+
     @mcp.tool()
     async def start_global_stock_stream(
         symbols: list,
-        data_types: list = ["trades", "quotes"],
+        data_types: list = None,
         feed: str = "sip",
         duration_seconds: int = None,
         buffer_size_per_symbol: int = None,
         replace_existing: bool = False,
     ) -> str:
         """Start global real-time stock data stream for day trading."""
+        if data_types is None:
+            data_types = ["trades", "quotes"]
         return await streaming_tools.start_global_stock_stream(
             symbols,
             data_types,
@@ -411,9 +416,7 @@ def register_streaming_tools(mcp):
         symbol: str, data_type: str, recent_seconds: int = None, limit: int = None
     ) -> str:
         """Get streaming data for analysis."""
-        return await streaming_tools.get_stock_stream_data(
-            symbol, data_type, recent_seconds, limit
-        )
+        return await streaming_tools.get_stock_stream_data(symbol, data_type, recent_seconds, limit)
 
     @mcp.tool()
     async def list_active_stock_streams() -> str:
@@ -447,7 +450,7 @@ def register_streaming_tools(mcp):
 
 def register_order_tools(mcp):
     """Register order management tools."""
-    
+
     @mcp.tool()
     async def place_stock_order(
         symbol: str,
@@ -455,12 +458,12 @@ def register_order_tools(mcp):
         quantity: float,
         order_type: str = "market",
         time_in_force: str = "day",
-        limit_price: Optional[float] = None,
-        stop_price: Optional[float] = None,
-        trail_price: Optional[float] = None,
-        trail_percent: Optional[float] = None,
+        limit_price: float | None = None,
+        stop_price: float | None = None,
+        trail_price: float | None = None,
+        trail_percent: float | None = None,
         extended_hours: bool = False,
-        client_order_id: Optional[str] = None,
+        client_order_id: str | None = None,
     ) -> str:
         """Place a stock order of any type."""
         return await order_tools.place_stock_order(
@@ -494,7 +497,7 @@ def register_order_tools(mcp):
 
     @mcp.tool()
     async def place_option_market_order(
-        legs: list, order_class: Optional[str] = None, quantity: int = 1
+        legs: list, order_class: str | None = None, quantity: int = 1
     ) -> str:
         """Place single or multi-leg options market order."""
         return await order_tools.place_option_market_order(legs, order_class, quantity)
@@ -502,7 +505,7 @@ def register_order_tools(mcp):
 
 def register_monitoring_tools(mcp):
     """Register hybrid monitoring tools."""
-    
+
     @mcp.tool()
     async def start_hybrid_monitoring(
         check_interval: int = 2,
@@ -510,7 +513,7 @@ def register_monitoring_tools(mcp):
         max_concurrent_positions: int = 5,
         watchlist_size_limit: int = 20,
         enable_auto_alerts: bool = True,
-        alert_channels: list = None
+        alert_channels: list = None,
     ) -> dict:
         """Start the hybrid trading monitoring service."""
         return await monitoring_tools.start_hybrid_monitoring(
@@ -519,7 +522,7 @@ def register_monitoring_tools(mcp):
             max_concurrent_positions,
             watchlist_size_limit,
             enable_auto_alerts,
-            alert_channels
+            alert_channels,
         )
 
     @mcp.tool()
@@ -567,10 +570,10 @@ def register_monitoring_tools(mcp):
         """
         Force immediate position check after order execution.
         This ensures real-time feedback on position changes for continuous monitoring.
-        
+
         Args:
             order_info: Optional dict with order details (symbol, action, etc.)
-            
+
         Returns:
             Position status with current count and symbols
         """
@@ -581,9 +584,9 @@ def register_monitoring_tools(mcp):
         """
         Ping the hybrid monitoring service to verify it's alive and responsive.
         Returns comprehensive health metrics including uptime, response time, and monitoring status.
-        
+
         Use this to verify service health and troubleshoot monitoring issues.
-        
+
         Returns:
             Service health status with metrics (alive, responsive, uptime, check_count, etc.)
         """
@@ -597,7 +600,7 @@ def register_monitoring_tools(mcp):
 
 def register_fastapi_monitoring_tools(mcp):
     """Register FastAPI monitoring service tools."""
-    
+
     @mcp.tool()
     async def start_fastapi_monitoring_service() -> dict:
         """
@@ -625,7 +628,7 @@ def register_fastapi_monitoring_tools(mcp):
     async def add_symbols_to_fastapi_watchlist(symbols: list) -> dict:
         """
         Add symbols to the FastAPI monitoring service watchlist.
-        
+
         Args:
             symbols: List of stock symbols to add to monitoring
         """
@@ -635,7 +638,7 @@ def register_fastapi_monitoring_tools(mcp):
     async def remove_symbols_from_fastapi_watchlist(symbols: list) -> dict:
         """
         Remove symbols from the FastAPI monitoring service watchlist.
-        
+
         Args:
             symbols: List of stock symbols to remove from monitoring
         """
@@ -653,7 +656,7 @@ def register_fastapi_monitoring_tools(mcp):
     async def check_positions_after_order_fastapi(order_info: dict = None) -> dict:
         """
         Check positions immediately after an order using the FastAPI service.
-        
+
         Args:
             order_info: Optional order information for tracking
         """
@@ -670,19 +673,21 @@ def register_fastapi_monitoring_tools(mcp):
 
 def register_extended_hours_tools(mcp):
     """Register extended hours trading tools."""
-    
+
     @mcp.tool()
     async def get_extended_market_clock() -> str:
         """Enhanced market clock with pre/post market sessions."""
         from ..tools.enhanced_market_clock import get_extended_market_clock
+
         return await get_extended_market_clock()
 
     @mcp.tool()
     async def validate_extended_hours_order(
-        symbol: str, order_type: str, extended_hours: Optional[bool] = None
+        symbol: str, order_type: str, extended_hours: bool | None = None
     ) -> dict:
         """Validate if order can be placed in current market session."""
         from ..tools.extended_hours_orders import validate_extended_hours_order
+
         return await validate_extended_hours_order(symbol, order_type, extended_hours)
 
     @mcp.tool()
@@ -691,12 +696,13 @@ def register_extended_hours_tools(mcp):
         side: str,
         quantity: float,
         order_type: str = "limit",
-        limit_price: Optional[float] = None,
-        extended_hours: Optional[bool] = None,
+        limit_price: float | None = None,
+        extended_hours: bool | None = None,
         time_in_force: str = "day",
     ) -> str:
         """Place order with automatic extended hours detection."""
         from ..tools.extended_hours_orders import place_extended_hours_order
+
         return await place_extended_hours_order(
             symbol, side, quantity, order_type, limit_price, extended_hours, time_in_force
         )
@@ -705,12 +711,13 @@ def register_extended_hours_tools(mcp):
     async def get_extended_hours_info() -> str:
         """Get comprehensive information about extended hours trading."""
         from ..tools.extended_hours_orders import get_extended_hours_info
+
         return await get_extended_hours_info()
 
 
 def register_plotting_tools(mcp):
     """Register technical plotting tools."""
-    
+
     @mcp.tool()
     async def generate_advanced_technical_plots(
         symbols: str,
@@ -755,6 +762,7 @@ def register_plotting_tools(mcp):
         """
         # Use fixed version directly
         from ..tools.advanced_plotting_tool import generate_peak_trough_plots_fixed
+
         return await generate_peak_trough_plots_fixed(
             symbols,
             timeframe,
@@ -783,7 +791,7 @@ def register_plotting_tools(mcp):
 
         This tool integrates the standalone plot.py script as an MCP tool, providing
         professional technical analysis plots with automatic ImageMagick display.
-        
+
         This tool will use the global config parameters when window/lookahead are not specified:
         - window defaults to global_config.technical_analysis.hanning_window_samples
         - lookahead defaults to global_config.technical_analysis.peak_trough_lookahead
@@ -810,6 +818,7 @@ def register_plotting_tools(mcp):
             Comprehensive analysis results with plot locations and trading signals
         """
         from ..tools.plot_py_tool import generate_stock_plot as plot_py_func
+
         return await plot_py_func(
             symbols, timeframe, days, window, lookahead, feed, no_plot, verbose
         )
@@ -817,7 +826,7 @@ def register_plotting_tools(mcp):
 
 def register_help_tools(mcp):
     """Register help system tools."""
-    
+
     def get_safe_help_system():
         """Get help system, initializing if needed."""
         try:
@@ -826,7 +835,7 @@ def register_help_tools(mcp):
             # Help system not initialized, initialize it now
             help_system.initialize_help_system(mcp)
             return help_system.get_help_system()
-    
+
     @mcp.tool()
     async def get_tool_help(tool_name: str) -> str:
         """
@@ -931,7 +940,7 @@ def register_help_tools(mcp):
 
 def register_debug_tools(mcp):
     """Register debug and testing tools."""
-    
+
     @mcp.tool()
     async def debug_mcp_tools() -> str:
         """Debug function to verify MCP tool registration for Claude Code compatibility."""
@@ -943,9 +952,9 @@ def register_debug_tools(mcp):
 
         tools_info = {
             "total_tools": len(tools_dict),
-            "tool_names": list(tools_dict.keys())[:10]
-            if tools_dict
-            else [],  # First 10 for brevity
+            "tool_names": (
+                list(tools_dict.keys())[:10] if tools_dict else []
+            ),  # First 10 for brevity
             "sample_tool_schema": None,
             "claude_code_mode": getattr(mcp, "_claude_code_mode", False),
             "server_name": getattr(mcp, "name", "unknown"),
@@ -1012,9 +1021,7 @@ def register_debug_tools(mcp):
             status_emoji = (
                 "🟢"
                 if health.get("server_status") == "healthy"
-                else "🟡"
-                if health.get("server_status") == "degraded"
-                else "🔴"
+                else "🟡" if health.get("server_status") == "degraded" else "🔴"
             )
             market_emoji = "🔔" if session.get("alpaca_market_open") else "🔕"
 
@@ -1042,36 +1049,36 @@ Capabilities: {health.get("capabilities", {}).get("tools", 0)} tools, {health.ge
 
 def register_cleanup_tools(mcp):
     """Register cleanup and maintenance tools."""
-    
+
     @mcp.tool()
     async def cleanup(
         remove_logs: bool = True,
         remove_caches: bool = True,
         remove_backups: bool = True,
-        dry_run: bool = False
+        dry_run: bool = False,
     ) -> str:
         """
         Clean up unnecessary temporary files from the MCP server.
-        
+
         This tool removes files that are NOT necessary for MCP server operations:
         - Log files (*.log)
         - Cache directories (.mypy_cache, .pytest_cache, __pycache__)
         - Backup files (*.backup, *.bak, *~)
         - PID files (*.pid)
         - Temporary files (*.tmp, *.temp)
-        
+
         PRESERVES essential files:
         - State files in monitoring_data/
         - Alert history in monitoring_data/alerts/
         - Configuration files
         - All source code and tools
-        
+
         Args:
             remove_logs: Remove all log files (default: True)
             remove_caches: Remove cache directories (default: True)
             remove_backups: Remove backup files (default: True)
             dry_run: Only show what would be deleted without actually deleting (default: False)
-        
+
         Returns:
             Detailed report of cleanup operations
         """
@@ -1081,10 +1088,10 @@ def register_cleanup_tools(mcp):
     async def list_cleanup_candidates() -> str:
         """
         List all files that would be cleaned up without deleting them.
-        
+
         This is a safe way to see what the cleanup tool would remove.
         Equivalent to running cleanup(dry_run=True).
-        
+
         Returns:
             Report of files that can be cleaned up
         """

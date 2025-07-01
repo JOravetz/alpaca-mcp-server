@@ -2,7 +2,8 @@
 
 import time
 from datetime import datetime
-from ..config.settings import get_trading_client, get_stock_historical_client
+
+from ..config.settings import get_stock_historical_client, get_trading_client
 
 
 async def get_api_status() -> dict:
@@ -60,9 +61,7 @@ async def get_api_status() -> dict:
 
                 if symbol in quotes:
                     quote_data = quotes[symbol]
-                    quote_age = datetime.now() - quote_data.timestamp.replace(
-                        tzinfo=None
-                    )
+                    quote_age = datetime.now() - quote_data.timestamp.replace(tzinfo=None)
 
                     # Calculate bid-ask spread
                     bid_price = float(quote_data.bid_price)
@@ -99,19 +98,14 @@ async def get_api_status() -> dict:
 
         # Aggregate market data API status
         successful_symbols = sum(
-            1
-            for result in market_data_results.values()
-            if result.get("status") == "connected"
+            1 for result in market_data_results.values() if result.get("status") == "connected"
         )
         total_symbols = len(test_symbols)
 
         if successful_symbols == total_symbols:
             market_data_status = "connected"
             avg_latency = (
-                sum(
-                    result.get("latency_ms", 0)
-                    for result in market_data_results.values()
-                )
+                sum(result.get("latency_ms", 0) for result in market_data_results.values())
                 / total_symbols
             )
         elif successful_symbols > 0:
@@ -122,9 +116,7 @@ async def get_api_status() -> dict:
                 if result.get("status") == "connected"
             ]
             avg_latency = (
-                sum(successful_latencies) / len(successful_latencies)
-                if successful_latencies
-                else 0
+                sum(successful_latencies) / len(successful_latencies) if successful_latencies else 0
             )
         else:
             market_data_status = "error"
@@ -182,9 +174,7 @@ async def get_api_status() -> dict:
             "test_summary": {
                 "trading_api_latency_ms": results["trading_api"].get("latency_ms"),
                 "market_data_avg_latency_ms": round(avg_latency, 1),
-                "market_data_success_rate": round(
-                    (successful_symbols / total_symbols) * 100, 1
-                ),
+                "market_data_success_rate": round((successful_symbols / total_symbols) * 100, 1),
             },
             "last_check": datetime.now().isoformat(),
         }

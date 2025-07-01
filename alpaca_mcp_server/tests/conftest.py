@@ -3,9 +3,10 @@ Pytest configuration for Alpaca MCP Server tests.
 Real data testing with actual API connections.
 """
 
-import pytest
 import asyncio
 import os
+
+import pytest
 
 # Ensure test environment
 os.environ["PAPER"] = "true"

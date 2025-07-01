@@ -1,8 +1,10 @@
-import os
-import sys
 import argparse
-import pandas as pd
+import os
 import re
+import sys
+from typing import Optional
+
+import pandas as pd  # type: ignore[import-untyped]
 from alpaca_trade_api.rest import REST  # type: ignore
 
 # Pre-compile regex pattern for symbol validation
@@ -12,7 +14,7 @@ SYMBOL_PATTERN = re.compile("^[A-Z]+$")
 class TickerList:
     """Fetches a list of tradable assets from the Alpaca API with specific filtering criteria"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the Alpaca API credentials from environment variables"""
         # Get API credentials from environment variables
         self.api_key = os.environ.get("APCA_API_KEY_ID")
@@ -24,10 +26,10 @@ class TickerList:
             )
 
         # Initialize REST API client lazily
-        self._rest_api = None
+        self._rest_api: Optional[REST] = None
 
     @property
-    def rest_api(self):
+    def rest_api(self) -> REST:
         """Lazy initialization of the REST API client"""
         if self._rest_api is None:
             self._rest_api = REST(
@@ -37,7 +39,7 @@ class TickerList:
             )
         return self._rest_api
 
-    def is_valid_symbol(self, symbol):
+    def is_valid_symbol(self, symbol: str) -> bool:
         """
         Validates if a symbol meets our criteria:
         - 4 or fewer characters
@@ -53,12 +55,9 @@ class TickerList:
             return False
 
         # Run regex check last (most expensive operation)
-        if not SYMBOL_PATTERN.match(symbol):
-            return False
+        return bool(SYMBOL_PATTERN.match(symbol))
 
-        return True
-
-    def fetch_and_save(self, file_name):
+    def fetch_and_save(self, file_name: str) -> None:
         """
         Fetches the list of active assets, filters based on criteria,
         and saves to a text file with the provided file name
@@ -69,9 +68,7 @@ class TickerList:
 
             # Filter assets based on criteria
             valid_assets = [
-                asset
-                for asset in assets
-                if (asset.tradable and self.is_valid_symbol(asset.symbol))
+                asset for asset in assets if (asset.tradable and self.is_valid_symbol(asset.symbol))
             ]
 
             # Extract symbols and names directly into lists
@@ -92,9 +89,7 @@ class TickerList:
                 file_name += ".txt"
 
             # Save the DataFrame directly to a file
-            df.to_csv(
-                file_name, sep="|", header=None, index=False, columns=["symbol", "name"]
-            )
+            df.to_csv(file_name, sep="|", header=None, index=False, columns=["symbol", "name"])
 
             print(f"Successfully saved {len(symbols)} tradable assets to {file_name}")
 

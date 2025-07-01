@@ -1,14 +1,14 @@
 """Market analysis prompt implementation."""
 
-from typing import Optional, List
 from datetime import datetime
+
+from ..resources.market_resources import get_market_conditions
 from ..tools.enhanced_market_clock import get_extended_market_clock
 from ..tools.market_data_tools import get_stock_snapshots
-from ..resources.market_resources import get_market_conditions
 
 
 async def market_analysis(
-    symbols: Optional[List[str]] = None,
+    symbols: list[str] | None = None,
     timeframe: str = "1Day",
     analysis_type: str = "comprehensive",
 ) -> str:
@@ -24,9 +24,7 @@ async def market_analysis(
             symbols = ["SPY", "QQQ", "IWM", "AAPL", "MSFT", "NVDA"]
 
         # Get market snapshots for analysis
-        snapshots = await get_stock_snapshots(
-            ",".join(symbols[:4])
-        )  # Limit to avoid too much data
+        snapshots = await get_stock_snapshots(",".join(symbols[:4]))  # Limit to avoid too much data
 
         # Generate market analysis based on session
         session_status = "UNKNOWN"
@@ -43,9 +41,7 @@ async def market_analysis(
 • Lower liquidity - use limit orders only
 • Good for earnings/news reactions
 • Extended hours trading available (set extended_hours=True)"""
-        elif "Regular market session" in market_clock or market_conditions.get(
-            "is_open", False
-        ):
+        elif "Regular market session" in market_clock or market_conditions.get("is_open", False):
             session_status = "REGULAR HOURS"
             session_emoji = "🔔"
             trading_notes = """
@@ -74,7 +70,7 @@ async def market_analysis(
 • Review positions and prepare watchlists"""
 
         result = f"""# {session_emoji} Market Analysis Report - {session_status}
-        
+
 ## 📊 Market Overview
 **Analysis Time:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S ET")}
 **Market Session:** {session_status}
@@ -171,12 +167,12 @@ async def market_analysis(
 
 ### For Current Session ({session_status}):
 1. **Setup:** Account check and position review
-2. **Analysis:** Use peak/trough analysis for entry signals  
+2. **Analysis:** Use peak/trough analysis for entry signals
 3. **Execution:** Place limit orders with proper risk management
 4. **Monitoring:** Stream real-time data for active positions
 
 ### Trading Lesson Integration:
-• **"SCAN LONGER before entry"** → Use `get_stock_peak_trough_analysis()` 
+• **"SCAN LONGER before entry"** → Use `get_stock_peak_trough_analysis()`
 • **"Use limit orders exclusively"** → Avoid market orders
 • **"React within 2-3 seconds"** → Have streaming data ready
 • **"Monitor every 1-3 seconds"** → Use `get_stock_stream_data()`
@@ -186,7 +182,7 @@ async def market_analysis(
 # Market check
 get_extended_market_clock()
 
-# Multi-stock analysis  
+# Multi-stock analysis
 get_stock_snapshots("CGTL,HCTI,KLTO")
 
 # Peak/trough signals

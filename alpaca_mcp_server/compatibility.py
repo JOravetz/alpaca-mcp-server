@@ -1,12 +1,13 @@
 """Claude Code MCP compatibility layer."""
 
-import os
 import logging
+import os
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def apply_claude_code_compatibility(mcp):
+def apply_claude_code_compatibility(mcp: Any) -> Any:
     """Apply Claude Code specific compatibility patches to the MCP server.
 
     This ensures proper tool discovery and registration for Claude Code.

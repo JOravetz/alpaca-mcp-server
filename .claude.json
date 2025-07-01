@@ -1,9 +1,10 @@
 {
   "mcpServers": {
-    "alpaca": {
+    "alpaca-trading": {
       "type": "stdio",
       "command": "python",
-      "args": ["/home/jjoravet/alpaca-mcp-server/run_alpaca_mcp.py"],
+      "args": ["-m", "alpaca_mcp_server"],
+      "cwd": "/home/jjoravet/alpaca-mcp-server-enhanced",
       "env": {
         "APCA_API_KEY_ID": "${APCA_API_KEY_ID}",
         "APCA_API_SECRET_KEY": "${APCA_API_SECRET_KEY}",

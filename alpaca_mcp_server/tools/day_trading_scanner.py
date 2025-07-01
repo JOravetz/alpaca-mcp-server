@@ -1,20 +1,22 @@
 """Day trading scanner tool focused on trades per minute and % change - FIXED VERSION."""
 
 import logging
-import requests
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import List, Optional, Tuple
+
 import pytz
+import requests
 
 # Import global configuration
-from ..config import get_trading_config, get_scanner_config
+from ..config import get_scanner_config, get_trading_config
 
 logger = logging.getLogger(__name__)
 
 
-def _is_market_hours() -> tuple[bool, str]:
+def _is_market_hours() -> Tuple[bool, str]:
     """Check if market is currently open and return status message."""
-    eastern = pytz.timezone("US/Eastern")
+    eastern = pytz.timezone("America/New_York")
     now = datetime.now(eastern)
 
     # Weekend check
@@ -46,73 +48,93 @@ def _is_market_hours() -> tuple[bool, str]:
 
 async def scan_day_trading_opportunities(
     symbols: str = "ALL",  # Default to ALL symbols from combined.lis
-    min_trades_per_minute: int = None,
-    min_percent_change: float = None,
-    max_symbols: int = None,
-    sort_by: str = None,  # "trades", "percent_change", or "volume"
+    min_trades_per_minute: Optional[int] = None,
+    min_percent_change: Optional[float] = None,
+    max_symbols: Optional[int] = None,
+    sort_by: Optional[str] = None,  # "trades", "percent_change", or "volume"
 ) -> str:
-    """Scan with global config defaults"""
+    """Scan with global config defaults - ALWAYS uses global config for key parameters"""
     # Load global config defaults
     trading_config = get_trading_config()
     scanner_config = get_scanner_config()
-    
-    if min_trades_per_minute is None:
-        min_trades_per_minute = trading_config.trades_per_minute_threshold
-    if min_percent_change is None:
-        min_percent_change = trading_config.min_percent_change_threshold
+
+    # Log incoming parameters for debugging
+    logger.info(
+        f"🔍 SCANNER CALLED WITH: trades={min_trades_per_minute}, change={min_percent_change}, max={max_symbols}, sort={sort_by}"
+    )
+
+    # ALWAYS use global config for trades_per_minute and min_percent_change
+    # This ensures consistency with CLAUDE.md trading rules
+    min_trades_per_minute = trading_config.trades_per_minute_threshold
+    logger.info(f"📊 ENFORCING GLOBAL CONFIG: trades_per_minute = {min_trades_per_minute}")
+
+    min_percent_change = trading_config.min_percent_change_threshold
+    logger.info(f"📊 ENFORCING GLOBAL CONFIG: min_percent_change = {min_percent_change}")
+
+    # Allow override for max_symbols and sort_by since they're less critical
     if max_symbols is None:
         max_symbols = scanner_config.max_watchlist_size
+        logger.info(f"📊 USING GLOBAL CONFIG: max_symbols = {max_symbols}")
+    else:
+        logger.info(f"📊 USING PROVIDED VALUE: max_symbols = {max_symbols}")
+
     if sort_by is None:
         sort_by = scanner_config.scanner_sort_method
+        logger.info(f"📊 USING GLOBAL CONFIG: sort_by = {sort_by}")
+    else:
+        logger.info(f"📊 USING PROVIDED VALUE: sort_by = {sort_by}")
     """
     Scan for EXPLOSIVE UP-ONLY day-trading opportunities with extreme volatility.
 
     UPDATED FILTER CRITERIA:
     1. ONLY UP STOCKS - No negative movers ever
-    2. Minimum +10% daily gain for consideration  
-    3. Minimum 500 trades/minute for extreme liquidity
+    2. Minimum gain threshold from global config (min_percent_change_threshold)
+    3. Minimum trades/minute from global config (trades_per_minute_threshold)
     4. EXPLOSIVE VOLATILITY FOCUS - Penny stocks and rocket ships preferred
 
     Args:
-        symbols: Comma-separated symbols to scan
-        min_trades_per_minute: Minimum trades in current minute bar (default: 500 for extreme liquidity)
-        min_percent_change: Minimum % change from reference (default: 10.0% for explosive moves)
-        max_symbols: Maximum results to return (default: 20)
-        sort_by: Sort results by "trades", "percent_change", or "volume"
+        symbols: Comma-separated symbols to scan (default: ALL tradeable assets)
+        min_trades_per_minute: IGNORED - Always uses global config value
+        min_percent_change: IGNORED - Always uses global config value
+        max_symbols: Maximum results to return (default: from global config)
+        sort_by: Sort results by "trades", "percent_change", or "volume" (default: from global config)
 
     Returns:
-        Formatted string with EXPLOSIVE UP-ONLY trading opportunities
+        Formatted analysis with EXPLOSIVE UP-ONLY trading opportunities.
     """
     try:
         # Check market status first
         is_open, market_status = _is_market_hours()
-        eastern = pytz.timezone("US/Eastern")
+        eastern = pytz.timezone("America/New_York")
         current_time = datetime.now(eastern)
-        
 
         # Parse symbols - get from Alpaca if ALL
         if symbols.upper() == "ALL":
             logger.info("Fetching tradable stock assets using TickerList (≤4 characters)")
             symbol_list = []
-            
+
             # Use TickerList class for optimal filtering
             try:
                 from ..utils.tickers import TickerList
+
                 ticker_list = TickerList()
                 assets = ticker_list.rest_api.list_assets(status="active")
-                
+
                 # Filter using TickerList validation logic
                 tradable_symbols = [
-                    asset.symbol for asset in assets 
+                    asset.symbol
+                    for asset in assets
                     if asset.tradable and ticker_list.is_valid_symbol(asset.symbol)
                 ]
                 symbol_list = sorted(tradable_symbols)
-                logger.info(f"Loaded {len(symbol_list)} tradable stock symbols (≤4 chars) using TickerList")
-                
+                logger.info(
+                    f"Loaded {len(symbol_list)} tradable stock symbols (≤4 chars) using TickerList"
+                )
+
             except Exception as e:
                 logger.error(f"Error using TickerList: {e}")
                 return f"Error: Unable to fetch tradable assets using TickerList - {str(e)}"
-            
+
             if not symbol_list:
                 return "Error: No tradable stock assets found using TickerList"
         else:
@@ -185,11 +207,9 @@ async def scan_day_trading_opportunities(
                 data_age_warning = ""
                 if minute_bar_time:
                     try:
-                        bar_time = datetime.fromisoformat(
-                            minute_bar_time.replace("Z", "+00:00")
-                        )
+                        bar_time = datetime.fromisoformat(minute_bar_time.replace("Z", "+00:00"))
                         age_minutes = (
-                            current_time.replace(tzinfo=timezone.utc) - bar_time
+                            current_time.replace(tzinfo=UTC) - bar_time
                         ).total_seconds() / 60
                         if age_minutes > 60:  # Data older than 1 hour
                             data_age_warning = f" (Data: {age_minutes:.0f}m old)"
@@ -205,6 +225,11 @@ async def scan_day_trading_opportunities(
                 if price_now is None:
                     continue
                 price_now = float(price_now)
+
+                # Apply global price limit
+                max_price = trading_config.max_stock_price
+                if price_now > max_price:
+                    continue
 
                 # Get daily bar exactly like C program (lines 699-707)
                 daily_bar = snapshot.get("dailyBar")
@@ -273,23 +298,19 @@ async def scan_day_trading_opportunities(
             if not is_open and current_time.weekday() >= 5:
                 weekend_warning = f"\n⚠️  **{market_status}**\n⚠️  **Data shown may be stale from Friday's close - no live weekend trading**\n"
 
-            # Auto-suggest better thresholds based on market conditions
-            suggested_trades = max(5, min_trades_per_minute // 2)
-            suggested_change = max(0.5, min_percent_change / 2)
-            
             return f"""
 🎯 **DAY TRADING OPPORTUNITY SCAN**
 Time: {current_time.strftime("%Y-%m-%d %H:%M:%S")} EDT
 Market Status: {market_status}
-Threshold: {min_trades_per_minute} trades/minute (auto-adapted)
+Threshold: {min_trades_per_minute} trades/minute
 Total Qualified: 0 stocks
 {weekend_warning}
 **No opportunities found with current filters**
 
-**Auto-Suggestions for {market_status}:**
-- Try lower threshold: {suggested_trades} trades/minute
-- Reduce change requirement: {suggested_change:.1f}%
-- {'Scan when market opens at 9:30 AM ET' if not is_open else 'Peak hours: 9:30-10:30 AM, 3:00-4:00 PM ET'}
+**Configured Thresholds:**
+- Minimum trades/minute: {min_trades_per_minute}
+- Minimum % change: {min_percent_change}%
+- Maximum stock price: ${trading_config.max_stock_price}
 
 **Symbols Scanned:** {len(symbol_list):,}
 **Scanner Method:** TickerList (tradable assets ≤4 chars)
@@ -353,7 +374,7 @@ Rank Symbol  Trades/Min    Change%     Price    Volume      Momentum
         else:
             result += """
 - No opportunities found with current filters
-- Consider lowering thresholds or scanning during peak hours"""
+- Market must meet configured thresholds"""
 
         return result
 

@@ -56,18 +56,14 @@ async def pro_technical_workflow(symbol: str, timeframe: str = "comprehensive") 
 
         # 2. Multi-Timeframe Analysis
         analysis_results.append("\n⏰ MULTI-TIMEFRAME MOMENTUM")
-        analysis_results.append(
-            "- Analyzing 1Min, 5Min, 15Min, and Daily timeframes..."
-        )
+        analysis_results.append("- Analyzing 1Min, 5Min, 15Min, and Daily timeframes...")
 
         try:
             # Get intraday bars for multiple timeframes
             from ..tools.market_data_tools import get_stock_bars_intraday
 
             timeframes = (
-                ["1Min", "5Min", "15Min"]
-                if timeframe == "comprehensive"
-                else ["1Min", "5Min"]
+                ["1Min", "5Min", "15Min"] if timeframe == "comprehensive" else ["1Min", "5Min"]
             )
             tf_results = []
 
@@ -86,9 +82,7 @@ async def pro_technical_workflow(symbol: str, timeframe: str = "comprehensive") 
 
             analysis_results.extend(tf_results)
         except Exception:
-            analysis_results.append(
-                "- Multi-timeframe: Computing momentum across timeframes..."
-            )
+            analysis_results.append("- Multi-timeframe: Computing momentum across timeframes...")
 
         # 3. Volume and Flow Analysis
         analysis_results.append("\n💰 VOLUME & ORDER FLOW ANALYSIS")
@@ -102,9 +96,7 @@ async def pro_technical_workflow(symbol: str, timeframe: str = "comprehensive") 
             )
             analysis_results.append(f"✅ Flow Analysis:\n{flow_analysis}")
         except Exception:
-            analysis_results.append(
-                "- Volume analysis: Computing VWAP and flow patterns..."
-            )
+            analysis_results.append("- Volume analysis: Computing VWAP and flow patterns...")
             analysis_results.append("- Order book: Analyzing bid/ask pressure...")
 
         # 4. Market Context Analysis
@@ -123,9 +115,7 @@ async def pro_technical_workflow(symbol: str, timeframe: str = "comprehensive") 
             )
             analysis_results.append(f"✅ Market Context:\n{market_context}")
         except Exception:
-            analysis_results.append(
-                "- Market momentum: Bullish/Bearish bias identified"
-            )
+            analysis_results.append("- Market momentum: Bullish/Bearish bias identified")
             analysis_results.append("- Sector analysis: Relative strength computed")
 
         # 5. Technical Indicators Summary

@@ -3,6 +3,8 @@ Master Scanner Workflow - Comprehensive Market Analysis
 Uses multiple scanner tools simultaneously for complete market coverage.
 """
 
+from ..config.global_config import get_global_config
+
 
 async def master_scanning_workflow(scan_type: str = "comprehensive") -> str:
     """
@@ -23,6 +25,9 @@ async def master_scanning_workflow(scan_type: str = "comprehensive") -> str:
     """
 
     try:
+        # Load global configuration
+        config = get_global_config()
+
         workflow_results = []
 
         # Header
@@ -45,9 +50,7 @@ async def master_scanning_workflow(scan_type: str = "comprehensive") -> str:
             )
             workflow_results.append(f"Results: {primary_scan}")
         except Exception as e:
-            workflow_results.append(
-                f"- Primary scanner: Ready (test mode - {str(e)[:50]})"
-            )
+            workflow_results.append(f"- Primary scanner: Ready (test mode - {str(e)[:50]})")
 
         # 2. Explosive Momentum Scanner
         workflow_results.append("\n🔥 SCANNER 2: EXPLOSIVE MOMENTUM")
@@ -59,9 +62,7 @@ async def master_scanning_workflow(scan_type: str = "comprehensive") -> str:
             )
             workflow_results.append(f"Results: {explosive_scan}")
         except Exception as e:
-            workflow_results.append(
-                f"- Explosive scanner: Ready (test mode - {str(e)[:50]})"
-            )
+            workflow_results.append(f"- Explosive scanner: Ready (test mode - {str(e)[:50]})")
 
         # 3. After Hours Scanner (if applicable)
         if scan_type in ["comprehensive", "extended_hours"]:
@@ -81,9 +82,7 @@ async def master_scanning_workflow(scan_type: str = "comprehensive") -> str:
         workflow_results.append("- Running peak/trough analysis on top candidates...")
 
         # Simulated technical analysis results
-        workflow_results.append(
-            "- Technical scanner: Support/resistance levels identified"
-        )
+        workflow_results.append("- Technical scanner: Support/resistance levels identified")
 
         # 5. Market Context Analysis
         workflow_results.append("\n🌊 MARKET CONTEXT ANALYSIS")
@@ -95,12 +94,12 @@ async def master_scanning_workflow(scan_type: str = "comprehensive") -> str:
         workflow_results.append("\n🎯 SYNTHESIZED OPPORTUNITIES")
         workflow_results.append("=" * 30)
 
-        synthesis = """
+        synthesis = f"""
 TOP TRADING OPPORTUNITIES (Multi-Scanner Synthesis):
 
 📈 MOMENTUM PLAYS:
-• High-activity symbols with 500+ trades/minute
-• Explosive movers with 15%+ change  
+• High-activity symbols with {config.trading.trades_per_minute_threshold}+ trades/minute
+• Explosive movers with {config.trading.min_percent_change_threshold}%+ change
 • Technical breakout confirmations
 • Volume surge indicators
 

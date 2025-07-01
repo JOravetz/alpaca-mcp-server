@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import argparse
-import os
-from alpaca.data import StockHistoricalDataClient, StockSnapshotRequest
 import json
+import os
 from datetime import datetime
+
+from alpaca.data import StockHistoricalDataClient, StockSnapshotRequest
 
 
 # Custom JSON encoder to handle datetime objects

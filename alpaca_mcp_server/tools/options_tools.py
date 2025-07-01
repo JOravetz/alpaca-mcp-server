@@ -1,22 +1,23 @@
 """Options trading tools and contract information."""
 
-from typing import Optional
 from datetime import date
-from alpaca.data.requests import OptionChainRequest, OptionLatestQuoteRequest, OptionSnapshotRequest
+
 from alpaca.data.enums import OptionsFeed
-from alpaca.trading.enums import ContractType, AssetStatus
+from alpaca.data.requests import OptionChainRequest, OptionLatestQuoteRequest, OptionSnapshotRequest
+from alpaca.trading.enums import AssetStatus, ContractType
+
 from ..config.settings import get_option_historical_client
 
 
 async def get_option_contracts(
     underlying_symbol: str,
-    expiration_date: Optional[date] = None,
-    strike_price_gte: Optional[str] = None,
-    strike_price_lte: Optional[str] = None,
-    type: Optional[ContractType] = None,
-    status: Optional[AssetStatus] = None,
-    root_symbol: Optional[str] = None,
-    limit: Optional[int] = None,
+    expiration_date: date | None = None,
+    strike_price_gte: str | None = None,
+    strike_price_lte: str | None = None,
+    type: ContractType | None = None,
+    status: AssetStatus | None = None,
+    root_symbol: str | None = None,
+    limit: int | None = None,
 ) -> str:
     """
     Retrieves metadata for option contracts based on specified criteria.
@@ -37,9 +38,7 @@ async def get_option_contracts(
     try:
         client = get_option_historical_client()
         # Build request parameters dynamically to avoid unsupported args
-        request_params = {
-            "underlying_symbol": underlying_symbol
-        }
+        request_params = {"underlying_symbol": underlying_symbol}
         if expiration_date:
             request_params["expiration_date"] = expiration_date
         if strike_price_gte:
@@ -47,7 +46,7 @@ async def get_option_contracts(
         if strike_price_lte:
             request_params["strike_price_lte"] = float(strike_price_lte)
         # Note: contract_type and limit may not be supported in this API version
-        
+
         request = OptionChainRequest(**request_params)
 
         contracts = client.get_option_chain(request)
@@ -73,9 +72,7 @@ Exchange: {contract.exchange}
         return f"Error fetching option contracts: {str(e)}"
 
 
-async def get_option_latest_quote(
-    symbol: str, feed: Optional[OptionsFeed] = None
-) -> str:
+async def get_option_latest_quote(symbol: str, feed: OptionsFeed | None = None) -> str:
     """
     Retrieves and formats the latest quote for an option contract.
 
@@ -141,7 +138,7 @@ Option Snapshot for {symbol}:
 ============================
 {snapshot}
 """
-        
+
         snapshot = client.get_option_snapshot(request)
 
         if not snapshot:
@@ -153,18 +150,18 @@ Option Snapshot for {symbol}:
 Latest Quote:
   Ask: ${snapshot.latest_quote.ask} x {snapshot.latest_quote.ask_size}
   Bid: ${snapshot.latest_quote.bid} x {snapshot.latest_quote.bid_size}
-  
+
 Latest Trade:
   Price: ${snapshot.latest_trade.price}
   Size: {snapshot.latest_trade.size}
   Exchange: {snapshot.latest_trade.exchange}
-  
+
 Greeks (if available):
   Delta: {getattr(snapshot, "delta", "N/A")}
   Gamma: {getattr(snapshot, "gamma", "N/A")}
   Theta: {getattr(snapshot, "theta", "N/A")}
   Vega: {getattr(snapshot, "vega", "N/A")}
-  
+
 Implied Volatility: {getattr(snapshot, "implied_volatility", "N/A")}
 Open Interest: {getattr(snapshot, "open_interest", "N/A")}
 """

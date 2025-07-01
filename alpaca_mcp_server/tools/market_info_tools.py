@@ -1,5 +1,9 @@
 """Market information and calendar tools."""
 
+from datetime import datetime
+
+import pytz
+
 from ..config.settings import get_trading_client
 
 
@@ -7,21 +11,45 @@ async def get_market_clock() -> str:
     """
     Retrieves and formats current market status and next open/close times.
 
+    Checks both regular market hours (9:30 AM - 4:00 PM) and extended hours (4:00 AM - 8:00 PM).
+    Returns "Yes" for Is Open if within extended hours on a trading day.
+
     Returns:
         str: Formatted string containing:
             - Current Time
-            - Market Open Status
+            - Market Open Status (includes extended hours)
             - Next Open Time
             - Next Close Time
     """
     try:
         client = get_trading_client()
         clock = client.get_clock()
+
+        # Get current time in EDT/EST
+        et_tz = pytz.timezone("America/New_York")
+        current_et = datetime.now(et_tz)
+        current_hour = current_et.hour
+        current_minute = current_et.minute
+
+        # Check if it's a trading day (next_open is today)
+        next_open_et = clock.next_open.astimezone(et_tz) if clock.next_open else None
+        is_trading_day = next_open_et and next_open_et.date() == current_et.date()
+
+        # Check extended hours (4:00 AM to 8:00 PM ET)
+        in_extended_hours = False
+        if is_trading_day:
+            # 4:00 AM = hour 4, 8:00 PM = hour 20
+            if 4 <= current_hour < 20 or current_hour == 20 and current_minute == 0:
+                in_extended_hours = True
+
+        # Use regular market status OR extended hours
+        is_open = clock.is_open or in_extended_hours
+
         return f"""
 Market Status:
 -------------
 Current Time: {clock.timestamp}
-Is Open: {"Yes" if clock.is_open else "No"}
+Is Open: {"Yes" if is_open else "No"}
 Next Open: {clock.next_open}
 Next Close: {clock.next_close}
 """

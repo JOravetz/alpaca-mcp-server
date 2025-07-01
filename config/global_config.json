@@ -1,0 +1,42 @@
+{
+  "trading": {
+    "trades_per_minute_threshold": 1000,
+    "min_percent_change_threshold": 10.0,
+    "default_position_size_usd": 50000,
+    "max_concurrent_positions": 5,
+    "never_sell_for_loss": true,
+    "order_timeout_seconds": 10,
+    "default_order_type": "limit",
+    "default_time_in_force": "day",
+    "max_stock_price": 20.0,
+    "price_decimal_places": 4,
+    "family_protection_profit_threshold_percent": 10.0,
+    "automatic_profit_threshold_percent": 3.0
+  },
+  "technical_analysis": {
+    "hanning_window_samples": 11,
+    "peak_trough_min_distance": 3,
+    "peak_trough_lookahead": 1
+  },
+  "market_hours": {
+    "trading_hours_start": "04:00",
+    "trading_hours_end": "20:00",
+    "trading_timezone": "America/New_York"
+  },
+  "scanner": {
+    "active_scan_interval_seconds": 60,
+    "max_watchlist_size": 50,
+    "scanner_sort_method": "trades",
+    "wash_sale_cooldown_minutes": 30
+  },
+  "system": {
+    "hibernation_enabled": true,
+    "monitoring_check_interval_seconds": 60,
+    "streaming_buffer_size_per_symbol": 5000
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "last_updated": "2025-06-25T20:04:00Z",
+    "description": "Global configuration for fast, aggressive MCP trading system"
+  }
+}

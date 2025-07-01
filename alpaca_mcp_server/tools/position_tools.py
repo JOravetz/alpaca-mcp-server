@@ -1,14 +1,12 @@
 """Position management tools for Alpaca MCP Server."""
 
-from typing import Optional
-from ..config.settings import get_trading_client
-from alpaca.trading.requests import ClosePositionRequest
 from alpaca.common.exceptions import APIError
+from alpaca.trading.requests import ClosePositionRequest
+
+from ..config.settings import get_trading_client
 
 
-async def close_position(
-    symbol: str, qty: Optional[str] = None, percentage: Optional[str] = None
-) -> str:
+async def close_position(symbol: str, qty: str | None = None, percentage: str | None = None) -> str:
     """
     Closes a specific position for a single symbol.
 
@@ -31,8 +29,8 @@ async def close_position(
         # Close the position
         order = client.close_position(symbol, close_options)
 
-        order_id = getattr(order, 'id', 'Unknown')
-        order_status = getattr(order, 'status', 'Unknown')
+        order_id = getattr(order, "id", "Unknown")
+        order_status = getattr(order, "status", "Unknown")
         return f"""Position Closed Successfully:
 ----------------------------
 Symbol: {symbol}
@@ -41,10 +39,7 @@ Status: {order_status}"""
 
     except APIError as api_error:
         error_message = str(api_error)
-        if (
-            "42210000" in error_message
-            and "would result in order size of zero" in error_message
-        ):
+        if "42210000" in error_message and "would result in order size of zero" in error_message:
             return """Error: Invalid position closure request.
 
 The requested percentage would result in less than 1 share.
@@ -83,9 +78,9 @@ async def close_all_positions(cancel_orders: bool = False) -> str:
         response_parts.append("-" * 30)
 
         for response in close_responses:
-            symbol = getattr(response, 'symbol', 'Unknown')
-            status = getattr(response, 'status', 'Unknown')
-            order_id = getattr(response, 'order_id', None)
+            symbol = getattr(response, "symbol", "Unknown")
+            status = getattr(response, "status", "Unknown")
+            order_id = getattr(response, "order_id", None)
             response_parts.append(f"Symbol: {symbol}")
             response_parts.append(f"Status: {status}")
             if order_id:

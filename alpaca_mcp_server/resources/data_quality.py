@@ -2,8 +2,10 @@
 
 import time
 from datetime import datetime
-from ..config.settings import get_stock_historical_client
+
 from alpaca.data.requests import StockLatestQuoteRequest
+
+from ..config.settings import get_stock_historical_client
 
 
 async def get_data_quality(
@@ -43,9 +45,7 @@ async def get_data_quality(
 
                 if symbol in quote:
                     quote_data = quote[symbol]
-                    quote_age = datetime.now() - quote_data.timestamp.replace(
-                        tzinfo=None
-                    )
+                    quote_age = datetime.now() - quote_data.timestamp.replace(tzinfo=None)
                     quote_age_seconds = quote_age.total_seconds()
 
                     # Calculate bid-ask spread
@@ -62,9 +62,7 @@ async def get_data_quality(
                         else (
                             "good"
                             if latency_ms < latency_threshold_ms * 0.5
-                            else "fair"
-                            if latency_ms < latency_threshold_ms
-                            else "poor"
+                            else "fair" if latency_ms < latency_threshold_ms else "poor"
                         )
                     )
 
@@ -88,9 +86,7 @@ async def get_data_quality(
                         else (
                             "good"
                             if spread_pct < spread_threshold_pct * 0.5
-                            else "fair"
-                            if spread_pct < spread_threshold_pct
-                            else "poor"
+                            else "fair" if spread_pct < spread_threshold_pct else "poor"
                         )
                     )
 
@@ -114,9 +110,7 @@ async def get_data_quality(
                         else (
                             "good"
                             if overall_score >= 70
-                            else "fair"
-                            if overall_score >= 50
-                            else "poor"
+                            else "fair" if overall_score >= 50 else "poor"
                         )
                     )
 
@@ -159,9 +153,7 @@ async def get_data_quality(
             1 for status in feed_status.values() if status.get("status") == "connected"
         )
         total_feeds = len(test_symbols)
-        connection_rate = (
-            (connected_feeds / total_feeds * 100) if total_feeds > 0 else 0
-        )
+        connection_rate = (connected_feeds / total_feeds * 100) if total_feeds > 0 else 0
 
         if latency_tests:
             avg_latency = sum(latency_tests) / len(latency_tests)
@@ -199,9 +191,7 @@ async def get_data_quality(
         if connection_rate < 90:
             recommendations.append("Feed connection issues - verify API credentials")
         if avg_quality_score < 70:
-            recommendations.append(
-                "Data quality degraded - consider using alternative feeds"
-            )
+            recommendations.append("Data quality degraded - consider using alternative feeds")
 
         if not recommendations:
             recommendations.append("All systems operating normally")

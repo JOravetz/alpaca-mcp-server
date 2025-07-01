@@ -1,0 +1,20 @@
+{
+  "trade_id": "AAPL_BUY_1750293344",
+  "symbol": "AAPL",
+  "action": "BUY",
+  "quantity": 100,
+  "expected_price": 150.0,
+  "actual_price": null,
+  "fill_timestamp": null,
+  "confirmation_status": "PENDING",
+  "screenshot_path": null,
+  "screenshot_required": true,
+  "position_verified": false,
+  "price_acknowledged": false,
+  "created_at": "2025-06-19T00:35:44.582610+00:00",
+  "confirmed_at": null,
+  "timeout_at": "2025-06-19T00:45:44.582619+00:00",
+  "notes": [
+    "Trade confirmation requested at 19:35:44"
+  ]
+}

@@ -1,22 +1,23 @@
 """After-hours market scanner with enhanced streaming analytics."""
 
+import contextlib
 import logging
 from datetime import datetime
-from ..tools.market_data_tools import get_stock_snapshots
-from ..tools.enhanced_market_clock import get_extended_market_clock
 
 # Import global configuration
-from ..config import get_trading_config, get_scanner_config
+from ..config import get_scanner_config, get_trading_config
+from ..tools.enhanced_market_clock import get_extended_market_clock
+from ..tools.market_data_tools import get_stock_snapshots
 
 logger = logging.getLogger(__name__)
 
 
 async def scan_after_hours_opportunities(
     symbols: str = "ALL",  # Use ALL tradeable assets by default
-    min_volume: int = None,             # Use global config default
-    min_percent_change: float = None,   # Use global config default
-    max_symbols: int = None,            # Use global config default
-    sort_by: str = None,                # Use global config default
+    min_volume: int = None,  # Use global config default
+    min_percent_change: float = None,  # Use global config default
+    max_symbols: int = None,  # Use global config default
+    sort_by: str = None,  # Use global config default
 ) -> str:
     """
     Scan for after-hours trading opportunities with enhanced analytics.
@@ -40,37 +41,43 @@ async def scan_after_hours_opportunities(
     # Get defaults from global configuration
     trading_config = get_trading_config()
     scanner_config = get_scanner_config()
-    
+
     # Use global config defaults if parameters not provided
     if min_volume is None:
         min_volume = 100000  # After-hours specific default
     if min_percent_change is None:
-        min_percent_change = trading_config.min_percent_change_threshold / 5  # Lower threshold for after-hours
+        min_percent_change = (
+            trading_config.min_percent_change_threshold / 5
+        )  # Lower threshold for after-hours
     if max_symbols is None:
         max_symbols = min(15, scanner_config.max_watchlist_size)
     if sort_by is None:
         sort_by = scanner_config.scanner_sort_method or "percent_change"
-    
+
     try:
         # Resolve symbols - get ALL tradeable assets if needed
         if symbols.upper() == "ALL":
             try:
                 from ..utils.tickers import TickerList
+
                 ticker_list = TickerList()
                 assets = ticker_list.rest_api.list_assets(status="active")
-                
+
                 # Filter using TickerList validation logic
                 tradable_symbols = [
-                    asset.symbol for asset in assets 
+                    asset.symbol
+                    for asset in assets
                     if asset.tradable and ticker_list.is_valid_symbol(asset.symbol)
                 ]
                 # Limit to top liquid stocks for after-hours scanning
                 symbol_list = sorted(tradable_symbols)[:200]  # Limit for performance
                 symbols = ",".join(symbol_list)
-                
+
             except Exception:
                 # Fallback to major stocks if TickerList fails
-                symbols = "AAPL,MSFT,NVDA,TSLA,GOOGL,AMZN,META,NFLX,COIN,HOOD,AMC,GME,PLTR,SOFI,RIVN,LCID"
+                symbols = (
+                    "AAPL,MSFT,NVDA,TSLA,GOOGL,AMZN,META,NFLX,COIN,HOOD,AMC,GME,PLTR,SOFI,RIVN,LCID"
+                )
 
         # Get market session info
         market_clock = await get_extended_market_clock()
@@ -107,9 +114,7 @@ async def scan_after_hours_opportunities(
                     symbol_data["current_price"] = float(line.replace("• Price: $", ""))
 
                 elif line.startswith("• Previous Close: $"):
-                    symbol_data["prev_close"] = float(
-                        line.replace("• Previous Close: $", "")
-                    )
+                    symbol_data["prev_close"] = float(line.replace("• Previous Close: $", ""))
 
                 elif line.startswith("• OHLC: $"):
                     parts = line.replace("• OHLC: $", "").split(" / $")
@@ -121,10 +126,8 @@ async def scan_after_hours_opportunities(
 
                 elif line.startswith("• Volume:"):
                     vol_text = line.replace("• Volume: ", "").replace(",", "")
-                    try:
+                    with contextlib.suppress(ValueError, TypeError):
                         symbol_data["volume"] = int(float(vol_text))
-                    except (ValueError, TypeError):
-                        pass
 
                 elif line.startswith("• Bid/Ask: $"):
                     bid_ask = line.replace("• Bid/Ask: $", "")
@@ -135,10 +138,7 @@ async def scan_after_hours_opportunities(
                         symbol_data["spread"] = symbol_data["ask"] - symbol_data["bid"]
 
                 elif line.startswith("=="):  # End of symbol data
-                    if (
-                        symbol_data["current_price"] > 0
-                        and symbol_data["prev_close"] > 0
-                    ):
+                    if symbol_data["current_price"] > 0 and symbol_data["prev_close"] > 0:
                         # Calculate metrics
                         percent_change = (
                             (symbol_data["current_price"] - symbol_data["prev_close"])
@@ -169,6 +169,7 @@ async def scan_after_hours_opportunities(
                         if (
                             abs(percent_change) >= min_percent_change
                             and symbol_data["volume"] >= min_volume
+                            and symbol_data["current_price"] <= trading_config.max_stock_price
                         ):
                             symbol_data.update(
                                 {
@@ -265,9 +266,7 @@ async def scan_after_hours_opportunities(
 
         # Enhanced analytics summary
         total_volume = sum(s["volume"] for s in opportunities)
-        avg_change = sum(abs(s["percent_change"]) for s in opportunities) / len(
-            opportunities
-        )
+        avg_change = sum(abs(s["percent_change"]) for s in opportunities) / len(opportunities)
         top_mover = max(opportunities, key=lambda x: abs(x["percent_change"]))
         most_active = max(opportunities, key=lambda x: x["volume"])
 
@@ -281,7 +280,7 @@ async def scan_after_hours_opportunities(
 
 **Liquidity Assessment:**
 • High Liquidity: {sum(1 for s in opportunities if s["spread_pct"] < 0.2)} stocks
-• Moderate Liquidity: {sum(1 for s in opportunities if 0.2 <= s["spread_pct"] < 0.5)} stocks  
+• Moderate Liquidity: {sum(1 for s in opportunities if 0.2 <= s["spread_pct"] < 0.5)} stocks
 • Low Liquidity: {sum(1 for s in opportunities if s["spread_pct"] >= 0.5)} stocks
 
 ## ⚡ Enhanced Actions
@@ -355,9 +354,7 @@ async def get_enhanced_streaming_analytics(
                 symbol, "trades", recent_seconds=analysis_minutes * 60
             )
             quotes_data = (
-                await get_stock_stream_data(
-                    symbol, "quotes", recent_seconds=analysis_minutes * 60
-                )
+                await get_stock_stream_data(symbol, "quotes", recent_seconds=analysis_minutes * 60)
                 if include_orderbook
                 else ""
             )
@@ -368,9 +365,7 @@ async def get_enhanced_streaming_analytics(
         # Get intraday bars for technical analysis
         from ..tools.market_data_tools import get_stock_bars_intraday
 
-        bars_data = await get_stock_bars_intraday(
-            symbol, timeframe="1Min", limit=analysis_minutes
-        )
+        bars_data = await get_stock_bars_intraday(symbol, timeframe="1Min", limit=analysis_minutes)
 
         result = f"""# 🔥 Enhanced Streaming Analytics - {symbol}
 
@@ -381,7 +376,7 @@ async def get_enhanced_streaming_analytics(
 ## 📊 Real-Time Market Snapshot
 {_format_snapshot_section(snapshot)}
 
-## 📈 Intraday Technical Analysis  
+## 📈 Intraday Technical Analysis
 {_format_bars_analysis(bars_data)}
 
 ## ⚡ Live Stream Analysis
@@ -424,7 +419,7 @@ def _format_snapshot_section(snapshot_data: str) -> str:
                 bid_ask = line.replace("• Bid/Ask: $", "")
 
         return f"""• **Current Price:** ${current_price}
-• **Volume:** {volume}  
+• **Volume:** {volume}
 • **Daily Change:** {daily_change}
 • **Bid/Ask Spread:** ${bid_ask}"""
 
@@ -495,16 +490,12 @@ def _generate_trading_signals(snapshot_data: str, bars_data: str) -> str:
                 current_price = float(line.replace("• Price: $", ""))
             elif line.startswith("• Volume:"):
                 vol_text = line.replace("• Volume: ", "").replace(",", "")
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     volume = int(float(vol_text))
-                except (ValueError, TypeError):
-                    pass
             elif line.startswith("• Daily Change:") and "%" in line:
                 pct_text = line.split("%")[0].replace("• Daily Change: ", "")
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     percent_change = float(pct_text)
-                except (ValueError, TypeError):
-                    pass
 
         signals = []
 
@@ -519,9 +510,7 @@ def _generate_trading_signals(snapshot_data: str, bars_data: str) -> str:
         # Momentum analysis
         if abs(percent_change) > 10:
             direction = "bullish" if percent_change > 0 else "bearish"
-            signals.append(
-                f"🚀 **STRONG MOMENTUM** - {direction.upper()} breakout potential"
-            )
+            signals.append(f"🚀 **STRONG MOMENTUM** - {direction.upper()} breakout potential")
         elif abs(percent_change) > 5:
             direction = "upward" if percent_change > 0 else "downward"
             signals.append(f"📈 **MODERATE MOMENTUM** - {direction} trend developing")
@@ -538,9 +527,7 @@ def _generate_trading_signals(snapshot_data: str, bars_data: str) -> str:
         if abs(percent_change) > 5 and volume > 500000:
             signals.append("✅ **TRADE SETUP** - Good momentum + volume combination")
         else:
-            signals.append(
-                "⏳ **WAIT** - Need stronger volume or momentum confirmation"
-            )
+            signals.append("⏳ **WAIT** - Need stronger volume or momentum confirmation")
 
         return "\n".join(f"• {signal}" for signal in signals)
 

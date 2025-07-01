@@ -1,37 +1,38 @@
-import os
-import json
 import argparse
-import requests
-
-from zoneinfo import ZoneInfo
+import json
+import os
 from datetime import datetime, time
+from typing import Any, Dict, List, Optional
+from zoneinfo import ZoneInfo
+
+import requests  # type: ignore[import-untyped]
 
 API_KEY_ID = os.environ["APCA_API_KEY_ID"]
 SECRET_KEY_ID = os.environ["APCA_API_SECRET_KEY"]
 
 
-def is_premarket(current_time):
+def is_premarket(current_time: datetime) -> bool:
     premarket_start = time(4, 0)  # 4:00 AM
     market_open = time(9, 30)  # 9:30 AM
     return premarket_start <= current_time.time() < market_open
 
 
-def load_previous_results():
+def load_previous_results() -> Dict[str, Any]:
     if not os.path.exists("previous_results.json"):
         try:
             with open("previous_results.json", "w") as f:
                 json.dump({}, f)
-        except (IOError, json.JSONDecodeError, PermissionError):
+        except (OSError, json.JSONDecodeError, PermissionError):
             return {}
     try:
-        with open("previous_results.json", "r") as f:
+        with open("previous_results.json") as f:
             data = json.load(f)
             return data if isinstance(data, dict) else {}
-    except (IOError, json.JSONDecodeError, PermissionError):
+    except (OSError, json.JSONDecodeError, PermissionError):
         return {}
 
 
-def save_current_results(results):
+def save_current_results(results: List[Dict[str, Any]]) -> None:
     results_dict = {
         result["symbol"]: {
             "gradient_recent": result["gradient_recent"],
@@ -44,7 +45,7 @@ def save_current_results(results):
         json.dump(results_dict, f)
 
 
-def generate_html(results, timestamp):
+def generate_html(results: List[Dict[str, Any]], timestamp: str) -> str:
     html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -227,16 +228,14 @@ def generate_html(results, timestamp):
     return html
 
 
-def run(args):
+def run(args: argparse.Namespace) -> None:
     LIST = str(args.list) if args.list else "combined"
     previous_results = load_previous_results()
 
-    with open(LIST + ".lis", "r") as f:
+    with open(LIST + ".lis") as f:
         universe = [line.strip().split()[0].upper() for line in f if line.strip()]
 
-    url = (
-        f"https://data.alpaca.markets/v2/stocks/snapshots?symbols={','.join(universe)}"
-    )
+    url = f"https://data.alpaca.markets/v2/stocks/snapshots?symbols={','.join(universe)}"
     headers = {
         "accept": "application/json",
         "APCA-API-KEY-ID": API_KEY_ID,
@@ -252,11 +251,7 @@ def run(args):
     for symbol in universe:
         try:
             snapshot = snapshots.get(symbol)
-            if (
-                not snapshot
-                or "latestTrade" not in snapshot
-                or "minuteBar" not in snapshot
-            ):
+            if not snapshot or "latestTrade" not in snapshot or "minuteBar" not in snapshot:
                 continue
 
             trade_time = datetime.fromisoformat(
@@ -273,19 +268,14 @@ def run(args):
             minute_volume = int(snapshot["minuteBar"]["v"])
             minute_trades = int(snapshot["minuteBar"]["n"])
 
-            if premarket:
-                reference_price = day_close
-            else:
-                reference_price = float(snapshot["prevDailyBar"]["c"])
+            reference_price = day_close if premarket else float(snapshot["prevDailyBar"]["c"])
 
             percent = ((price_now - reference_price) / reference_price) * 100.0
             gradient_full = percent / 2.0
             gradient_recent = ((price_now - day_close) / day_close) * 100.0
 
             prev_data = previous_results.get(symbol, {})
-            gradient_change = gradient_recent - prev_data.get(
-                "gradient_recent", gradient_recent
-            )
+            gradient_change = gradient_recent - prev_data.get("gradient_recent", gradient_recent)
             volume_change = minute_volume - prev_data.get("volume", minute_volume)
             trades_change = minute_trades - prev_data.get("trades", minute_trades)
 
@@ -327,8 +317,6 @@ def run(args):
 
 if __name__ == "__main__":
     PARSER = argparse.ArgumentParser()
-    PARSER.add_argument(
-        "--list", type=str, default="", help="Symbol list (default=combined.lis)"
-    )
+    PARSER.add_argument("--list", type=str, default="", help="Symbol list (default=combined.lis)")
     ARGUMENTS = PARSER.parse_args()
     run(ARGUMENTS)

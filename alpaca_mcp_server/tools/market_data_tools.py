@@ -1,21 +1,22 @@
 """Market data tools for Alpaca MCP Server."""
 
-from typing import Optional, Union, List
 from datetime import datetime, timedelta
+
 import pytz
-from ..config.settings import get_stock_historical_client
+from alpaca.common.enums import SupportedCurrencies
+from alpaca.data.enums import Adjustment, DataFeed
 
 # Alpaca imports for market data
 from alpaca.data.requests import (
-    StockLatestQuoteRequest,
     StockBarsRequest,
-    StockTradesRequest,
-    StockLatestTradeRequest,
     StockLatestBarRequest,
+    StockLatestQuoteRequest,
+    StockLatestTradeRequest,
+    StockTradesRequest,
 )
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
-from alpaca.data.enums import DataFeed, Adjustment
-from alpaca.common.enums import SupportedCurrencies
+
+from ..config.settings import get_stock_historical_client
 
 
 def get_smart_date_range():
@@ -25,7 +26,7 @@ def get_smart_date_range():
     Returns:
         tuple: (start_date, end_date, is_market_open) in YYYY-MM-DD format
     """
-    eastern = pytz.timezone("US/Eastern")
+    eastern = pytz.timezone("America/New_York")
     now_et = datetime.now(eastern)
 
     # Check if today is a weekday (Monday=0, Sunday=6)
@@ -75,7 +76,7 @@ async def get_stock_quote(symbol: str) -> str:
         if symbol in quotes:
             quote = quotes[symbol]
             # Convert timestamp to NYC/EDT
-            eastern = pytz.timezone("US/Eastern")
+            eastern = pytz.timezone("America/New_York")
             timestamp_nyc = quote.timestamp.astimezone(eastern)
 
             return f"""Latest Quote for {symbol}:
@@ -122,19 +123,13 @@ async def get_stock_bars(symbol: str, days: int = 5) -> str:
 
         if symbol in bars_data and bars_data[symbol]:
             bars = bars_data[symbol]
-            result = (
-                f"Historical Price Bars for {symbol} (Last {len(bars)} trading days):\n"
-            )
+            result = f"Historical Price Bars for {symbol} (Last {len(bars)} trading days):\n"
             result += "=" * 60 + "\n"
 
             for bar in bars:
                 # Calculate daily change
-                daily_change = (
-                    (float(bar.close) - float(bar.open)) / float(bar.open)
-                ) * 100
-                change_indicator = (
-                    "📈" if daily_change > 0 else "📉" if daily_change < 0 else "➡️"
-                )
+                daily_change = ((float(bar.close) - float(bar.open)) / float(bar.open)) * 100
+                change_indicator = "📈" if daily_change > 0 else "📉" if daily_change < 0 else "➡️"
 
                 result += f"""Date: {bar.timestamp.strftime("%Y-%m-%d")}
 Open: ${float(bar.open):.2f}
@@ -156,8 +151,8 @@ Daily Change: {change_indicator} {daily_change:+.2f}%
 async def get_stock_bars_intraday(
     symbol: str,
     timeframe: str = "1Min",
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     limit: int = 10000,
     adjustment: str = "raw",
     feed: str = "sip",
@@ -206,7 +201,7 @@ async def get_stock_bars_intraday(
         tf = timeframe_map[timeframe]
 
         # Parse dates - the SDK requires timezone-aware datetime objects
-        eastern = pytz.timezone("US/Eastern")
+        eastern = pytz.timezone("America/New_York")
 
         if start_date and end_date:
             # User provided both dates
@@ -249,9 +244,7 @@ async def get_stock_bars_intraday(
         # Parse enums
         adjustment_enum = getattr(Adjustment, adjustment.upper(), Adjustment.RAW)
         feed_enum = getattr(DataFeed, feed.upper(), DataFeed.SIP)
-        currency_enum = getattr(
-            SupportedCurrencies, currency.upper(), SupportedCurrencies.USD
-        )
+        currency_enum = getattr(SupportedCurrencies, currency.upper(), SupportedCurrencies.USD)
 
         request_params = StockBarsRequest(
             symbol_or_symbols=symbol_list,
@@ -304,7 +297,7 @@ Suggestions:
 
             # Professional analysis starts here
             result = f"""# Professional Intraday Analysis: {symbol}
-        
+
 ## Market Data Summary
 Symbol: {symbol}
 Timeframe: {timeframe}
@@ -374,12 +367,8 @@ Price Action: {"Trending Up" if close_price > open_price else "Trending Down" if
             # Recent bars detail
             result += f"## Recent Price Action (Last {min(5, len(bars))} bars):\n"
             for bar in bars[-5:]:
-                bar_change = (
-                    (float(bar.close) - float(bar.open)) / float(bar.open)
-                ) * 100
-                trend_arrow = (
-                    "🟢" if bar_change > 0.5 else "🔴" if bar_change < -0.5 else "🟡"
-                )
+                bar_change = ((float(bar.close) - float(bar.open)) / float(bar.open)) * 100
+                trend_arrow = "🟢" if bar_change > 0.5 else "🔴" if bar_change < -0.5 else "🟡"
 
                 result += f"""{trend_arrow} {bar.timestamp.strftime("%H:%M")} | O:${float(bar.open):.2f} H:${float(bar.high):.2f} L:${float(bar.low):.2f} C:${float(bar.close):.2f} | Vol:{bar.volume:,} | {bar_change:+.2f}%
 """
@@ -411,7 +400,7 @@ Analysis Time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         else:
             # Multiple symbols - provide summary analysis
             result = f"""# Intraday Analysis: Multiple Symbols
-            
+
 ## Summary
 Symbols: {", ".join(symbol_list)}
 Timeframe: {timeframe}
@@ -456,7 +445,7 @@ Data Feed: {feed.upper()}
                 ) * 100
 
                 result += f"""## {symbol}
-                
+
 ### Performance
 • Period Return: {total_return:+.2f}%
 • Open: ${open_price:.2f} → Close: ${close_price:.2f}
@@ -488,8 +477,7 @@ Data Feed: {feed.upper()}
                         first_bar = bars[0]
                         last_bar = bars[-1]
                         total_return = (
-                            (float(last_bar.close) - float(first_bar.open))
-                            / float(first_bar.open)
+                            (float(last_bar.close) - float(first_bar.open)) / float(first_bar.open)
                         ) * 100
                         total_volume = sum(bar.volume for bar in bars)
                         volatility = (
@@ -538,7 +526,7 @@ Data Feed: {feed.upper()}
         return f"Error fetching intraday data: {str(e)}"
 
 
-async def get_stock_snapshots(symbols: Union[str, List[str]]) -> str:
+async def get_stock_snapshots(symbols: str | list[str]) -> str:
     """
     Get comprehensive market snapshots for one or more stocks.
 
@@ -572,7 +560,7 @@ async def get_stock_snapshots(symbols: Union[str, List[str]]) -> str:
         result = "# Market Snapshots\n"
         result += f"Symbols: {', '.join(symbol_list)}\n"
         # Display current timestamp in NYC/EDT
-        eastern = pytz.timezone("US/Eastern")
+        eastern = pytz.timezone("America/New_York")
         current_time_nyc = datetime.now(eastern)
         result += f"Timestamp: {current_time_nyc.strftime('%Y-%m-%d %H:%M:%S %Z')}\n\n"
 
@@ -595,7 +583,7 @@ async def get_stock_snapshots(symbols: Union[str, List[str]]) -> str:
 """
                 if latest_trade:
                     # Convert timestamp to NYC/EDT
-                    eastern = pytz.timezone("US/Eastern")
+                    eastern = pytz.timezone("America/New_York")
                     trade_time_nyc = latest_trade.timestamp.astimezone(eastern)
 
                     result += f"""• Price: ${float(latest_trade.price):.2f}
@@ -608,13 +596,11 @@ async def get_stock_snapshots(symbols: Union[str, List[str]]) -> str:
 
                 result += "\n### Latest Quote\n"
                 if latest_quote:
-                    spread = float(latest_quote.ask_price) - float(
-                        latest_quote.bid_price
-                    )
+                    spread = float(latest_quote.ask_price) - float(latest_quote.bid_price)
                     spread_pct = (spread / float(latest_quote.ask_price)) * 100
 
                     # Convert timestamp to NYC/EDT
-                    eastern = pytz.timezone("US/Eastern")
+                    eastern = pytz.timezone("America/New_York")
                     quote_time_nyc = latest_quote.timestamp.astimezone(eastern)
 
                     result += f"""• Bid: ${float(latest_quote.bid_price):.2f} (Size: {latest_quote.bid_size:,})
@@ -634,7 +620,7 @@ async def get_stock_snapshots(symbols: Union[str, List[str]]) -> str:
                         ) * 100
 
                         # Convert timestamp to NYC/EDT
-                        eastern = pytz.timezone("US/Eastern")
+                        eastern = pytz.timezone("America/New_York")
                         minute_time_nyc = minute_bar.timestamp.astimezone(eastern)
 
                         # Get trade count
@@ -665,9 +651,10 @@ async def get_stock_snapshots(symbols: Union[str, List[str]]) -> str:
                         current_price = float(latest_trade.price)
                         daily_high = float(daily_bar.high)
                         daily_low = float(daily_bar.low)
-                        
-                        
-                        if current_price > daily_high * 1.5 or (daily_high < 2.0 and current_price > daily_high + 0.5):
+
+                        if current_price > daily_high * 1.5 or (
+                            daily_high < 2.0 and current_price > daily_high + 0.5
+                        ):
                             is_stale_daily = True
                             result += "⚠️ **STALE DATA WARNING**: Daily bar appears to be from previous day\n"
                             result += f"   Current price ${current_price:.2f} is way above daily high ${daily_high:.2f}\n"
@@ -678,16 +665,17 @@ async def get_stock_snapshots(symbols: Union[str, List[str]]) -> str:
 """
 
                     # Calculate daily change using stock_analyzer.py logic
-                    eastern = pytz.timezone("US/Eastern")
+                    eastern = pytz.timezone("America/New_York")
                     current_time_et = datetime.now(eastern)
-                    market_open = current_time_et.replace(hour=9, minute=30, second=0, microsecond=0)
+                    market_open = current_time_et.replace(
+                        hour=9, minute=30, second=0, microsecond=0
+                    )
                     is_pre_market = current_time_et < market_open and current_time_et.hour >= 4
-                    
-                    
+
                     # Check for data availability and calculate daily change
                     if latest_trade and daily_bar:
                         current_price = float(latest_trade.price)
-                        
+
                         # Use stock_analyzer.py logic: if pre-market, use daily_bar.close as reference
                         if is_pre_market:
                             reference_price = float(daily_bar.close)
@@ -702,17 +690,19 @@ async def get_stock_snapshots(symbols: Union[str, List[str]]) -> str:
                                 reference_price = float(previous_daily_bar.close)
                             else:
                                 reference_price = float(daily_bar.close)
-                            
-                            daily_change = ((current_price - reference_price) / reference_price) * 100
-                            
+
+                            daily_change = (
+                                (current_price - reference_price) / reference_price
+                            ) * 100
+
                             result += f"""• Daily Change: {daily_change:+.2f}% (${current_price - reference_price:+.2f})
 • Reference Close: ${reference_price:.2f}
 • Current Price: ${current_price:.2f}
 """
-                        
+
                         # Set daily_change for performance indicators
                         daily_change = ((current_price - reference_price) / reference_price) * 100
-                    
+
                     elif previous_daily_bar and daily_bar:
                         # Fallback to daily bar calculation
                         daily_change = (
@@ -722,9 +712,9 @@ async def get_stock_snapshots(symbols: Union[str, List[str]]) -> str:
                         result += f"""• Daily Change: {daily_change:+.2f}% (${float(daily_bar.close) - float(previous_daily_bar.close):+.2f})
 • Previous Close: ${float(previous_daily_bar.close):.2f}
 """
-                        
+
                     # Add performance indicators
-                    if 'daily_change' in locals():
+                    if "daily_change" in locals():
                         result += "\n### Performance Indicators\n"
                         if daily_change > 3:
                             result += "• Strong Upward Movement - Consider momentum plays\n"
@@ -754,9 +744,7 @@ async def get_stock_snapshots(symbols: Union[str, List[str]]) -> str:
         return f"Error fetching snapshots: {str(e)}"
 
 
-async def get_stock_trades(
-    symbol: str, days: int = 5, limit: Optional[int] = None
-) -> str:
+async def get_stock_trades(symbol: str, days: int = 5, limit: int | None = None) -> str:
     """
     Retrieves historical trades for a stock.
 
@@ -820,7 +808,7 @@ async def get_stock_latest_trade(symbol: str) -> str:
         if symbol in trades:
             trade = trades[symbol]
             # Convert timestamp to NYC/EDT
-            eastern = pytz.timezone("US/Eastern")
+            eastern = pytz.timezone("America/New_York")
             timestamp_nyc = trade.timestamp.astimezone(eastern)
 
             return f"""Latest Trade for {symbol}:
@@ -856,7 +844,7 @@ async def get_stock_latest_bar(symbol: str) -> str:
             bar_change = ((float(bar.close) - float(bar.open)) / float(bar.open)) * 100
 
             # Convert timestamp to NYC/EDT
-            eastern = pytz.timezone("US/Eastern")
+            eastern = pytz.timezone("America/New_York")
             timestamp_nyc = bar.timestamp.astimezone(eastern)
 
             return f"""Latest Minute Bar for {symbol}:

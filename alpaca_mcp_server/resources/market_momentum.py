@@ -1,11 +1,13 @@
 """Market momentum resource with real SPY data analysis."""
 
 from datetime import datetime
+
 import pytz
-from ..config.settings import get_stock_historical_client
+from alpaca.data.enums import DataFeed
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
-from alpaca.data.enums import DataFeed
+
+from ..config.settings import get_stock_historical_client
 from ..tools.market_data_tools import get_stock_bars_intraday
 
 
@@ -55,16 +57,14 @@ async def get_market_momentum(
 
         # Fall back to direct API call using the same logic as the working tool
         data_client = get_stock_historical_client()
-        eastern = pytz.timezone("US/Eastern")
+        eastern = pytz.timezone("America/New_York")
 
         # Use smart date range (copied from working tool)
         now_et = datetime.now(eastern)
 
         # Default to today's extended hours data (4 AM - 8 PM ET)
         start = eastern.localize(
-            datetime.strptime(now_et.strftime("%Y-%m-%d"), "%Y-%m-%d").replace(
-                hour=4, minute=0
-            )
+            datetime.strptime(now_et.strftime("%Y-%m-%d"), "%Y-%m-%d").replace(hour=4, minute=0)
         )
 
         is_weekday = now_et.weekday() < 5
@@ -105,9 +105,7 @@ async def get_market_momentum(
 
         bars_data = data_client.get_stock_bars(request)
         symbol_bars = (
-            list(bars_data.data[symbol])
-            if bars_data.data and symbol in bars_data.data
-            else []
+            list(bars_data.data[symbol]) if bars_data.data and symbol in bars_data.data else []
         )
 
         if len(symbol_bars) < max(sma_short, sma_long):
@@ -131,14 +129,10 @@ async def get_market_momentum(
 
         # Dynamic SMA calculations based on user parameters
         sma_short_value = (
-            sum(prices[-sma_short:]) / sma_short
-            if len(prices) >= sma_short
-            else current_price
+            sum(prices[-sma_short:]) / sma_short if len(prices) >= sma_short else current_price
         )
         sma_long_value = (
-            sum(prices[-sma_long:]) / sma_long
-            if len(prices) >= sma_long
-            else current_price
+            sum(prices[-sma_long:]) / sma_long if len(prices) >= sma_long else current_price
         )
 
         # Trend direction calculation using dynamic SMAs
@@ -164,9 +158,7 @@ async def get_market_momentum(
         volatility_period = min(sma_long, len(prices))
         volatility_prices = prices[-volatility_period:]
         avg_price = sum(volatility_prices) / len(volatility_prices)
-        variance = sum((p - avg_price) ** 2 for p in volatility_prices) / len(
-            volatility_prices
-        )
+        variance = sum((p - avg_price) ** 2 for p in volatility_prices) / len(volatility_prices)
         volatility = variance**0.5
         volatility_pct = (volatility / avg_price) * 100
 
@@ -180,9 +172,7 @@ async def get_market_momentum(
             previous_avg = sum(previous_prices) / len(previous_prices)
 
             short_term_momentum = (
-                ((recent_avg - previous_avg) / previous_avg) * 100
-                if previous_avg > 0
-                else 0
+                ((recent_avg - previous_avg) / previous_avg) * 100 if previous_avg > 0 else 0
             )
         else:
             short_term_momentum = 0

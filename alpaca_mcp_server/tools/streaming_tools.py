@@ -550,7 +550,7 @@ async def stream_aware_price_monitor(symbol: str, analysis_seconds: int = 10) ->
                         ask = float(ask_str.split("$")[1])
                         current_price = (bid + ask) / 2
                         bid_ask_spread = ask - bid
-                    except:
+                    except (ValueError, IndexError, AttributeError):
                         pass
 
         # Process trades for volume
@@ -573,7 +573,7 @@ async def stream_aware_price_monitor(symbol: str, analysis_seconds: int = 10) ->
                             volume = int(volume_part)
                             total_volume += volume
                             prices.append(price)
-                    except:
+                    except (ValueError, IndexError, AttributeError):
                         continue
 
                 volume_analysis = {
@@ -714,7 +714,7 @@ async def get_stock_stream_data(
 
                         ts = float(timestamp_str)
                         time_part = datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")[:12]
-                    except:
+                    except (ValueError, OSError):
                         time_part = timestamp_str[-12:]  # fallback
                 result += f"  {i:2d}. ${trade['price']:8.4f} x {trade['size']:,} @ {time_part}\n"
 
@@ -735,7 +735,7 @@ async def get_stock_stream_data(
 
                         ts = float(timestamp_str)
                         time_part = datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")[:12]
-                    except:
+                    except (ValueError, OSError):
                         time_part = timestamp_str[-12:]  # fallback
                 result += f"  {i:2d}. {bid} x {ask} @ {time_part}\n"
 
@@ -963,22 +963,35 @@ async def stream_optimized_order_placement(
         optimal_price = None
 
         if isinstance(stream_quotes, str) and "Recent Quotes:" in stream_quotes:
-            quote_lines = [line.strip() for line in stream_quotes.split("\n") if "$" in line]
+            quote_lines = [
+                line.strip() for line in stream_quotes.split("\n") if "$" in line and " x " in line
+            ]
             if quote_lines:
                 last_quote = quote_lines[-1]
                 try:
-                    # Extract bid/ask from format like "$20.1234 x $20.5678 @ 14:30:25"
-                    if " x " in last_quote:
-                        bid_str, ask_str = last_quote.split(" x ")[:2]
-                        bid = float(bid_str.split("$")[1])
-                        ask = float(ask_str.split("$")[1])
+                    # Extract bid/ask from format like "   1. $20.1234 x $20.5678 @ 14:30:25"
+                    # First remove the number prefix if present
+                    if ". " in last_quote:
+                        last_quote = last_quote.split(". ", 1)[1]
 
-                        # Calculate optimal limit price
-                        if side.lower() == "buy":
-                            optimal_price = bid  # Buy at bid for better fill
-                        else:
-                            optimal_price = ask  # Sell at ask for better fill
-                except Exception:
+                    # Now extract bid/ask
+                    if " x " in last_quote:
+                        parts = last_quote.split(" x ")
+                        if len(parts) >= 2:
+                            bid_str = parts[0].strip()
+                            ask_part = parts[1].split(" @")[0].strip()
+
+                            # Remove $ and convert to float
+                            bid = float(bid_str.replace("$", ""))
+                            ask = float(ask_part.replace("$", ""))
+
+                            # Calculate optimal limit price
+                            if side.lower() == "buy":
+                                optimal_price = ask  # Buy at ask for faster fill
+                            else:
+                                optimal_price = bid  # Sell at bid for faster fill
+                except Exception as e:
+                    print(f"Debug: Error parsing quote '{last_quote}': {e}")
                     pass
 
         if optimal_price is None:
@@ -992,13 +1005,21 @@ async def stream_optimized_order_placement(
             optimal_price = format_price_for_alpaca(optimal_price, optimal_price)
 
         # Execute with stream-derived pricing
+        # Determine time_in_force based on order_type parameter
+        if order_type.lower() == "ioc":
+            actual_order_type = "limit"
+            time_in_force = "ioc"
+        else:
+            actual_order_type = order_type
+            time_in_force = "day"
+
         order_result = await place_stock_order(
             symbol=symbol,
             side=side,
             quantity=quantity,
-            order_type=order_type,
-            limit_price=optimal_price if order_type == "limit" else None,
-            time_in_force="day",  # Use DAY for extended hours compatibility
+            order_type=actual_order_type,
+            limit_price=optimal_price if actual_order_type == "limit" else None,
+            time_in_force=time_in_force,
             extended_hours=True,  # Enable extended hours
         )
 

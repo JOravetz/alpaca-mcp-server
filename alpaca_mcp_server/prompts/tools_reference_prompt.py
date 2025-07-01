@@ -18,7 +18,7 @@ async def list_all_tools() -> str:
 
 Perfect for the trading lesson: **"SCAN LONGER before entry"** - provides precise entry/exit points
 - Returns BUY/LONG and SELL/SHORT signals
-- Identifies support/resistance levels  
+- Identifies support/resistance levels
 - Multi-symbol analysis in one call
 - Example: `get_stock_peak_trough_analysis("CGTL,HCTI", timeframe="1Min")`
 

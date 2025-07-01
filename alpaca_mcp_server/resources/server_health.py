@@ -1,10 +1,12 @@
 """Server health monitoring resource."""
 
-from datetime import datetime
-import psutil
 import os
 import time
-from ..config.settings import get_trading_client, get_stock_historical_client
+from datetime import datetime
+
+import psutil
+
+from ..config.settings import get_stock_historical_client, get_trading_client
 
 
 async def get_server_health() -> dict:
@@ -88,18 +90,12 @@ async def get_server_health() -> dict:
 
         # Health assessment
         healthy_connections = sum(
-            1
-            for conn in connection_status.values()
-            if conn.get("status") == "connected"
+            1 for conn in connection_status.values() if conn.get("status") == "connected"
         )
         total_connections = len(connection_status)
 
         # Overall health determination
-        if (
-            healthy_connections == total_connections
-            and memory_mb < 1000
-            and cpu_percent < 80
-        ):
+        if healthy_connections == total_connections and memory_mb < 1000 and cpu_percent < 80:
             overall_status = "healthy"
         elif healthy_connections > 0 and memory_mb < 2000 and cpu_percent < 95:
             overall_status = "degraded"
@@ -130,9 +126,7 @@ async def get_server_health() -> dict:
             "system_metrics": {
                 "system_memory_percent": round(system_memory.percent, 1),
                 "system_cpu_percent": round(system_cpu, 1),
-                "available_memory_gb": round(
-                    system_memory.available / 1024 / 1024 / 1024, 1
-                ),
+                "available_memory_gb": round(system_memory.available / 1024 / 1024 / 1024, 1),
             },
             "connection_health": {
                 "healthy_connections": healthy_connections,

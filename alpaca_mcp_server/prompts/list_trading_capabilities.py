@@ -27,7 +27,7 @@ Get started with these guided trading experiences:
 Professional-grade multi-tool orchestration:
 
 🚀 master_scanning_workflow() - Comprehensive market scanning using ALL scanner tools
-🔬 pro_technical_workflow(symbol) - Professional algorithmic analysis with peak/trough detection  
+🔬 pro_technical_workflow(symbol) - Professional algorithmic analysis with peak/trough detection
 ⏰ market_session_workflow(session) - Complete session strategy with timing analysis
 🎯 day_trading_workflow(symbol) - Complete setup analysis for any symbol
 📊 Multi-scanner synthesis with actionable opportunities
@@ -130,7 +130,7 @@ Dynamic context for intelligent decision making:
 Ready to start trading with AI assistance:
 
 - BEGIN: startup() for complete session initialization
-- DISCOVER: scan() for momentum opportunities  
+- DISCOVER: scan() for momentum opportunities
 - ANALYZE: market_analysis(["YOUR_SYMBOLS"]) for deep insights
 - MONITOR: health_check() for quick status updates
 

@@ -1,6 +1,7 @@
 """Account resources implementation."""
 
 from datetime import datetime
+
 from ..config.settings import get_trading_client
 
 

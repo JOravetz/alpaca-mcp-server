@@ -1,10 +1,8 @@
 """Trading data models and schemas for Alpaca MCP Server."""
 
 from dataclasses import dataclass
-from typing import Optional
 from datetime import datetime
 from enum import Enum
-
 
 # ============================================================================
 # Trading Data Models
@@ -37,8 +35,8 @@ class OrderDetails:
     time_in_force: str
     status: str
     filled_qty: float = 0
-    limit_price: Optional[float] = None
-    stop_price: Optional[float] = None
+    limit_price: float | None = None
+    stop_price: float | None = None
 
 
 @dataclass
@@ -48,9 +46,9 @@ class MarketData:
     symbol: str
     price: float
     timestamp: datetime
-    volume: Optional[int] = None
-    bid: Optional[float] = None
-    ask: Optional[float] = None
+    volume: int | None = None
+    bid: float | None = None
+    ask: float | None = None
 
 
 class OrderSide(Enum):

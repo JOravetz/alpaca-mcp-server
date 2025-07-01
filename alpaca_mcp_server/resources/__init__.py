@@ -1,9 +1,9 @@
 """Resources module for Alpaca MCP Server - Dynamic trading context."""
 
-from .account_resources import get_account_status
-from .position_resources import get_current_positions
-from .market_resources import get_market_conditions
 from . import help_system
+from .account_resources import get_account_status
+from .market_resources import get_market_conditions
+from .position_resources import get_current_positions
 
 __all__ = [
     "get_account_status",

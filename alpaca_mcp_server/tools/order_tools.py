@@ -1,12 +1,12 @@
 """Order management tools for Alpaca MCP Server."""
 
 import time
-from typing import Any
+from typing import Any, Optional, Union
 
 from ..config.settings import get_trading_client
 
 
-def format_price_for_alpaca(price: float, current_price: float | None = None) -> float:
+def format_price_for_alpaca(price: Optional[float], current_price: Optional[float] = None) -> Optional[float]:
     """
     Format price according to Alpaca's decimal place requirements.
 
@@ -31,7 +31,7 @@ def format_price_for_alpaca(price: float, current_price: float | None = None) ->
         return float(f"{price:.2f}")
 
 
-async def get_current_stock_price(symbol: str) -> float | None:
+async def get_current_stock_price(symbol: str) -> Optional[float]:
     """
     Get current stock price for decimal place determination.
 
@@ -61,21 +61,21 @@ async def get_current_stock_price(symbol: str) -> float | None:
 async def get_position_average_price(symbol: str) -> float | None:
     """
     Get the average entry price for a current position.
-    
+
     Args:
         symbol: Stock symbol to check
-        
+
     Returns:
         Average entry price or None if no position exists
     """
     try:
         client = get_trading_client()
         positions = client.get_all_positions()
-        
+
         for position in positions:
             if position.symbol == symbol:
                 return float(position.avg_entry_price)
-        
+
         return None
     except Exception:
         return None
@@ -84,28 +84,34 @@ async def get_position_average_price(symbol: str) -> float | None:
 async def validate_sell_order_for_profit(symbol: str, sell_price: float) -> tuple[bool, str]:
     """
     Validate that a sell order will result in a profit.
-    
+
     Args:
         symbol: Stock symbol
         sell_price: Proposed sell price
-        
+
     Returns:
         Tuple of (is_valid, message)
     """
     try:
         avg_price = await get_position_average_price(symbol)
-        
+
         if avg_price is None:
             return True, "No position found - sell order allowed"
-        
+
         if sell_price <= avg_price:
-            return False, f"❌ LOSS PREVENTION: Sell price ${sell_price:.4f} is below average cost ${avg_price:.4f}. NEVER SELL FOR A LOSS!"
-        
+            return (
+                False,
+                f"❌ LOSS PREVENTION: Sell price ${sell_price:.4f} is below average cost ${avg_price:.4f}. NEVER SELL FOR A LOSS!",
+            )
+
         profit_per_share = sell_price - avg_price
         profit_pct = (profit_per_share / avg_price) * 100
-        
-        return True, f"✅ PROFIT CONFIRMED: Sell price ${sell_price:.4f} is ${profit_per_share:.4f} (+{profit_pct:.2f}%) above cost ${avg_price:.4f}"
-        
+
+        return (
+            True,
+            f"✅ PROFIT CONFIRMED: Sell price ${sell_price:.4f} is ${profit_per_share:.4f} (+{profit_pct:.2f}%) above cost ${avg_price:.4f}",
+        )
+
     except Exception as e:
         return False, f"Error validating sell order: {str(e)}"
 

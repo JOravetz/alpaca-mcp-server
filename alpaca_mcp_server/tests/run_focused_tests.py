@@ -13,13 +13,13 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import after path modification
-from alpaca_mcp_server.prompts.master_scanning_workflow import master_scanning_workflow
-from alpaca_mcp_server.prompts.pro_technical_workflow import pro_technical_workflow
-from alpaca_mcp_server.prompts.market_session_workflow import market_session_workflow
 from alpaca_mcp_server.prompts.day_trading_workflow import day_trading_workflow
 from alpaca_mcp_server.prompts.list_trading_capabilities import (
     list_trading_capabilities,
 )
+from alpaca_mcp_server.prompts.market_session_workflow import market_session_workflow
+from alpaca_mcp_server.prompts.master_scanning_workflow import master_scanning_workflow
+from alpaca_mcp_server.prompts.pro_technical_workflow import pro_technical_workflow
 
 
 async def test_workflow_functionality():
@@ -287,9 +287,7 @@ async def run_focused_tests():
             total_passed += passed
             total_tests += total
             success_rate = (passed / total) * 100 if total > 0 else 0
-            print(
-                f"\n{suite_name} Results: {passed}/{total} passed ({success_rate:.1f}%)"
-            )
+            print(f"\n{suite_name} Results: {passed}/{total} passed ({success_rate:.1f}%)")
         except Exception as e:
             print(f"\n{suite_name} Suite Error: {e}")
 

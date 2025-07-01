@@ -1,14 +1,14 @@
 """Models module for Alpaca MCP Server."""
 
 from .schemas import (
-    # Data models
-    TradingPosition,
-    OrderDetails,
     MarketData,
+    OrderDetails,
     # Enumerations
     OrderSide,
     OrderType,
     TimeInForce,
+    # Data models
+    TradingPosition,
 )
 
 __all__ = [
