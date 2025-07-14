@@ -5,7 +5,7 @@ import threading
 import time
 from collections import defaultdict, deque
 from datetime import UTC
-from typing import Any, Dict, Optional, Set, Union
+from typing import Any
 
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.historical.option import OptionHistoricalDataClient
@@ -53,10 +53,10 @@ settings = Settings()
 # Client Factory Functions (Singleton Pattern)
 # ============================================================================
 
-_trading_client: Optional[TradingClient] = None
-_stock_historical_client: Optional[StockHistoricalDataClient] = None
-_stock_data_stream_client: Optional[StockDataStream] = None
-_option_historical_client: Optional[OptionHistoricalDataClient] = None
+_trading_client: TradingClient | None = None
+_stock_historical_client: StockHistoricalDataClient | None = None
+_stock_data_stream_client: StockDataStream | None = None
+_option_historical_client: OptionHistoricalDataClient | None = None
 
 
 def get_trading_client() -> TradingClient:
@@ -87,9 +87,9 @@ def get_stock_stream_client() -> StockDataStream:
     global _stock_data_stream_client
     if _stock_data_stream_client is None:
         _stock_data_stream_client = StockDataStream(
-            api_key=settings.api_key or "", 
-            secret_key=settings.api_secret or "", 
-            url_override=settings.stream_data_wss
+            api_key=settings.api_key or "",
+            secret_key=settings.api_secret or "",
+            url_override=settings.stream_data_wss,
         )
     return _stock_data_stream_client
 
@@ -98,6 +98,8 @@ def get_option_historical_client() -> OptionHistoricalDataClient:
     """Get or create option historical data client instance."""
     global _option_historical_client
     if _option_historical_client is None:
+        if not settings.api_key or not settings.api_secret:
+            raise ValueError("API credentials are required for option data client")
         _option_historical_client = OptionHistoricalDataClient(
             api_key=settings.api_key, secret_key=settings.api_secret
         )
@@ -108,10 +110,10 @@ def get_option_historical_client() -> OptionHistoricalDataClient:
 # Global Stock Streaming State (Alpaca allows only ONE stream connection)
 # ============================================================================
 
-_global_stock_stream: Optional[Any] = None
-_stock_stream_thread: Optional[Any] = None
+_global_stock_stream: Any | None = None
+_stock_stream_thread: Any | None = None
 _stock_stream_active: bool = False
-_stock_stream_subscriptions: Dict[str, Set[str]] = {
+_stock_stream_subscriptions: dict[str, set[str]] = {
     "trades": set(),
     "quotes": set(),
     "bars": set(),
@@ -121,11 +123,11 @@ _stock_stream_subscriptions: Dict[str, Set[str]] = {
 }
 
 # Configurable stock data buffers - no artificial limits for active stocks
-_stock_data_buffers: Dict[str, Any] = {}
+_stock_data_buffers: dict[str, Any] = {}
 _stock_stream_stats: defaultdict[str, int] = defaultdict(int)
-_stock_stream_start_time: Optional[float] = None
-_stock_stream_end_time: Optional[float] = None
-_stock_stream_config: Dict[str, Any] = {
+_stock_stream_start_time: float | None = None
+_stock_stream_end_time: float | None = None
+_stock_stream_config: dict[str, Any] = {
     "feed": "sip",
     "buffer_size": None,  # Unlimited by default
     "duration_seconds": None,  # No time limit by default
@@ -139,7 +141,7 @@ _stock_stream_config: Dict[str, Any] = {
 class ConfigurableStockDataBuffer:
     """Thread-safe buffer with configurable size limits for stock market data"""
 
-    def __init__(self, max_size: Optional[int] = None) -> None:
+    def __init__(self, max_size: int | None = None) -> None:
         """
         Initialize buffer with optional size limit.
 
@@ -197,7 +199,7 @@ class ConfigurableStockDataBuffer:
                             timestamp = float(timestamp)
                         except (ValueError, TypeError):
                             continue  # Skip invalid timestamps
-                elif isinstance(timestamp, (int, float)):
+                elif isinstance(timestamp, int | float):
                     # Already a numeric timestamp
                     pass
                 else:
@@ -211,7 +213,7 @@ class ConfigurableStockDataBuffer:
         with self.lock:
             return list(self.data)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         with self.lock:
             return {
                 "current_size": len(self.data),
@@ -228,7 +230,7 @@ class ConfigurableStockDataBuffer:
 
 
 def get_or_create_stock_buffer(
-    symbol: str, data_type: str, buffer_size: Optional[int] = None
+    symbol: str, data_type: str, buffer_size: int | None = None
 ) -> ConfigurableStockDataBuffer:
     """Get or create a buffer for a stock symbol/data_type combination"""
     buffer_key = f"{symbol}_{data_type}"
@@ -240,7 +242,7 @@ def get_or_create_stock_buffer(
         if effective_size is not None and not isinstance(effective_size, int):
             effective_size = int(effective_size) if str(effective_size).isdigit() else None
         _stock_data_buffers[buffer_key] = ConfigurableStockDataBuffer(effective_size)
-    
+
     buffer = _stock_data_buffers[buffer_key]
     if not isinstance(buffer, ConfigurableStockDataBuffer):
         # This should never happen but let's be safe

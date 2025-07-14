@@ -285,12 +285,14 @@ class StockAnalyzer:
                     signal_strength -= 2
 
             # Volatility signals
-            if volatility_data and volatility_data["volatility"] > 3.0:
-                if volume_data and volume_data["trades_zscore"] > 2.0:
-                    signals.append("HIGH_VOLATILITY_WITH_VOLUME")
-                    signal_strength += (
-                        abs(velocity_data["minute_velocity"] * 2) if velocity_data else 1
-                    )
+            if (
+                volatility_data
+                and volatility_data["volatility"] > 3.0
+                and volume_data
+                and volume_data["trades_zscore"] > 2.0
+            ):
+                signals.append("HIGH_VOLATILITY_WITH_VOLUME")
+                signal_strength += abs(velocity_data["minute_velocity"] * 2) if velocity_data else 1
 
             # Pattern signals
             price = float(snapshot.latest_trade.price or 0)

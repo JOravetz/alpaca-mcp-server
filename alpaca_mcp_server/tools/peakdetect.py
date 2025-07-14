@@ -43,11 +43,11 @@ def _pad(fft_data, pad_len):
 
     return: padded list
     """
-    l = len(fft_data)
-    n = _n(l * pad_len)
+    length = len(fft_data)
+    n = _n(length * pad_len)
     fft_data = list(fft_data)
 
-    return fft_data[: l // 2] + [0] * (2**n - l) + fft_data[l // 2 :]
+    return fft_data[: length // 2] + [0] * (2**n - length) + fft_data[length // 2 :]
 
 
 def _n(x):
@@ -237,33 +237,31 @@ def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0):
             mnpos = x
 
         # look for max
-        if y < mx - delta and mx != np.inf:
+        if y < mx - delta and mx != np.inf and y_axis[index : index + lookahead].max() < mx:
             # Maxima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index : index + lookahead].max() < mx:
-                max_peaks.append([mxpos, mx])
-                dump.append(True)
-                # set algorithm to only find minima now
-                mx = np.inf
-                mn = np.inf
-                if index + lookahead >= length:
-                    # end is within lookahead no more peaks can be found
-                    break
-                continue
+            max_peaks.append([mxpos, mx])
+            dump.append(True)
+            # set algorithm to only find minima now
+            mx = np.inf
+            mn = np.inf
+            if index + lookahead >= length:
+                # end is within lookahead no more peaks can be found
+                break
+            continue
 
         # look for min
-        if y > mn + delta and mn != -np.inf:
+        if y > mn + delta and mn != -np.inf and y_axis[index : index + lookahead].min() > mn:
             # Minima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index : index + lookahead].min() > mn:
-                min_peaks.append([mnpos, mn])
-                dump.append(False)
-                # set algorithm to only find maxima now
-                mn = -np.inf
-                mx = -np.inf
-                if index + lookahead >= length:
-                    # end is within lookahead no more peaks can be found
-                    break
+            min_peaks.append([mnpos, mn])
+            dump.append(False)
+            # set algorithm to only find maxima now
+            mn = -np.inf
+            mx = -np.inf
+            if index + lookahead >= length:
+                # end is within lookahead no more peaks can be found
+                break
 
     # Remove the false hit on the first value of the y_axis
     try:
@@ -431,7 +429,7 @@ def peakdetect_parabola(y_axis, x_axis, points=31):
         # Fallback to zero_crossing if basic detection fails
         try:
             max_raw, min_raw = peakdetect_zero_crossing(y_axis, x_axis)
-        except (ValueError, IndexError, TypeError) as e:
+        except (ValueError, IndexError, TypeError):
             # Just return the basic peaks if everything else fails
             return [basic_max_peaks, basic_min_peaks]
 
@@ -840,10 +838,10 @@ def _smooth(x, window_len=11, window="hanning"):
     s = np.r_[x[window_len - 1 : 0 : -1], x, x[-1:-window_len:-1]]
     try:
         w = window_funcs[window](window_len)
-    except KeyError:
+    except KeyError as e:
         raise ValueError(
             "Window is not one of '{}', '{}', '{}', '{}', '{}'".format(*window_funcs.keys())
-        )
+        ) from e
 
     y = np.convolve(w / w.sum(), s, mode="valid")
 
@@ -882,23 +880,22 @@ def zero_crossings(y_axis, window_len=11, window_f="hanning", offset_corrected=F
         diff = np.diff(indices)
 
         # More forgiving validation for noisy signals
-        if diff.std() / diff.mean() > 0.5:  # Increased threshold from 0.1 to 0.5
+        if (
+            diff.std() / diff.mean() > 0.5 and not offset_corrected
+        ):  # Increased threshold from 0.1 to 0.5
             # Possibly bad zero crossing, see if it's offsets
-            if not offset_corrected:
-                # Try offset correction
-                offset = np.mean([y_axis.max(), y_axis.min()])
-                try:
-                    return zero_crossings(y_axis - offset, window_len, window_f, True)
-                except ValueError:
-                    # If offset correction also fails, try increasing window size
-                    if window_len < 51:  # Cap the maximum window size
-                        try:
-                            return zero_crossings(
-                                y_axis, window_len + 10, window_f, offset_corrected
-                            )
-                        except ValueError:
-                            # If all else fails, continue with what we have
-                            pass
+            # Try offset correction
+            offset = np.mean([y_axis.max(), y_axis.min()])
+            try:
+                return zero_crossings(y_axis - offset, window_len, window_f, True)
+            except ValueError:
+                # If offset correction also fails, try increasing window size
+                if window_len < 51:  # Cap the maximum window size
+                    try:
+                        return zero_crossings(y_axis, window_len + 10, window_f, offset_corrected)
+                    except ValueError:
+                        # If all else fails, continue with what we have
+                        pass
 
     # check if any zero crossings were found
     if len(indices) < 1:

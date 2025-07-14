@@ -1,12 +1,14 @@
 """Order management tools for Alpaca MCP Server."""
 
 import time
-from typing import Any, Optional, Union
+from typing import Any
 
 from ..config.settings import get_trading_client
 
 
-def format_price_for_alpaca(price: Optional[float], current_price: Optional[float] = None) -> Optional[float]:
+def format_price_for_alpaca(
+    price: float | None, current_price: float | None = None
+) -> float | None:
     """
     Format price according to Alpaca's decimal place requirements.
 
@@ -31,7 +33,7 @@ def format_price_for_alpaca(price: Optional[float], current_price: Optional[floa
         return float(f"{price:.2f}")
 
 
-async def get_current_stock_price(symbol: str) -> Optional[float]:
+async def get_current_stock_price(symbol: str) -> float | None:
     """
     Get current stock price for decimal place determination.
 
@@ -117,15 +119,15 @@ async def validate_sell_order_for_profit(symbol: str, sell_price: float) -> tupl
 
 
 # Alpaca imports for order management
-from alpaca.common.exceptions import APIError
-from alpaca.trading.enums import (
+from alpaca.common.exceptions import APIError  # noqa: E402
+from alpaca.trading.enums import (  # noqa: E402
     OrderClass,
     OrderSide,
     OrderType,
     QueryOrderStatus,
     TimeInForce,
 )
-from alpaca.trading.requests import (
+from alpaca.trading.requests import (  # noqa: E402
     GetOrdersRequest,
     LimitOrderRequest,
     MarketOrderRequest,

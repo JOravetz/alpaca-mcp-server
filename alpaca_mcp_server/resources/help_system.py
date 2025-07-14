@@ -405,12 +405,14 @@ class HelpSystem:
 
         lines = docstring.split("\n")
         for i, line in enumerate(lines):
-            if param_name in line and (
-                "Args:" in lines[max(0, i - 5) : i] or "Parameters:" in lines[max(0, i - 5) : i]
+            if (
+                param_name in line
+                and (
+                    "Args:" in lines[max(0, i - 5) : i] or "Parameters:" in lines[max(0, i - 5) : i]
+                )
+                and ":" in line
             ):
-                # Try to extract description after parameter name
-                if ":" in line:
-                    return line.split(":", 1)[1].strip()
+                return line.split(":", 1)[1].strip()
 
         return "No description available"
 

@@ -135,9 +135,19 @@ def register_options_tools(mcp):
         limit: int = None,
     ) -> str:
         """Get option contracts for underlying symbol."""
+        from datetime import datetime
+
+        # Convert string date to date object if provided
+        parsed_expiration_date = None
+        if expiration_date:
+            try:
+                parsed_expiration_date = datetime.strptime(expiration_date, "%Y-%m-%d").date()
+            except ValueError:
+                return f"Error: Invalid date format '{expiration_date}'. Use YYYY-MM-DD format."
+
         return await options_tools.get_option_contracts(
             underlying_symbol,
-            expiration_date,
+            parsed_expiration_date,
             strike_price_gte,
             strike_price_lte,
             type,

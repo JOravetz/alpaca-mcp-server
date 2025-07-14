@@ -1,6 +1,7 @@
 """Real-time streaming tools for day trading - fixed version."""
 
 import asyncio
+import contextlib
 import os
 
 # Import the actual module for modifying variables (not the settings instance)
@@ -365,10 +366,8 @@ async def stop_global_stock_stream() -> str:
         _settings_module._stock_stream_active = False
 
         if _settings_module._global_stock_stream:
-            try:
+            with contextlib.suppress(Exception):
                 _settings_module._global_stock_stream.stop()
-            except Exception:
-                pass  # Stream might already be stopped
 
         # Get final buffer statistics
         total_buffered_items = sum(
@@ -986,16 +985,72 @@ async def stream_optimized_order_placement(
                             ask = float(ask_part.replace("$", ""))
 
                             # Calculate optimal limit price
-                            if side.lower() == "buy":
-                                optimal_price = ask  # Buy at ask for faster fill
-                            else:
-                                optimal_price = bid  # Sell at bid for faster fill
+                            optimal_price = ask if side.lower() == "buy" else bid
                 except Exception as e:
                     print(f"Debug: Error parsing quote '{last_quote}': {e}")
                     pass
 
+        # If stream data didn't provide pricing, try fallback methods
         if optimal_price is None:
-            return f"❌ Unable to determine optimal price for {symbol} from stream data"
+            print(f"Debug: Stream data failed for {symbol}, trying fallback methods...")
+
+            # Try to get real-time quote as fallback
+            try:
+                from alpaca_mcp_server.tools.market_data_tools import get_stock_quote
+
+                quote_result = await get_stock_quote(symbol)
+
+                # Parse quote data for bid/ask prices
+                if "Ask Price:" in quote_result and "Bid Price:" in quote_result:
+                    lines = quote_result.split("\n")
+                    ask_price = None
+                    bid_price = None
+
+                    for line in lines:
+                        if "Ask Price:" in line:
+                            ask_str = line.split("$")[1]
+                            ask_price = float(ask_str)
+                        elif "Bid Price:" in line:
+                            bid_str = line.split("$")[1]
+                            bid_price = float(bid_str)
+
+                    if ask_price and bid_price:
+                        optimal_price = ask_price if side.lower() == "buy" else bid_price
+                        print(f"Debug: Fallback quote pricing successful - {optimal_price}")
+            except Exception as e:
+                print(f"Debug: Quote fallback failed: {e}")
+
+            # If quote fallback failed, try snapshot as final fallback
+            if optimal_price is None:
+                try:
+                    from alpaca_mcp_server.tools.market_data_tools import get_stock_snapshots
+
+                    snapshot_result = await get_stock_snapshots(symbol)
+
+                    # Parse snapshot data for bid/ask prices
+                    if "Bid:" in snapshot_result and "Ask:" in snapshot_result:
+                        lines = snapshot_result.split("\n")
+                        ask_price = None
+                        bid_price = None
+
+                        for line in lines:
+                            if "• Ask:" in line:
+                                # Extract from format like "• Ask: $20.34 (Size: 100)"
+                                ask_part = line.split("$")[1].split(" ")[0]
+                                ask_price = float(ask_part)
+                            elif "• Bid:" in line:
+                                # Extract from format like "• Bid: $20.32 (Size: 200)"
+                                bid_part = line.split("$")[1].split(" ")[0]
+                                bid_price = float(bid_part)
+
+                        if ask_price and bid_price:
+                            optimal_price = ask_price if side.lower() == "buy" else bid_price
+                            print(f"Debug: Fallback snapshot pricing successful - {optimal_price}")
+                except Exception as e:
+                    print(f"Debug: Snapshot fallback failed: {e}")
+
+        if optimal_price is None:
+            return f"❌ Unable to determine optimal price for {symbol} from stream data or fallback methods. Ensure symbol is valid and market data is available."
 
         # Import order placement tool
         from alpaca_mcp_server.tools.order_tools import format_price_for_alpaca, place_stock_order
@@ -1023,12 +1078,18 @@ async def stream_optimized_order_placement(
             extended_hours=True,  # Enable extended hours
         )
 
+        # Determine pricing source for response
+        pricing_source = "Stream Data"
+        if "Recent Quotes:" not in str(stream_quotes):
+            pricing_source = "Fallback API"
+
         # Enhanced response with stream context
         result = "🎯 STREAM-OPTIMIZED ORDER PLACEMENT\n"
         result += "=" * 45 + "\n\n"
-        result += "📊 Stream Analysis:\n"
+        result += "📊 Pricing Analysis:\n"
         result += f"  └── Symbol: {symbol}\n"
         result += f"  └── Optimal Price: ${optimal_price:.4f}\n"
+        result += f"  └── Pricing Source: {pricing_source}\n"
         result += f"  └── Order Type: {order_type.upper()}\n"
         result += "  └── Execution: IOC (Fast Fill)\n\n"
 

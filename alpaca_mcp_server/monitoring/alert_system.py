@@ -11,7 +11,7 @@ import os
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests  # type: ignore[import-untyped]
 
@@ -30,14 +30,14 @@ class AlertSystem:
     - Future: SMS, email, audio alerts
     """
 
-    def __init__(self, channels: Optional[List[str]] = None):
+    def __init__(self, channels: list[str] | None = None):
         self.logger = logging.getLogger("alert_system")
 
         # Default channels if none specified
         self.channels = channels or ["file", "console"]
 
         # Alert history
-        self.alert_history: List[Dict[str, Any]] = []
+        self.alert_history: list[dict[str, Any]] = []
         self.alerts_sent_today = 0
 
         # Configuration
@@ -53,7 +53,11 @@ class AlertSystem:
         self.logger.info(f"AlertSystem initialized with channels: {self.channels}")
 
     async def send_alert(
-        self, title: str, message: str, priority: str = "info", metadata: Optional[Dict[str, Any]] = None
+        self,
+        title: str,
+        message: str,
+        priority: str = "info",
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Send alert through all configured channels.

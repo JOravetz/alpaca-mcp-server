@@ -6,7 +6,21 @@ from alpaca.data.enums import OptionsFeed
 from alpaca.data.requests import OptionChainRequest, OptionLatestQuoteRequest, OptionSnapshotRequest
 from alpaca.trading.enums import AssetStatus, ContractType
 
-from ..config.settings import get_option_historical_client
+
+async def test_option_client_basic(underlying_symbol: str) -> str:
+    """Test basic option client functionality."""
+    try:
+        from alpaca.data.historical.option import OptionHistoricalDataClient
+
+        from ..config.settings import settings
+
+        # Create client directly
+        client = OptionHistoricalDataClient(
+            api_key=settings.api_key, secret_key=settings.api_secret
+        )
+        return f"Option client test successful for {underlying_symbol}. Client type: {type(client)}"
+    except Exception as e:
+        return f"Option client test failed: {str(e)}"
 
 
 async def get_option_contracts(
@@ -36,8 +50,16 @@ async def get_option_contracts(
         str: Formatted string containing option contract metadata
     """
     try:
-        client = get_option_historical_client()
-        # Build request parameters dynamically to avoid unsupported args
+        from alpaca.data.historical.option import OptionHistoricalDataClient
+
+        from ..config.settings import settings
+
+        # Create client directly
+        client = OptionHistoricalDataClient(
+            api_key=settings.api_key, secret_key=settings.api_secret
+        )
+
+        # Build request with correct parameter name
         request_params = {"underlying_symbol": underlying_symbol}
         if expiration_date:
             request_params["expiration_date"] = expiration_date
@@ -45,27 +67,72 @@ async def get_option_contracts(
             request_params["strike_price_gte"] = float(strike_price_gte)
         if strike_price_lte:
             request_params["strike_price_lte"] = float(strike_price_lte)
-        # Note: contract_type and limit may not be supported in this API version
 
         request = OptionChainRequest(**request_params)
-
         contracts = client.get_option_chain(request)
 
         if not contracts:
             return f"No option contracts found for {underlying_symbol}"
 
         result = f"Option Contracts for {underlying_symbol}:\n" + "=" * 50 + "\n"
-        for contract in contracts:
+
+        # Handle contracts dict format - Debug and fix field access
+        count = 0
+        for symbol, contract_data in contracts.items():
+            if limit and count >= limit:
+                break
+
+            # Parse contract symbol for type and strike (fallback method)
+            contract_type = "N/A"
+            strike_price = "N/A"
+            expiration = "N/A"
+
+            # Extract info from symbol if contract_data doesn't have direct attributes
+            if hasattr(contract_data, "strike_price"):
+                strike_price = f"${contract_data.strike_price}"
+
+            # Force symbol parsing to always run
+            if len(symbol) >= 15:  # Standard option symbol format
+                # AAPL250801C00205000 -> 205.00 strike, Call
+                try:
+                    contract_type = (
+                        "CALL" if symbol[-9] == "C" else "PUT" if symbol[-9] == "P" else "N/A"
+                    )
+                    strike_raw = symbol[-8:]  # Last 8 digits
+                    strike_price = f"${float(strike_raw) / 1000:.2f}"
+                except Exception as e:
+                    # If parsing fails, show the error for debugging
+                    strike_price = f"Parse error: {str(e)}"
+            else:
+                strike_price = f"Symbol too short: {len(symbol)}"
+
+            if hasattr(contract_data, "expiration_date"):
+                expiration = str(contract_data.expiration_date)
+
+            # Force expiration parsing to always run
+            if len(symbol) >= 15:
+                # Extract expiration from symbol AAPL250801C00205000 -> 2025-08-01
+                try:
+                    exp_part = symbol[4:10]  # 250801
+                    year = f"20{exp_part[:2]}"
+                    month = exp_part[2:4]
+                    day = exp_part[4:6]
+                    expiration = f"{year}-{month}-{day}"
+                except Exception as e:
+                    expiration = f"Parse error: {str(e)}"
+
+            if hasattr(contract_data, "type"):
+                contract_type = str(contract_data.type)
+
             result += f"""
-Contract: {contract.symbol}
-Name: {contract.name}
-Type: {contract.type}
-Strike Price: ${contract.strike_price}
-Expiration: {contract.expiration_date}
-Status: {contract.status}
-Exchange: {contract.exchange}
+Contract: {symbol}
+Strike Price: {strike_price}
+Expiration: {expiration}
+Type: {contract_type}
 ---
 """
+            count += 1
+
         return result
 
     except Exception as e:
@@ -84,7 +151,14 @@ async def get_option_latest_quote(symbol: str, feed: OptionsFeed | None = None) 
         str: Formatted string containing the latest quote information
     """
     try:
-        client = get_option_historical_client()
+        from alpaca.data.historical.option import OptionHistoricalDataClient
+
+        from ..config.settings import settings
+
+        # Create client directly
+        client = OptionHistoricalDataClient(
+            api_key=settings.api_key, secret_key=settings.api_secret
+        )
         request = OptionLatestQuoteRequest(symbol_or_symbols=symbol, feed=feed)
 
         quote = client.get_option_latest_quote(request)
@@ -120,7 +194,15 @@ async def get_option_snapshot(symbol: str) -> str:
         str: Formatted string containing comprehensive option data
     """
     try:
-        client = get_option_historical_client()
+        from alpaca.data.historical.option import OptionHistoricalDataClient
+
+        from ..config.settings import settings
+
+        # Create client directly
+        client = OptionHistoricalDataClient(
+            api_key=settings.api_key, secret_key=settings.api_secret
+        )
+
         # Try different parameter names for OptionSnapshotRequest
         try:
             request = OptionSnapshotRequest(symbols=[symbol])

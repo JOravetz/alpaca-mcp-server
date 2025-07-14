@@ -20,6 +20,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from ..config import get_scanner_config, get_system_config, get_trading_config
+from ..tools.peak_trough_analysis_tool import analyze_peaks_and_troughs
 from .alert_system import AlertSystem
 from .auto_trader import AutoTrader
 from .desktop_notifications import DesktopNotificationService
@@ -445,7 +446,7 @@ class MonitoringServiceAPI:
             await scan_day_trading_opportunities()
             # Extract symbols from scanner result (would need to parse the formatted string)
             # For now, we'll implement without scanner rank
-        except Exception as e:
+        except Exception:
             pass
 
         for symbol in sorted(self.watchlist):
@@ -1601,30 +1602,33 @@ class MonitoringServiceAPI:
             positions_result = await get_positions()
 
             # Parse positions to check if symbol exists
-            if positions_result and isinstance(positions_result, str):
-                if f"Symbol: {symbol}" in positions_result:
-                    # Extract quantity to verify it's not zero
-                    lines = positions_result.split("\n")
-                    for i, line in enumerate(lines):
-                        if f"Symbol: {symbol}" in line:
-                            # Look for quantity in the next few lines
-                            for j in range(i + 1, min(i + 10, len(lines))):
-                                if "Quantity:" in lines[j]:
-                                    qty_str = lines[j].split("Quantity:")[1].strip()
-                                    qty = (
-                                        float(qty_str)
-                                        if qty_str.replace(".", "").replace("-", "").isdigit()
-                                        else 0
+            if (
+                positions_result
+                and isinstance(positions_result, str)
+                and f"Symbol: {symbol}" in positions_result
+            ):
+                # Extract quantity to verify it's not zero
+                lines = positions_result.split("\n")
+                for i, line in enumerate(lines):
+                    if f"Symbol: {symbol}" in line:
+                        # Look for quantity in the next few lines
+                        for j in range(i + 1, min(i + 10, len(lines))):
+                            if "Quantity:" in lines[j]:
+                                qty_str = lines[j].split("Quantity:")[1].strip()
+                                qty = (
+                                    float(qty_str)
+                                    if qty_str.replace(".", "").replace("-", "").isdigit()
+                                    else 0
+                                )
+                                if abs(qty) > 0:
+                                    self.logger.warning(
+                                        f"🚫 POSITION EXISTS: {symbol} has {qty} shares - CANNOT BUY AGAIN"
                                     )
-                                    if abs(qty) > 0:
-                                        self.logger.warning(
-                                            f"🚫 POSITION EXISTS: {symbol} has {qty} shares - CANNOT BUY AGAIN"
-                                        )
-                                        return {
-                                            "status": "position_exists",
-                                            "message": f"Already have position in {symbol}: {qty} shares",
-                                        }
-                                    break
+                                    return {
+                                        "status": "position_exists",
+                                        "message": f"Already have position in {symbol}: {qty} shares",
+                                    }
+                                break
         except Exception as e:
             self.logger.error(f"Error checking positions for {symbol}: {e}")
             return {"status": "error", "message": f"Could not verify positions: {e}"}
@@ -1818,13 +1822,16 @@ class MonitoringServiceAPI:
             )
 
             # If using AutoTrader, update its profit-required tracking
-            if hasattr(self, "auto_trader") and self.auto_trader:
+            if (
+                hasattr(self, "auto_trader")
+                and self.auto_trader
+                and symbol in self.auto_trader.profit_required_symbols
+            ):
                 # Remove from profit required since we sold for profit
-                if symbol in self.auto_trader.profit_required_symbols:
-                    self.auto_trader.profit_required_symbols.remove(symbol)
-                    self.logger.warning(
-                        f"✅ {symbol} removed from profit-required list - can buy again after profitable sale"
-                    )
+                self.auto_trader.profit_required_symbols.remove(symbol)
+                self.logger.warning(
+                    f"✅ {symbol} removed from profit-required list - can buy again after profitable sale"
+                )
 
         except Exception as e:
             self.logger.error(f"Error executing aggressive sell for {symbol}: {e}")
@@ -1988,7 +1995,7 @@ class MonitoringServiceAPI:
         try:
             await cancel_order_by_id(order_id)
             self.logger.warning(f"Cancelled order {order_id} due to timeout")
-        except Exception as e:
+        except Exception:
             pass
 
         if order_id in self.active_orders:
@@ -2142,7 +2149,7 @@ class MonitoringServiceAPI:
                 if "Bid Price:" in line:
                     price_str = line.split("Bid Price:")[1].strip().replace("$", "")
                     return float(price_str)
-        except Exception as e:
+        except Exception:
             pass
         return None
 
@@ -2442,7 +2449,7 @@ class MonitoringServiceAPI:
                 if "Ask Price:" in line:
                     price_str = line.split("Ask Price:")[1].strip().replace("$", "")
                     return float(price_str)
-        except Exception as e:
+        except Exception:
             pass
         return None
 
@@ -2454,7 +2461,7 @@ class MonitoringServiceAPI:
                 if "Bid Price:" in line:
                     price_str = line.split("Bid Price:")[1].strip().replace("$", "")
                     return float(price_str)
-        except Exception as e:
+        except Exception:
             pass
         return None
 
@@ -2481,7 +2488,7 @@ class MonitoringServiceAPI:
                         quantity = int(line.split("Quantity:")[1].strip())
 
             return entry_price, quantity
-        except Exception as e:
+        except Exception:
             pass
         return None, None
 
@@ -2496,7 +2503,7 @@ class MonitoringServiceAPI:
                     price_match = re.search(r"\$(\d+\.?\d*)", line)
                     if price_match:
                         return float(price_match.group(1))
-        except Exception as e:
+        except Exception:
             pass
         return None
 
@@ -2808,27 +2815,27 @@ class MonitoringServiceAPI:
                     if (
                         signal["signal_type"] == "fresh_trough"
                         and signal.get("bars_ago", 999) <= fresh_threshold
+                        and self.auto_trading_enabled
                     ):
                         # Process signal for auto-trading
-                        if self.auto_trading_enabled:
-                            try:
-                                trading_result = await self.process_fresh_signal_for_trading(signal)
-                                if trading_result["status"] == "success":
-                                    self.logger.warning(
-                                        f"🚀 AUTO-TRADING EXECUTED: {signal['symbol']} - {trading_result['message']}"
-                                    )
-                                elif trading_result["status"] not in [
-                                    "disabled",
-                                    "ignored",
-                                    "duplicate",
-                                ]:
-                                    self.logger.debug(
-                                        f"🔄 Auto-trading: {signal['symbol']} - {trading_result['message']}"
-                                    )
-                            except Exception as e:
-                                self.logger.error(
-                                    f"Error in auto-trading execution for {signal['symbol']}: {e}"
+                        try:
+                            trading_result = await self.process_fresh_signal_for_trading(signal)
+                            if trading_result["status"] == "success":
+                                self.logger.warning(
+                                    f"🚀 AUTO-TRADING EXECUTED: {signal['symbol']} - {trading_result['message']}"
                                 )
+                            elif trading_result["status"] not in [
+                                "disabled",
+                                "ignored",
+                                "duplicate",
+                            ]:
+                                self.logger.debug(
+                                    f"🔄 Auto-trading: {signal['symbol']} - {trading_result['message']}"
+                                )
+                        except Exception as e:
+                            self.logger.error(
+                                f"Error in auto-trading execution for {signal['symbol']}: {e}"
+                            )
 
                 # Log fresh signals found
                 trough_count = len([s for s in fresh_signals if s["signal_type"] == "fresh_trough"])
@@ -3028,7 +3035,7 @@ class MonitoringServiceAPI:
         for websocket in self.websocket_connections:
             try:
                 await websocket.send_text(message)
-            except (ConnectionResetError, ConnectionAbortedError, Exception) as e:
+            except (ConnectionResetError, ConnectionAbortedError, Exception):
                 disconnected.add(websocket)
 
         # Remove disconnected clients
@@ -3238,7 +3245,9 @@ async def update_technical_analysis_config(request: TechnicalAnalysisUpdateReque
     try:
         config.save()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save configuration: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to save configuration: {str(e)}"
+        ) from e
 
     return {
         "status": "success",
@@ -3297,7 +3306,9 @@ async def update_trading_config(request: TradingConfigUpdateRequest):
     try:
         config.save()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save configuration: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to save configuration: {str(e)}"
+        ) from e
 
     return {
         "status": "success",
@@ -3327,7 +3338,9 @@ async def reload_configuration():
             },
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to reload configuration: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to reload configuration: {str(e)}"
+        ) from e
 
 
 @app.get("/status")
@@ -3352,7 +3365,7 @@ async def get_status():
             client = get_trading_client()
             positions = client.get_all_positions()
             active_positions = len(positions) if positions else 0
-        except (ConnectionError, TimeoutError, Exception) as e:
+        except (ConnectionError, TimeoutError, Exception):
             active_positions = 0
 
         # Get signals count
@@ -3360,7 +3373,7 @@ async def get_status():
         try:
             temp_signals = await monitoring_service.get_signals()
             signals_detected_today = len(temp_signals.get("current_signals", []))
-        except Exception as e:
+        except Exception:
             pass
 
         status = ServiceStatus(

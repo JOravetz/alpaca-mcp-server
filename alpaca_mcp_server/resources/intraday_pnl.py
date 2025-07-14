@@ -64,39 +64,43 @@ async def get_intraday_pnl(
         losing_trades = 0
 
         for order in orders:
-            if order.filled_at and order.filled_at.date() == target_date:
-                if order.filled_avg_price and order.filled_qty:
-                    trade_value = float(order.filled_avg_price) * float(order.filled_qty)
+            if (
+                order.filled_at
+                and order.filled_at.date() == target_date
+                and order.filled_avg_price
+                and order.filled_qty
+            ):
+                trade_value = float(order.filled_avg_price) * float(order.filled_qty)
 
-                    # Apply minimum trade value filter
-                    if trade_value < min_trade_value:
-                        continue
+                # Apply minimum trade value filter
+                if trade_value < min_trade_value:
+                    continue
 
-                    total_volume += trade_value
+                total_volume += trade_value
 
-                    symbol = order.symbol
-                    if symbol not in trades_by_symbol:
-                        trades_by_symbol[symbol] = {
-                            "trades": [],
-                            "realized_pnl": 0,
-                            "volume": 0,
-                            "trade_count": 0,
-                        }
-
-                    trade_data = {
-                        "side": order.side.value,
-                        "qty": float(order.filled_qty),
-                        "price": float(order.filled_avg_price),
-                        "value": trade_value,
-                        "time": order.filled_at,
-                        "order_id": order.id,
+                symbol = order.symbol
+                if symbol not in trades_by_symbol:
+                    trades_by_symbol[symbol] = {
+                        "trades": [],
+                        "realized_pnl": 0,
+                        "volume": 0,
+                        "trade_count": 0,
                     }
 
-                    trades_by_symbol[symbol]["trades"].append(trade_data)
-                    trades_by_symbol[symbol]["volume"] += trade_value
-                    trades_by_symbol[symbol]["trade_count"] += 1
+                trade_data = {
+                    "side": order.side.value,
+                    "qty": float(order.filled_qty),
+                    "price": float(order.filled_avg_price),
+                    "value": trade_value,
+                    "time": order.filled_at,
+                    "order_id": order.id,
+                }
 
-                    trade_count += 1
+                trades_by_symbol[symbol]["trades"].append(trade_data)
+                trades_by_symbol[symbol]["volume"] += trade_value
+                trades_by_symbol[symbol]["trade_count"] += 1
+
+                trade_count += 1
 
         # Calculate day trades and P&L for each symbol
         for symbol, symbol_data in trades_by_symbol.items():

@@ -37,10 +37,10 @@ async def get_market_clock() -> str:
 
         # Check extended hours (4:00 AM to 8:00 PM ET)
         in_extended_hours = False
-        if is_trading_day:
-            # 4:00 AM = hour 4, 8:00 PM = hour 20
-            if 4 <= current_hour < 20 or current_hour == 20 and current_minute == 0:
-                in_extended_hours = True
+        if is_trading_day and (
+            4 <= current_hour < 20 or current_hour == 20 and current_minute == 0
+        ):
+            in_extended_hours = True
 
         # Use regular market status OR extended hours
         is_open = clock.is_open or in_extended_hours

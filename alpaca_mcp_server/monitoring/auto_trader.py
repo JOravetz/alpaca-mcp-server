@@ -687,16 +687,16 @@ class AutoTrader:
         try:
             # Get latest streaming trades to detect if we're at a peak
             stream_data = await get_stock_stream_data(symbol, "trades", limit=5, recent_seconds=10)
-            if stream_data:
-                # Check if current price is peaking (no higher recent trades)
-                if self._is_at_profit_peak(stream_data, current_price, position.entry_price):
-                    await self._execute_sell_order(
-                        symbol,
-                        position,
-                        "peak_detected",
-                        f"At profit peak: ${position.unrealized_pnl:.2f}",
-                    )
-                    return
+            if stream_data and self._is_at_profit_peak(
+                stream_data, current_price, position.entry_price
+            ):
+                await self._execute_sell_order(
+                    symbol,
+                    position,
+                    "peak_detected",
+                    f"At profit peak: ${position.unrealized_pnl:.2f}",
+                )
+                return
         except Exception as e:
             self.logger.debug(f"Stream peak detection error for {symbol}: {e}")
 
