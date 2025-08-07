@@ -1,0 +1,1 @@
+/home/jjoravet/autotrade/latest.sh
