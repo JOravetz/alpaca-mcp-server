@@ -205,26 +205,74 @@ async def get_stock_bars_intraday(
 
         if start_date and end_date:
             # User provided both dates
-            start = eastern.localize(
-                datetime.strptime(start_date, "%Y-%m-%d").replace(hour=4, minute=0)
-            )
-            end = eastern.localize(
-                datetime.strptime(end_date, "%Y-%m-%d").replace(hour=20, minute=0)
-            )
+            # Handle both YYYY-MM-DD and YYYY-MM-DDTHH:MM:SS formats
+            try:
+                if "T" in str(start_date):
+                    start = eastern.localize(
+                        datetime.strptime(str(start_date), "%Y-%m-%dT%H:%M:%S")
+                    )
+                else:
+                    start = eastern.localize(
+                        datetime.strptime(str(start_date), "%Y-%m-%d").replace(hour=4, minute=0)
+                    )
+            except ValueError:
+                # Try alternative format with just date part
+                start = eastern.localize(
+                    datetime.strptime(str(start_date).split("T")[0], "%Y-%m-%d").replace(
+                        hour=4, minute=0
+                    )
+                )
+
+            try:
+                if "T" in str(end_date):
+                    end = eastern.localize(datetime.strptime(str(end_date), "%Y-%m-%dT%H:%M:%S"))
+                else:
+                    end = eastern.localize(
+                        datetime.strptime(str(end_date), "%Y-%m-%d").replace(hour=20, minute=0)
+                    )
+            except ValueError:
+                # Try alternative format with just date part
+                end = eastern.localize(
+                    datetime.strptime(str(end_date).split("T")[0], "%Y-%m-%d").replace(
+                        hour=20, minute=0
+                    )
+                )
         elif start_date:
             # User provided start date only
-            start = eastern.localize(
-                datetime.strptime(start_date, "%Y-%m-%d").replace(hour=4, minute=0)
-            )
+            try:
+                if "T" in str(start_date):
+                    start = eastern.localize(
+                        datetime.strptime(str(start_date), "%Y-%m-%dT%H:%M:%S")
+                    )
+                else:
+                    start = eastern.localize(
+                        datetime.strptime(str(start_date), "%Y-%m-%d").replace(hour=4, minute=0)
+                    )
+            except ValueError:
+                start = eastern.localize(
+                    datetime.strptime(str(start_date).split("T")[0], "%Y-%m-%d").replace(
+                        hour=4, minute=0
+                    )
+                )
             end = datetime.now(eastern)
         elif end_date:
             # User provided end date only
-            end = eastern.localize(
-                datetime.strptime(end_date, "%Y-%m-%d").replace(hour=20, minute=0)
-            )
+            try:
+                if "T" in str(end_date):
+                    end = eastern.localize(datetime.strptime(str(end_date), "%Y-%m-%dT%H:%M:%S"))
+                else:
+                    end = eastern.localize(
+                        datetime.strptime(str(end_date), "%Y-%m-%d").replace(hour=20, minute=0)
+                    )
+            except ValueError:
+                end = eastern.localize(
+                    datetime.strptime(str(end_date).split("T")[0], "%Y-%m-%d").replace(
+                        hour=20, minute=0
+                    )
+                )
             # Default to same day
             start = eastern.localize(
-                datetime.strptime(end_date, "%Y-%m-%d").replace(hour=4, minute=0)
+                datetime.strptime(str(end_date).split("T")[0], "%Y-%m-%d").replace(hour=4, minute=0)
             )
         else:
             # No dates provided - use smart defaults

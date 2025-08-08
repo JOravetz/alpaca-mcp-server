@@ -21,7 +21,7 @@ import signal
 import sys
 import threading
 import time
-from typing import Any, List, Optional, Union
+from typing import Any
 
 from alpaca.data.enums import DataFeed
 
@@ -67,7 +67,7 @@ signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
 
-def load_symbols_from_file(file_path: str) -> List[str]:
+def load_symbols_from_file(file_path: str) -> list[str]:
     """Load stock symbols from a file (one symbol per line)
 
     Args:
@@ -88,7 +88,7 @@ def load_symbols_from_file(file_path: str) -> List[str]:
         return []
 
 
-def get_unique_symbols(cmd_symbols: List[str], file_symbols: List[str]) -> List[str]:
+def get_unique_symbols(cmd_symbols: list[str], file_symbols: list[str]) -> list[str]:
     """Combine symbols from command line and file, removing duplicates
 
     Args:

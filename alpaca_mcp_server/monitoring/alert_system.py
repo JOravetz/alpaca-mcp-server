@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import requests  # type: ignore[import-untyped]
+import requests
 
 from ..utils.timezone_utils import get_eastern_time_string
 
@@ -82,18 +82,23 @@ class AlertSystem:
 
             # Send through each configured channel
             tasks = []
+            channels_used = []
 
             if "file" in self.channels:
                 tasks.append(self._send_file_alert(alert))
+                channels_used.append("file")
 
             if "console" in self.channels:
                 tasks.append(self._send_console_alert(alert))
+                channels_used.append("console")
 
             if "desktop" in self.channels:
                 tasks.append(self._send_desktop_alert(alert))
+                channels_used.append("desktop")
 
             if "discord" in self.channels and self.discord_webhook:
                 tasks.append(self._send_discord_alert(alert))
+                channels_used.append("discord")
 
             # Execute all alert tasks concurrently
             results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -101,7 +106,7 @@ class AlertSystem:
             # Track which channels succeeded
             for i, result in enumerate(results):
                 if not isinstance(result, Exception):
-                    alert["channels_sent"].append(self.channels[i])
+                    alert["channels_sent"].append(channels_used[i])
 
             # Add to history
             self.alert_history.append(alert)

@@ -1,79 +1,181 @@
-# Environment and secrets - CRITICAL: Never commit sensitive data
+# ============================================
+# SECRETS & CREDENTIALS - NEVER COMMIT
+# ============================================
 .env
-.env.local
-.env.production
-.env.development
-.env.test
+.env.*
+!.env.example
 *.secret
 *.key
 *.pem
-secret.py
-secrets/
-credentials/
-config.json
 *.credentials
 api_keys.txt
-.secrets/
-
-# Allow example/template files
-!.env.example
-!.mcp.json.example
+secrets/
+credentials/
+config/local_config.json
+config/prod_config.json
+# Allow templates
 !*.example
+!*.template
 
-# Python
+# ============================================
+# PYTHON
+# ============================================
 __pycache__/
 *.py[cod]
+*$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+*.cover
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ============================================
+# VIRTUAL ENVIRONMENTS
+# ============================================
 env/
 venv/
+ENV/
 .venv/
-*.egg-info/
-dist/
-build/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Claude Code specific
-CLAUDE.md
-.claude/
+# ============================================
+# LOGS & TEMPORARY FILES
+# ============================================
+*.log
+logs/archive/
+logs/*.log
+!logs/.gitkeep
+monitoring_service.pid
+*.pid
 
-# Development and backup files
-*.backup*
-*.bak
-*.tmp
-*.temp
-bub.sh
-main.py
-test_*.py
+# Temporary analysis files
+real_time_analysis_*.json
+output.avo.2*.dat
+combined.sorted.*.lis
+*_proof.json
+previous_results.json
+market_analysis.json
+momentum_rss.json
+analyzer_stderr*.log
 
-# Project temporary analysis files
-alpaca_implementation_plan.txt
-alpaca_mcp_review.txt
-current_tools.txt
-original_tools.txt
-analyze_alpaca_for_prompts.sh
-extract_alpaca_files.sh
+# ============================================
+# BACKUPS (Optional - you may want to track)
+# ============================================
+# Uncomment if you don't want to track backups
+# */backup/
+# backup/
+# *.backup
+# *.bak
+# *.bakup
+# *.old
+# *.orig
+# *.new
 
-# UV package manager
-uv.lock
+# ============================================
+# DATABASE
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+!stock_data.db  # Keep this if it's essential
 
-# IDE
+# ============================================
+# IDE & EDITORS
+# ============================================
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
 
-# OS
+# ============================================
+# OS FILES
+# ============================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# MCP configuration (user-specific)
+# ============================================
+# PROJECT SPECIFIC
+# ============================================
+# MCP/Claude specific
+.claude/
 .mcp.json
+!.mcp.json.example
 
-# Personal data and user-specific files
+# UV package manager (keep lock file)
+# Comment out if you want to track uv.lock
+# uv.lock
+
+# Monitoring data (sensitive)
+monitoring_data/screenshots/*.png
+monitoring_data/screenshots/*.jpg
+!monitoring_data/screenshots/.gitkeep
+
+# Old documentation (if you want to ignore)
+# docs_old/
+
+# Misc files to ignore
+stuff
 *.personal
 *.private
 user_data/
-logs/
-*.log
-debug.log
-error.log
+
+# Compiled binaries (track in bin/)
+# Don't ignore bin/ directory
+!bin/
+!bin/*
+
+# ============================================
+# GENERATED FILES
+# ============================================
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.dll
+*.dylib
+
+# ============================================
+# TESTING
+# ============================================
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage

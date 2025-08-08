@@ -85,7 +85,7 @@ async def cleanup_server(
     ]
 
     for pattern in preserve_patterns:
-        preserved_files.extend(project_root.glob(pattern))
+        preserved_files.extend(str(p) for p in project_root.glob(pattern))
 
     # Remove duplicates and sort
     files_to_delete = sorted(set(files_to_delete))
@@ -119,7 +119,7 @@ async def cleanup_server(
 
     if not dry_run:
         # Delete files
-        for file_path, size in file_details:
+        for file_path, _size in file_details:
             try:
                 if file_path.exists():
                     file_path.unlink()
@@ -128,7 +128,7 @@ async def cleanup_server(
                 errors.append(f"Error deleting {file_path}: {str(e)}")
 
         # Delete directories
-        for dir_path, size in dir_details:
+        for dir_path, _size in dir_details:
             try:
                 if dir_path.exists():
                     shutil.rmtree(dir_path)

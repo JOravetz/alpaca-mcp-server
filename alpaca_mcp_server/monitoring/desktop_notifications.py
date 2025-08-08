@@ -57,7 +57,7 @@ class DesktopNotificationService:
     - Fallback: terminal bell and logging
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger("desktop_notifications")
         self.platform = platform.system().lower()
         self.notification_history: list[dict] = []
@@ -76,7 +76,7 @@ class DesktopNotificationService:
 
         self.logger.info(f"Desktop notification service initialized for {self.platform}")
 
-    def _check_notification_support(self):
+    def _check_notification_support(self) -> None:
         """Check if desktop notifications are supported on this platform"""
         try:
             if self.platform == "linux":
@@ -93,7 +93,7 @@ class DesktopNotificationService:
             elif self.platform == "windows":
                 # Check for Windows toast notification support
                 try:
-                    import win10toast
+                    import win10toast  # noqa: F401
 
                     self.logger.info("Windows toast notifications available")
                 except ImportError:
@@ -267,7 +267,7 @@ class DesktopNotificationService:
             self.logger.error(f"Error in fallback notification: {e}")
             return False
 
-    async def _save_notification_to_file(self, notification_record: dict):
+    async def _save_notification_to_file(self, notification_record: dict) -> None:
         """Save notification to JSON file for visibility"""
         try:
             # Save to monitoring_data/alerts/notifications.json
@@ -421,12 +421,12 @@ class DesktopNotificationService:
         """Get recent notification history"""
         return self.notification_history.copy()
 
-    def enable_notifications(self):
+    def enable_notifications(self) -> None:
         """Enable desktop notifications"""
         self.enabled = True
         self.logger.info("Desktop notifications enabled")
 
-    def disable_notifications(self):
+    def disable_notifications(self) -> None:
         """Disable desktop notifications"""
         self.enabled = False
         self.logger.info("Desktop notifications disabled")

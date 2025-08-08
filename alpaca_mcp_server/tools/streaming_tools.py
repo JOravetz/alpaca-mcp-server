@@ -16,8 +16,7 @@ from alpaca.data.live import StockDataStream
 
 # Import all streaming state variables directly from settings module
 from alpaca_mcp_server.config.settings import (
-    # Classes and functions
-    get_or_create_stock_buffer as _get_or_create_stock_buffer,
+    get_or_create_stock_buffer as _get_or_create_stock_buffer,  # Classes and functions
 )
 
 # Get the actual module from sys.modules to avoid the Settings instance shadowing

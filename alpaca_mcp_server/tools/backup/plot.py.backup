@@ -4,19 +4,21 @@ Multi-Symbol Peak Detection Script with NumPy Arrays and Date/Time Display
 Restructured to use numpy arrays instead of pandas and display actual dates/times
 """
 
-import os
-import sys
 import logging
-import numpy as np
-import pandas as pd
-import requests
+import os
 import subprocess
+import sys
 import tempfile
 import threading
 import webbrowser
 from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
+import requests
 from scipy.signal import filtfilt
 from scipy.signal.windows import hann as hanning
+
 try:
     import pandas_market_calendars as mcal
     HAS_MARKET_CALENDARS = True
@@ -30,9 +32,10 @@ except ImportError:
 
 # Set matplotlib backend BEFORE any other matplotlib imports
 import matplotlib
-# Default to headless for server environments - backend selection happens after arg parsing
-matplotlib.use('Agg')
-INTERACTIVE_BACKEND = False
+
+# Default to interactive - backend selection happens after arg parsing
+matplotlib.use('TkAgg')
+INTERACTIVE_BACKEND = True
 
 def setup_backend_for_args(no_plot=False):
     """Setup backend based on user arguments"""
@@ -41,15 +44,14 @@ def setup_backend_for_args(no_plot=False):
         matplotlib.use('Agg', force=True)
         INTERACTIVE_BACKEND = False
     else:
-        # Use Agg backend for headless environments, save files for ImageMagick display
-        matplotlib.use('Agg', force=True)
-        INTERACTIVE_BACKEND = False
+        # Keep TkAgg for interactive plotting
+        INTERACTIVE_BACKEND = True
 
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import pytz
 from dateutil import parser as date_parser
 from dateutil import tz
-import pytz
 
 # Add current directory to path to import peakdetect
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -81,17 +83,11 @@ class MCPPlotManager:
                 logger.info(f"Displaying interactive plot for {filepath}")
                 plt.show(block=False)  # Non-blocking show for interactive display
             else:
-                # For non-interactive backends, save to file and open in browser
+                # For non-interactive backends, save to file
                 logger.info(f"Saving plot to {filepath}")
-                fig.savefig(filepath, dpi=100, 
-                           facecolor='#212529', edgecolor='#212529', transparent=False)
+                fig.savefig(filepath, dpi=100, bbox_inches='tight', 
+                           facecolor='#212529', edgecolor='none')
                 plt.close(fig)  # Close figure to free memory
-                # Open in browser for better display
-                try:
-                    webbrowser.open(f'file://{filepath}')
-                    logger.info(f"Opened plot in browser: {filepath}")
-                except Exception as e:
-                    logger.warning(f"Could not open browser: {e}")
             self.generated_plots.append(filepath)
             return True
         except Exception as e:
@@ -279,18 +275,11 @@ def interpolate_to_uniform_grid(timestamps, prices, timeframe):
     """
     Use pandas market calendar to create uniform sampling during market hours,
     then fill gaps using forward/backward fill methods.
-    
-    For daily timeframes, skip interpolation and use original data directly.
     """
     # Convert timestamps to datetime objects with timezone
     original_times = [parse_timestamp_to_datetime(ts) for ts in timestamps]
     
-    # For daily timeframes, skip market calendar interpolation
-    if timeframe == '1Day':
-        logger.info(f"Daily timeframe detected - using original data without interpolation")
-        return timestamps, prices, original_times
-    
-    # Create market calendar DataFrame for intraday timeframes only
+    # Create market calendar DataFrame
     market_df = create_market_calendar_dataframe(timestamps, timeframe)
     
     if market_df.empty:
@@ -1206,7 +1195,6 @@ def plot_single_symbol(results):
     # Professional dark bootstrap theme
     plt.style.use("dark_background")
     fig, ax = plt.subplots(figsize=(16, 10), facecolor='#212529')
-    fig.patch.set_facecolor('#212529')  # Ensure figure background is solid
     ax.set_facecolor('#343a40')
 
     # Use continuous sample indices for x-axis (no time gaps)
@@ -1432,52 +1420,81 @@ def plot_single_symbol(results):
         "Time Range: {} to {}"
     ).format(price_min, price_max, noise_reduction, len(peaks), len(troughs), start_time, end_time)
 
-    # Simple positioning: Stats in left corner, Legend uses matplotlib's automatic 'best' positioning
-    def find_best_stats_position(original_prices, sample_indices):
-        """Find the best left corner for stats box to avoid data overlap"""
+    # Intelligent auto-placement of legend and stats box
+    def find_best_legend_position(ax, original_prices, sample_indices):
+        """Find the best position for legend and stats to avoid data overlap"""
         
+        # Divide plot into regions and calculate data density
         total_samples = len(sample_indices)
+        
+        # Define only corner regions for legend placement (user requirement)
+        corner_regions = {
+            'upper_left': (0.0, 0.33, 0.66, 1.0),     # x: 0-33%, y: 66-100%
+            'upper_right': (0.66, 1.0, 0.66, 1.0),    # x: 66-100%, y: 66-100%
+            'lower_left': (0.0, 0.33, 0.0, 0.33),     # x: 0-33%, y: 0-33%
+            'lower_right': (0.66, 1.0, 0.0, 0.33),    # x: 66-100%, y: 0-33%
+        }
+        
+        # All regions for stats box placement
+        all_regions = {
+            'upper_left': (0.0, 0.33, 0.66, 1.0),     # x: 0-33%, y: 66-100%
+            'upper_center': (0.33, 0.66, 0.66, 1.0),  # x: 33-66%, y: 66-100%
+            'upper_right': (0.66, 1.0, 0.66, 1.0),    # x: 66-100%, y: 66-100%
+            'middle_left': (0.0, 0.33, 0.33, 0.66),   # x: 0-33%, y: 33-66%
+            'middle_center': (0.33, 0.66, 0.33, 0.66), # x: 33-66%, y: 33-66%
+            'middle_right': (0.66, 1.0, 0.33, 0.66),  # x: 66-100%, y: 33-66%
+            'lower_left': (0.0, 0.33, 0.0, 0.33),     # x: 0-33%, y: 0-33%
+            'lower_center': (0.33, 0.66, 0.0, 0.33),  # x: 33-66%, y: 0-33%
+            'lower_right': (0.66, 1.0, 0.0, 0.33),    # x: 66-100%, y: 0-33%
+        }
+        
+        # Calculate data density in each region
         y_min, y_max = original_prices.min(), original_prices.max()
         y_range = y_max - y_min
         
-        # Only check left corners for stats box
-        left_corners = {
-            'upper_left': (0.0, 0.33, 0.66, 1.0),     # x: 0-33%, y: 66-100%
-            'lower_left': (0.0, 0.33, 0.0, 0.33),     # x: 0-33%, y: 0-33%
-        }
+        def calculate_region_density(regions_dict):
+            region_scores = {}
+            for region_name, (x_min, x_max, y_min_norm, y_max_norm) in regions_dict.items():
+                # Convert normalized coordinates to actual indices and prices
+                x_start = int(x_min * total_samples)
+                x_end = int(x_max * total_samples)
+                y_start = y_min + y_min_norm * y_range
+                y_end = y_min + y_max_norm * y_range
+                
+                # Count data points in this region
+                data_in_region = 0
+                if x_end > x_start:
+                    region_data = original_prices[x_start:x_end]
+                    data_in_region = np.sum((region_data >= y_start) & (region_data <= y_end))
+                
+                # Calculate density (points per unit area)
+                area = (x_max - x_min) * (y_max_norm - y_min_norm)
+                density = data_in_region / area if area > 0 else float('inf')
+                
+                region_scores[region_name] = density
+            return region_scores
         
-        # Calculate data density in each left corner
-        left_scores = {}
-        for region_name, (x_min, x_max, y_min_norm, y_max_norm) in left_corners.items():
-            # Convert normalized coordinates to actual indices and prices
-            x_start = int(x_min * total_samples)
-            x_end = int(x_max * total_samples)
-            y_start = y_min + y_min_norm * y_range
-            y_end = y_min + y_max_norm * y_range
-            
-            # Count data points in this region
-            data_in_region = 0
-            if x_end > x_start:
-                region_data = original_prices[x_start:x_end]
-                data_in_region = np.sum((region_data >= y_start) & (region_data <= y_end))
-            
-            # Calculate density (points per unit area)
-            area = (x_max - x_min) * (y_max_norm - y_min_norm)
-            density = data_in_region / area if area > 0 else float('inf')
-            
-            left_scores[region_name] = density
+        # NEW STRATEGY: Stats box in LEFT corners, Legend in RIGHT corners
         
-        # Choose the left corner with lowest data density
+        # Left corners for stats box (away from recent data)
+        left_corners = {k: v for k, v in corner_regions.items() if k.endswith('_left')}
+        # Right corners for legend (where recent data activity is lower)
+        right_corners = {k: v for k, v in corner_regions.items() if k.endswith('_right')}
+        
+        # Calculate density for left corners (stats box)
+        left_scores = calculate_region_density(left_corners)
         left_corners_sorted = sorted(left_scores.items(), key=lambda x: x[1])
         best_stats_corner = left_corners_sorted[0][0]
         
-        logger.info(f"Stats placement: {best_stats_corner} (density score: {left_scores[best_stats_corner]:.1f})")
-        logger.info(f"Legend placement: matplotlib 'best' automatic positioning")
+        # Calculate density for right corners (legend)
+        right_scores = calculate_region_density(right_corners)
+        right_corners_sorted = sorted(right_scores.items(), key=lambda x: x[1])
+        best_legend_corner = right_corners_sorted[0][0]
         
-        return best_stats_corner
+        return best_legend_corner, best_stats_corner
 
-    # Get optimal stats position (legend will use matplotlib's automatic positioning)
-    stats_region = find_best_stats_position(original_prices, sample_indices)
+    # Get optimal positions
+    legend_region, stats_region = find_best_legend_position(ax, original_prices, sample_indices)
     
     # Map regions to matplotlib positions with precise corner placement
     corner_positions = {
@@ -1520,15 +1537,23 @@ def plot_single_symbol(results):
         'lower_center': (0.50, 0.02, 'center', 'bottom'),
     }
     
-    # Professional positioning with proper spacing from borders
-    legend_gap_x = 0.02  # Legend horizontal gap from border
-    legend_gap_y = 0.02  # Legend vertical gap from border
-    stats_gap_x = 0.02   # Stats box horizontal gap from border
-    stats_gap_y = 0.04   # Stats box vertical gap from border (slightly more for better visibility)
+    # Professional corner positioning with proper spacing from borders
+    stats_gap_x = 0.02   # Stats box horizontal gap from left border
+    stats_gap_y = 0.04   # Stats box vertical gap from top/bottom border (moved down/up)
+    legend_gap_x = 0.02  # Legend horizontal gap from right border (reverted to fit nicely in corner)
+    legend_gap_y = 0.02  # Legend vertical gap from top/bottom border (reverted to original)
     
-    # Legend placement: Use matplotlib's automatic 'best' positioning to avoid data overlap
+    # Place legend in right corner (either upper or lower right based on data density)
+    if legend_region == 'upper_right':
+        legend_loc = 'upper right'
+        legend_bbox = (1.0 - legend_gap_x, 1.0 - legend_gap_y)
+    else:  # 'lower_right'
+        legend_loc = 'lower right'
+        legend_bbox = (1.0 - legend_gap_x, legend_gap_y)
+    
     legend = ax.legend(
-        loc='best',  # Automatic positioning to minimize data overlap
+        loc=legend_loc, 
+        bbox_to_anchor=legend_bbox,
         frameon=True, 
         fancybox=True, 
         shadow=True, 
@@ -1543,15 +1568,13 @@ def plot_single_symbol(results):
     for text in legend.get_texts():
         text.set_color(bootstrap_colors['light'])
     
-    # Stats box placement: LEFT corners only (upper_left or lower_left)
+    # Place stats box in left corner with proper spacing from borders
     if stats_region == 'upper_left':
         stats_bbox = (stats_gap_x, 1.0 - stats_gap_y)
         stats_va = 'top'
-        stats_ha = 'left'
-    else:  # stats_region == 'lower_left'
+    else:  # 'lower_left'
         stats_bbox = (stats_gap_x, stats_gap_y)
         stats_va = 'bottom'
-        stats_ha = 'left'
     
     ax.text(
         stats_bbox[0], stats_bbox[1],
@@ -1560,7 +1583,7 @@ def plot_single_symbol(results):
         fontsize=11,
         fontweight='bold',
         verticalalignment=stats_va,
-        horizontalalignment=stats_ha,
+        horizontalalignment='left',
         color=bootstrap_colors['light'],
         bbox=dict(
             boxstyle="round,pad=0.6", 
@@ -1602,9 +1625,9 @@ def plot_single_symbol(results):
     # Professional layout with padding
     plt.tight_layout(pad=3.0)
     
-    # Add solid background - no transparency
+    # Add subtle background gradient effect
     fig.patch.set_facecolor('#212529')
-    fig.patch.set_alpha(1.0)
+    fig.patch.set_alpha(0.95)
 
     # Show interactive plot with professional styling
     filepath = mcp_plot_manager.generate_filename(symbol)
@@ -1716,7 +1739,7 @@ def main():
         "-d",
         type=int,
         default=1,
-        help="Number of trading days to fetch (1-30 for intraday, 1-2520 for daily)",
+        help="Number of trading days to fetch (1-30)",
     )
 
     parser.add_argument(
@@ -1778,16 +1801,9 @@ def main():
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    # Validate arguments - timeframe-aware limits
-    if args.timeframe == "1Day":
-        max_days = 2520  # ~10 years for daily analysis
-    elif args.timeframe in ["1Hour", "2Hour", "4Hour"]:
-        max_days = 90    # 3 months for hourly
-    else:  # Intraday timeframes (1Min, 5Min, etc.)
-        max_days = 30    # Current limit for intraday
-        
-    if args.days < 1 or args.days > max_days:
-        logger.error(f"Days must be between 1 and {max_days} for {args.timeframe} timeframe")
+    # Validate arguments
+    if args.days < 1 or args.days > 30:
+        logger.error("Days must be between 1 and 30")
         sys.exit(1)
 
     if args.window < 3 or args.window > 101:

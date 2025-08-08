@@ -1,10 +1,9 @@
 """Timezone utilities for consistent Eastern time handling across the application."""
 
 from datetime import UTC, datetime, timedelta, timezone
-from typing import Tuple
 
 
-def get_eastern_time() -> Tuple[datetime, str]:
+def get_eastern_time() -> tuple[datetime, str]:
     """
     Get current time in Eastern timezone (EDT/EST).
 
@@ -16,7 +15,6 @@ def get_eastern_time() -> Tuple[datetime, str]:
 
     # Accurate DST check for Eastern timezone:
     # DST starts 2nd Sunday in March, ends 1st Sunday in November
-    year = utc_now.year
     month = utc_now.month
     day = utc_now.day
 

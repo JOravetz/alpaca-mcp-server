@@ -77,8 +77,7 @@ async def get_option_contracts(
         result = f"Option Contracts for {underlying_symbol}:\n" + "=" * 50 + "\n"
 
         # Handle contracts dict format - Debug and fix field access
-        count = 0
-        for symbol, contract_data in contracts.items():
+        for count, (symbol, contract_data) in enumerate(contracts.items()):
             if limit and count >= limit:
                 break
 
@@ -131,7 +130,6 @@ Expiration: {expiration}
 Type: {contract_type}
 ---
 """
-            count += 1
 
         return result
 

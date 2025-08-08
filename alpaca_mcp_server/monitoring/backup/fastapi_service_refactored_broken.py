@@ -269,14 +269,14 @@ def create_app() -> FastAPI:
         if hasattr(monitoring_service, "position_tracker") and monitoring_service.position_tracker:
             try:
                 positions = monitoring_service.position_tracker.get_all_positions()
-            except (AttributeError, ConnectionError, Exception) as e:
+            except (AttributeError, ConnectionError, Exception):
                 positions = {}
 
         signals = {}
         if hasattr(monitoring_service, "signal_detector") and monitoring_service.signal_detector:
             try:
                 signals = monitoring_service.signal_detector.active_signals
-            except (AttributeError, KeyError, Exception) as e:
+            except (AttributeError, KeyError, Exception):
                 signals = {}
 
         # Get configuration parameters
@@ -471,7 +471,7 @@ def create_app() -> FastAPI:
                                             price = float(price_str)
                                             if price > max_price:
                                                 symbols_to_remove.append(symbol)
-                                        except (ValueError, TypeError) as e:
+                                        except (ValueError, TypeError):
                                             pass
                                         break
                                 break

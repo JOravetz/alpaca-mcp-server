@@ -1,7 +1,6 @@
 """Configuration module for Alpaca MCP Server."""
 
-from .global_config import (
-    # Global configuration
+from .global_config import (  # Global configuration
     get_global_config,
     get_market_hours_config,
     get_scanner_config,
@@ -10,14 +9,12 @@ from .global_config import (
     get_trading_config,
     reload_global_config,
 )
-from .settings import (
+from .settings import (  # Client factory functions; Settings
     Settings,
     get_option_historical_client,
     get_stock_historical_client,
     get_stock_stream_client,
-    # Client factory functions
     get_trading_client,
-    # Settings
     settings,
 )
 

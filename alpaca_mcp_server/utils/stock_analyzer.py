@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 from datetime import datetime, time
-from typing import Any, Dict, List, Optional
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import requests  # type: ignore[import-untyped]
@@ -17,7 +17,7 @@ def is_premarket(current_time: datetime) -> bool:
     return premarket_start <= current_time.time() < market_open
 
 
-def load_previous_results() -> Dict[str, Any]:
+def load_previous_results() -> dict[str, Any]:
     if not os.path.exists("previous_results.json"):
         try:
             with open("previous_results.json", "w") as f:
@@ -32,7 +32,7 @@ def load_previous_results() -> Dict[str, Any]:
         return {}
 
 
-def save_current_results(results: List[Dict[str, Any]]) -> None:
+def save_current_results(results: list[dict[str, Any]]) -> None:
     results_dict = {
         result["symbol"]: {
             "gradient_recent": result["gradient_recent"],
@@ -45,7 +45,7 @@ def save_current_results(results: List[Dict[str, Any]]) -> None:
         json.dump(results_dict, f)
 
 
-def generate_html(results: List[Dict[str, Any]], timestamp: str) -> str:
+def generate_html(results: list[dict[str, Any]], timestamp: str) -> str:
     html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -241,7 +241,7 @@ def run(args: argparse.Namespace) -> None:
         "APCA-API-KEY-ID": API_KEY_ID,
         "APCA-API-SECRET-KEY": SECRET_KEY_ID,
     }
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=30)
     snapshots = response.json()
     results = []
 
@@ -305,8 +305,14 @@ def run(args: argparse.Namespace) -> None:
     try:
         with open("latest.html", "w") as f:
             f.write(html_content)
-        os.system(
-            "scp -q latest.html stockminer@www.stockminer.net:/home/71/00/8200071/public_html/latest/index.html"
+        # Use subprocess instead of os.system for security
+        import subprocess
+        subprocess.run(
+            [
+                "scp", "-q", "latest.html",
+                "stockminer@www.stockminer.net:/home/71/00/8200071/public_html/latest/index.html"
+            ],
+            check=True
         )
         print(f"Updated {timestamp}")
     except Exception as e:

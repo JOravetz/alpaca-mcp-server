@@ -152,7 +152,7 @@ async def add_symbols_to_watchlist(request: AddSymbolsRequest):
 
     except Exception as e:
         service.logger.error(f"Error adding symbols: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.post("/watchlist/remove")
@@ -181,7 +181,7 @@ async def remove_symbols_from_watchlist(request: RemoveSymbolsRequest):
 
     except Exception as e:
         service.logger.error(f"Error removing symbols: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.get("/watchlist")
@@ -197,7 +197,7 @@ async def get_watchlist():
         }
     except Exception as e:
         service.logger.error(f"Error getting watchlist: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.get("/watchlist/analysis")
@@ -235,7 +235,7 @@ async def get_positions():
         }
     except Exception as e:
         service.logger.error(f"Error getting positions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.post("/positions/check")
@@ -261,7 +261,7 @@ async def check_positions_after_order(request: OrderCheckRequest):
         }
     except Exception as e:
         service.logger.error(f"Error checking positions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.get("/signals")
@@ -283,7 +283,7 @@ async def get_signals():
         }
     except Exception as e:
         service.logger.error(f"Error getting signals: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.post("/config/technical")
@@ -319,8 +319,8 @@ async def sync_watchlist_with_scanner(request: ScanSyncRequest):
             "symbols_added": 0,
             "symbols_removed": 0,
         }
-    except Exception:
-        raise HTTPException(status_code=503, detail="Scanner service not available")
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="Scanner service not available") from e
 
 
 @api_router.get("/watchlist/auto-scan")
@@ -355,7 +355,7 @@ async def configure_auto_scan(request: AutoScanConfigRequest):
         }
     except Exception as e:
         service.logger.error(f"Error configuring auto-scan: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.post("/orders")
@@ -376,7 +376,7 @@ async def place_order(request: OrderRequest):
         }
     except Exception as e:
         service.logger.error(f"Error placing order: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.get("/streaming/status")
@@ -427,7 +427,7 @@ async def request_trade_confirmation(request: TradeConfirmationRequest):
         }
     except Exception as e:
         service.logger.error(f"Error requesting trade confirmation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.post("/trades/confirm-execution")
@@ -443,7 +443,7 @@ async def confirm_trade_execution(request: ConfirmExecutionRequest):
         }
     except Exception as e:
         service.logger.error(f"Error confirming trade execution: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.get("/trades/confirmations")
@@ -454,7 +454,7 @@ async def get_trade_confirmations():
         return {"status": "success", "confirmations": [], "count": 0}
     except Exception as e:
         service.logger.error(f"Error getting trade confirmations: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.get("/trades/confirmations/{trade_id}")
@@ -470,7 +470,7 @@ async def get_specific_trade_confirmation(trade_id: str):
         }
     except Exception as e:
         service.logger.error(f"Error getting trade confirmation: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.get("/notifications/status")
@@ -485,7 +485,7 @@ async def get_notifications_status():
         }
     except Exception as e:
         service.logger.error(f"Error getting notification status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @api_router.get("/notifications/history")
@@ -496,7 +496,7 @@ async def get_notifications_history():
         return {"status": "success", "notifications": [], "count": 0}
     except Exception as e:
         service.logger.error(f"Error getting notification history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 def create_app() -> FastAPI:

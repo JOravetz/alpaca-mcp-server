@@ -9,12 +9,12 @@ import os
 import sys
 from pathlib import Path
 
+# Import global configuration
+from ..config import get_technical_config
+
 # Add project root to path to import plot.py
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
-
-# Import global configuration
-from ..config import get_technical_config
 
 logger = logging.getLogger(__name__)
 

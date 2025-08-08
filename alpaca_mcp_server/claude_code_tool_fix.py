@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +57,8 @@ def force_claude_code_protocol_compliance(mcp: Any) -> Any:
 def add_claude_code_debug_tools(mcp: Any) -> Any:
     """Add debug tools specifically for Claude Code integration testing."""
 
-    @mcp.tool()
-    async def debug_list_tools() -> Dict[str, Any]:
+    @mcp.tool()  # type: ignore[misc]
+    async def debug_list_tools() -> dict[str, Any]:
         """Debug tool to list all registered tools in the MCP server."""
         if hasattr(mcp, "_tools"):
             return {
@@ -68,8 +68,8 @@ def add_claude_code_debug_tools(mcp: Any) -> Any:
             }
         return {"error": "No tools found", "tool_count": 0}
 
-    @mcp.tool()
-    async def debug_server_info() -> Dict[str, Any]:
+    @mcp.tool()  # type: ignore[misc]
+    async def debug_server_info() -> dict[str, Any]:
         """Debug tool to get MCP server information."""
         info = {
             "server_name": getattr(mcp, "name", "unknown"),

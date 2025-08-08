@@ -2,7 +2,6 @@ import argparse
 import os
 import re
 import sys
-from typing import Optional
 
 import pandas as pd  # type: ignore[import-untyped]
 from alpaca_trade_api.rest import REST  # type: ignore
@@ -26,7 +25,7 @@ class TickerList:
             )
 
         # Initialize REST API client lazily
-        self._rest_api: Optional[REST] = None
+        self._rest_api: REST | None = None
 
     @property
     def rest_api(self) -> REST:

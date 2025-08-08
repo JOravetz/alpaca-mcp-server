@@ -6,6 +6,7 @@ from ..prompts import (
     position_management_prompt,
     scan_prompt,
     startup_prompt,
+    stock_news_prompt,
     tools_reference_prompt,
 )
 
@@ -55,6 +56,19 @@ def register_core_prompts(mcp):
         For custom parameters, use the scan_day_trading_opportunities tool directly.
         """
         return await scan_prompt.scan(500, 20, "combined.lis")
+
+    @mcp.prompt()
+    async def stock_news(ticker: str) -> str:
+        """Get latest news for any stock ticker from Yahoo Finance RSS feed.
+
+        Args:
+            ticker: Stock ticker symbol (e.g., 'AAPL', 'TSLA', 'TTD')
+
+        Examples:
+            /stock-news AAPL
+            /stock-news TTD
+        """
+        return await stock_news_prompt.stock_news(ticker)
 
 
 def register_workflow_prompts(mcp):

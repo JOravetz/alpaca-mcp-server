@@ -192,24 +192,16 @@ class OptimizedAutoTrader:
 
         if cache.is_fresh():
             self.cache_hits += 1
-            if price_type == "ask":
-                return cache.ask
-            elif price_type == "bid":
-                return cache.bid
-            elif price_type == "last":
-                return cache.last
+            price_map = {"ask": cache.ask, "bid": cache.bid, "last": cache.last}
+            return price_map.get(price_type)
 
         # Cache miss - refresh prices
         self.cache_misses += 1
         await self._refresh_price_cache(symbol)
 
         cache = self.price_cache[symbol]
-        if price_type == "ask":
-            return cache.ask
-        elif price_type == "bid":
-            return cache.bid
-        elif price_type == "last":
-            return cache.last
+        price_map = {"ask": cache.ask, "bid": cache.bid, "last": cache.last}
+        return price_map.get(price_type)
 
         return None
 

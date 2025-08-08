@@ -845,11 +845,74 @@ class MonitoringServiceAPI:
     async def _embedded_scanner(
         self, min_trades_per_minute: int, min_percent_change: float, max_symbols: int
     ) -> set[str]:
-        """Embedded scanner - direct Alpaca API calls without MCP dependency"""
+        """Embedded scanner - uses C analyzer for real active stocks from combined.lis"""
+        import json
+        import subprocess
         from datetime import datetime
 
         import requests
 
+        # First try to use the C analyzer for active stocks
+        try:
+            # Run the C analyzer on combined.lis
+            result = subprocess.run(
+                ["./stock_analyzer_json", "combined.lis"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd="/home/jjoravet/alpaca-mcp-server-enhanced",
+            )
+
+            if result.returncode == 0:
+                # Parse JSON output (ignore stderr messages)
+                json_output = result.stdout
+                if json_output:
+                    data = json.loads(json_output)
+                    active_stocks = set()
+
+                    # Get max price from global config
+                    from alpaca_mcp_server.config.global_config import get_trading_config
+
+                    max_price = get_trading_config().max_stock_price
+
+                    # Extract symbols that meet ALL criteria
+                    for stock in data.get("stocks", []):
+                        symbol = stock.get("symbol")
+                        trades = stock.get("trades", 0)
+                        percent_change = stock.get("percent_change", 0)
+                        price = stock.get("price", 0)
+
+                        # Debug log for all stocks from C analyzer (no hard-coding)
+                        self.logger.debug(
+                            f"🔍 C ANALYZER: {symbol} trades={trades}, change={percent_change:.2f}%, price=${price:.2f}, thresholds=(trades>={min_trades_per_minute}, change>={min_percent_change}%, price<=${max_price})"
+                        )
+
+                        # Apply ALL filters: trades/minute, % change, AND price
+                        if (
+                            trades >= min_trades_per_minute
+                            and percent_change >= min_percent_change
+                            and price <= max_price
+                            and price > 0
+                        ):
+                            active_stocks.add(symbol)
+                            self.logger.info(
+                                f"✅ C ANALYZER FOUND: {symbol} with {trades} trades, {percent_change:.2f}% change, ${price:.2f} price"
+                            )
+
+                    if active_stocks:
+                        self.logger.info(
+                            f"🔍 C ANALYZER: Found {len(active_stocks)} active stocks: {active_stocks}"
+                        )
+                        return active_stocks
+                    else:
+                        self.logger.info(
+                            "🔍 C ANALYZER: No stocks meet criteria, falling back to API scanner"
+                        )
+
+        except Exception as e:
+            self.logger.warning(f"C analyzer failed: {e}, falling back to API scanner")
+
+        # Fallback to original API scanner
         try:
             # Get API credentials
             api_key = os.environ.get("APCA_API_KEY_ID")
@@ -880,6 +943,7 @@ class MonitoringServiceAPI:
 
                 # Filter for tradable US equity stocks under max price
                 symbol_list = []
+
                 for asset in assets_data:
                     if (
                         asset.get("tradable", False)
@@ -938,11 +1002,7 @@ class MonitoringServiceAPI:
                     # Get minute trades count
                     minute_trades = minute_bar.get("n")
 
-                    # Debug logging for key symbols
-                    if symbol in ["LPTX", "HCAI", "INDP"]:
-                        self.logger.warning(
-                            f"🔍 SCANNER DEBUG: {symbol} trades={minute_trades}, threshold={min_trades_per_minute}"
-                        )
+                    # No hard-coded symbols - scanner uses combined.lis via C analyzer
 
                     if not minute_trades or minute_trades < min_trades_per_minute:
                         continue

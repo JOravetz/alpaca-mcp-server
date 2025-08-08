@@ -7,7 +7,7 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class GlobalConfig:
     system: SystemConfig
 
     @classmethod
-    def load(cls, config_path: Optional[Union[str, Path]] = None) -> "GlobalConfig":
+    def load(cls, config_path: str | Path | None = None) -> "GlobalConfig":
         """Load configuration from file"""
         if config_path is None:
             # Default to config/global_config.json in project root
@@ -131,7 +131,7 @@ class GlobalConfig:
             "system": self.system.__dict__,
         }
 
-    def save(self, config_path: Optional[Union[str, Path]] = None) -> None:
+    def save(self, config_path: str | Path | None = None) -> None:
         """Save configuration to file"""
         if config_path is None:
             project_root = Path(__file__).parent.parent
@@ -155,7 +155,7 @@ class GlobalConfig:
 
 
 # Global instance
-_global_config: Optional[GlobalConfig] = None
+_global_config: GlobalConfig | None = None
 
 
 def get_global_config() -> GlobalConfig:

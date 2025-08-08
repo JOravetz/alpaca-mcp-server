@@ -8,7 +8,7 @@
     "order_timeout_seconds": 10,
     "default_order_type": "limit",
     "default_time_in_force": "day",
-    "max_stock_price": 20.0,
+    "max_stock_price": 30.0,
     "price_decimal_places": 4,
     "family_protection_profit_threshold_percent": 10.0,
     "automatic_profit_threshold_percent": 3.0

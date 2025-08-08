@@ -3,7 +3,6 @@
 import logging
 import os
 from datetime import UTC, datetime
-from typing import List, Optional, Tuple
 
 import pytz
 import requests
@@ -14,7 +13,7 @@ from ..config import get_scanner_config, get_trading_config
 logger = logging.getLogger(__name__)
 
 
-def _is_market_hours() -> Tuple[bool, str]:
+def _is_market_hours() -> tuple[bool, str]:
     """Check if market is currently open and return status message."""
     eastern = pytz.timezone("America/New_York")
     now = datetime.now(eastern)
@@ -48,10 +47,10 @@ def _is_market_hours() -> Tuple[bool, str]:
 
 async def scan_day_trading_opportunities(
     symbols: str = "ALL",  # Default to ALL symbols from combined.lis
-    min_trades_per_minute: Optional[int] = None,
-    min_percent_change: Optional[float] = None,
-    max_symbols: Optional[int] = None,
-    sort_by: Optional[str] = None,  # "trades", "percent_change", or "volume"
+    min_trades_per_minute: int | None = None,
+    min_percent_change: float | None = None,
+    max_symbols: int | None = None,
+    sort_by: str | None = None,  # "trades", "percent_change", or "volume"
 ) -> str:
     """Scan with global config defaults - ALWAYS uses global config for key parameters"""
     # Load global config defaults

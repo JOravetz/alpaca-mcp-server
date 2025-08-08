@@ -14,9 +14,9 @@ sys.path.insert(0, str(project_root))
 
 # Import global configuration
 # Force matplotlib backend before imports
-import matplotlib
+import matplotlib  # noqa: E402
 
-from ..config import get_technical_config
+from ..config import get_technical_config  # noqa: E402
 
 matplotlib.use("Agg")  # Use non-interactive backend
 

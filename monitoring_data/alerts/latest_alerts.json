@@ -1,12 +1,384 @@
 {
-  "last_updated": "2025-07-01T00:14:12.983461+00:00",
-  "alert_count": 1,
+  "last_updated": "2025-08-08T18:44:08.474890+00:00",
+  "alert_count": 32,
   "alerts": [
     {
-      "id": "alert_1751328844",
-      "timestamp": "2025-07-01T00:14:04.744329+00:00",
+      "id": "alert_1754676114",
+      "timestamp": "2025-08-08T18:01:54.654080+00:00",
       "title": "\ud83d\ude80 FastAPI Monitoring Service STARTED",
-      "message": "Service running with 0 symbols in watchlist",
+      "message": "Service running with 2 symbols in watchlist",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676123",
+      "timestamp": "2025-08-08T18:02:03.631742+00:00",
+      "title": "Trading Signal: PAPL",
+      "message": "\u26a0\ufe0f TRADING SIGNAL: PAPL\nType: fresh_peak\nPrice: $3.89\nConfidence: 0.0%\nAction: sell_candidate",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676132",
+      "timestamp": "2025-08-08T18:02:12.975959+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Removed symbols: SOUN, PAPL. Total watchlist: 0",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676194",
+      "timestamp": "2025-08-08T18:03:14.841812+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Added symbols: SGBX, SOUN. Total watchlist: 2",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676268",
+      "timestamp": "2025-08-08T18:04:28.407480+00:00",
+      "title": "Trading Signal: SGBX",
+      "message": "\ud83d\ude80 TRADING SIGNAL: SGBX\nType: fresh_trough\nPrice: $0.4319\nConfidence: 0.0%\nAction: buy_candidate",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676270",
+      "timestamp": "2025-08-08T18:04:30.960453+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Removed symbols: SGBX, SOUN. Total watchlist: 0",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676271",
+      "timestamp": "2025-08-08T18:04:31.090332+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Added symbols: MRM. Total watchlist: 1",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676343",
+      "timestamp": "2025-08-08T18:05:43.040738+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Removed symbols: MRM. Total watchlist: 0",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676343",
+      "timestamp": "2025-08-08T18:05:43.161704+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Added symbols: SGBX. Total watchlist: 1",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676419",
+      "timestamp": "2025-08-08T18:06:59.617773+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Removed symbols: SGBX. Total watchlist: 0",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676481",
+      "timestamp": "2025-08-08T18:08:01.369859+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Added symbols: SGBX, SOUN. Total watchlist: 2",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676553",
+      "timestamp": "2025-08-08T18:09:13.117360+00:00",
+      "title": "Trading Signal: SOUN",
+      "message": "\ud83d\ude80 TRADING SIGNAL: SOUN\nType: fresh_trough\nPrice: $13.6846\nConfidence: 0.0%\nAction: buy_candidate",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676563",
+      "timestamp": "2025-08-08T18:09:23.448073+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Removed symbols: SGBX, SOUN. Total watchlist: 0",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676623",
+      "timestamp": "2025-08-08T18:10:23.608701+00:00",
+      "title": "\ud83d\udcca Position Change Detected",
+      "message": "Position count changed from 0 to 1",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676903",
+      "timestamp": "2025-08-08T18:15:03.206802+00:00",
+      "title": "\ud83d\udcca Position Change Detected",
+      "message": "Position count changed from 1 to 0",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754676975",
+      "timestamp": "2025-08-08T18:16:15.194838+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Added symbols: SOUN. Total watchlist: 1",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677044",
+      "timestamp": "2025-08-08T18:17:24.891463+00:00",
+      "title": "Trading Signal: SOUN",
+      "message": "\u26a0\ufe0f TRADING SIGNAL: SOUN\nType: fresh_peak\nPrice: $13.7797\nConfidence: 0.0%\nAction: sell_candidate",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677046",
+      "timestamp": "2025-08-08T18:17:26.340895+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Removed symbols: SOUN. Total watchlist: 0",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677046",
+      "timestamp": "2025-08-08T18:17:26.443288+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Added symbols: SGBX. Total watchlist: 1",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677059",
+      "timestamp": "2025-08-08T18:17:39.067945+00:00",
+      "title": "\ud83d\udcca Order Filled: SGBX",
+      "message": "BUY 223015.0 @ $0.45",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677059",
+      "timestamp": "2025-08-08T18:17:39.178623+00:00",
+      "title": "\ud83d\udcca Position Status Check",
+      "message": "Post-order position check: 1 positions (SGBX)",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677059",
+      "timestamp": "2025-08-08T18:17:39.613966+00:00",
+      "title": "\ud83d\udcca Order Filled: SGBX",
+      "message": "BUY 223015.0 @ $0.4516",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677059",
+      "timestamp": "2025-08-08T18:17:39.718920+00:00",
+      "title": "\ud83d\udcca Position Status Check",
+      "message": "Post-order position check: 1 positions (SGBX)",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677109",
+      "timestamp": "2025-08-08T18:18:29.432329+00:00",
+      "title": "\ud83d\udcca Order Filled: SGBX",
+      "message": "SELL 5.0 @ $0.4518",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677109",
+      "timestamp": "2025-08-08T18:18:29.541454+00:00",
+      "title": "\ud83d\udcca Position Status Check",
+      "message": "Post-order position check: 0 positions",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677116",
+      "timestamp": "2025-08-08T18:18:36.033603+00:00",
+      "title": "Trading Signal: SGBX",
+      "message": "\u26a0\ufe0f TRADING SIGNAL: SGBX\nType: fresh_peak\nPrice: $0.462\nConfidence: 0.0%\nAction: sell_candidate",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677126",
+      "timestamp": "2025-08-08T18:18:46.035122+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Removed symbols: SGBX. Total watchlist: 0",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677329",
+      "timestamp": "2025-08-08T18:22:09.540373+00:00",
+      "title": "\ud83d\udcca Position Change Detected",
+      "message": "Position count changed from 0 to 1",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677460",
+      "timestamp": "2025-08-08T18:24:20.912691+00:00",
+      "title": "\ud83d\udcca Position Change Detected",
+      "message": "Position count changed from 1 to 0",
+      "priority": "high",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677462",
+      "timestamp": "2025-08-08T18:24:22.946337+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Added symbols: ASTH. Total watchlist: 1",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754677537",
+      "timestamp": "2025-08-08T18:25:37.930408+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Removed symbols: ASTH. Total watchlist: 0",
+      "priority": "info",
+      "metadata": {},
+      "channels_sent": [
+        "file",
+        "console"
+      ]
+    },
+    {
+      "id": "alert_1754678648",
+      "timestamp": "2025-08-08T18:44:08.474642+00:00",
+      "title": "\ud83d\udcca Watchlist Updated",
+      "message": "Added symbols: SOUN. Total watchlist: 1",
       "priority": "info",
       "metadata": {},
       "channels_sent": [

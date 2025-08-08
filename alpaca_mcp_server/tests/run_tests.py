@@ -8,33 +8,34 @@ import sys
 import time
 import traceback
 from pathlib import Path
+from typing import Any
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import test modules
-from tests.integration.test_mcp_server import (
+from alpaca_mcp_server  # noqa: E402.tests.integration.test_mcp_server import (  # noqa: E402
     TestMCPServerIntegration,
     TestPerformanceIntegration,
     TestRealDataIntegration,
     TestWorkflowExecution,
 )
-from tests.performance.test_performance import (
+from alpaca_mcp_server  # noqa: E402.tests.performance.test_performance import (  # noqa: E402
     TestConcurrentPerformance,
     TestPerformanceBenchmarks,
     TestResourceUsage,
     TestScalabilityLimits,
     TestWorkflowPerformance,
 )
-from tests.unit.test_error_handling import (
+from alpaca_mcp_server  # noqa: E402.tests.unit.test_error_handling import (  # noqa: E402
     TestDataValidation,
     TestEdgeCases,
     TestErrorHandling,
     TestFallbackScenarios,
     TestRecoveryMechanisms,
 )
-from tests.unit.test_workflows import (
+from alpaca_mcp_server  # noqa: E402.tests.unit.test_workflows import (  # noqa: E402
     TestDayTradingWorkflow,
     TestListTradingCapabilities,
     TestMarketSessionWorkflow,
@@ -47,8 +48,8 @@ from tests.unit.test_workflows import (
 class TestRunner:
     """Comprehensive test runner with detailed reporting."""
 
-    def __init__(self):
-        self.results = {
+    def __init__(self) -> None:
+        self.results: dict[str, Any] = {
             "unit_tests": {},
             "integration_tests": {},
             "performance_tests": {},
@@ -60,7 +61,7 @@ class TestRunner:
             "end_time": None,
         }
 
-    async def run_test_class(self, test_class, class_name):
+    async def run_test_class(self, test_class: Any, class_name: str) -> dict[str, Any]:
         """Run all tests in a test class."""
         print(f"\n🧪 Running {class_name}")
         print("=" * 50)
@@ -68,7 +69,7 @@ class TestRunner:
         instance = test_class()
         test_methods = [method for method in dir(instance) if method.startswith("test_")]
 
-        class_results = {"passed": 0, "failed": 0, "tests": []}
+        class_results: dict[str, Any] = {"passed": 0, "failed": 0, "tests": []}
 
         for test_method in test_methods:
             self.results["total_tests"] += 1
@@ -126,7 +127,7 @@ class TestRunner:
 
         return class_results
 
-    async def run_unit_tests(self):
+    async def run_unit_tests(self) -> None:
         """Run all unit tests."""
         print("\n🎯 UNIT TESTS - WORKFLOW FUNCTIONALITY")
         print("=" * 60)
@@ -145,7 +146,7 @@ class TestRunner:
                 test_class, class_name
             )
 
-    async def run_error_tests(self):
+    async def run_error_tests(self) -> None:
         """Run all error handling tests."""
         print("\n🛡️ ERROR HANDLING TESTS")
         print("=" * 60)
@@ -163,7 +164,7 @@ class TestRunner:
                 test_class, class_name
             )
 
-    async def run_integration_tests(self):
+    async def run_integration_tests(self) -> None:
         """Run all integration tests."""
         print("\n🔗 INTEGRATION TESTS - MCP SERVER")
         print("=" * 60)
@@ -180,7 +181,7 @@ class TestRunner:
                 test_class, class_name
             )
 
-    async def run_performance_tests(self):
+    async def run_performance_tests(self) -> None:
         """Run all performance tests."""
         print("\n⚡ PERFORMANCE TESTS")
         print("=" * 60)
@@ -198,7 +199,7 @@ class TestRunner:
                 test_class, class_name
             )
 
-    def generate_report(self):
+    def generate_report(self) -> None:
         """Generate comprehensive test report."""
         total_duration = self.results["end_time"] - self.results["start_time"]
         success_rate = (
@@ -273,7 +274,7 @@ class TestRunner:
 
         return self.results
 
-    async def run_all_tests(self):
+    async def run_all_tests(self) -> dict[str, Any]:
         """Run complete test suite."""
         self.results["start_time"] = time.time()
 
@@ -305,7 +306,7 @@ class TestRunner:
         return self.generate_report()
 
 
-async def main():
+async def main() -> None:
     """Main test execution function."""
     runner = TestRunner()
     results = await runner.run_all_tests()

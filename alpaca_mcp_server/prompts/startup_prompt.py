@@ -84,51 +84,58 @@ async def startup() -> str:
     except requests.exceptions.RequestException:
         # Service not running, try to start it
         try:
-            # Use the exact command provided by user for reliability
-            startup_cmd = "nohup python -m uvicorn alpaca_mcp_server.monitoring.fastapi_service:app --port 8001 --host 0.0.0.0 > /tmp/fastapi_monitoring.log 2>&1 & echo $!"
-            result = subprocess.run(
-                startup_cmd,
-                shell=True,
-                capture_output=True,
-                text=True,
+            # Start the service securely without shell=True
+            import os
+
+            log_file = open("/tmp/fastapi_monitoring.log", "w")
+            process = subprocess.Popen(
+                [
+                    "python", "-m", "uvicorn",
+                    "alpaca_mcp_server.monitoring.fastapi_service:app",
+                    "--port", "8001",
+                    "--host", "0.0.0.0"
+                ],
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
                 cwd="/home/jjoravet/alpaca-mcp-server-enhanced",
+                start_new_session=True,
+                preexec_fn=os.setsid  # Detach from parent process group
             )
 
-            if result.returncode == 0:
-                pid = result.stdout.strip()
-                fastapi_status = f"🚀 Starting service (PID: {pid})..."
+            pid = str(process.pid)
+            fastapi_status = f"🚀 Starting service (PID: {pid})..."
 
-                # Wait briefly and check if it started successfully with retry
-                import time
+            # Wait briefly and check if it started successfully with retry
+            import time
 
-                service_started = False
-                for _attempt in range(6):  # Try for 6 seconds total
-                    time.sleep(1)
-                    try:
-                        response = requests.get("http://localhost:8001/health", timeout=3)
-                        if response.status_code == 200:
-                            health_data = response.json()
-                            uptime = health_data.get("uptime_seconds", 0)
-                            watchlist_size = health_data.get("watchlist_size", 0)
-                            fastapi_status = f"✅ Started successfully - {uptime:.0f}s uptime, {watchlist_size} stocks monitored"
-                            service_started = True
+            service_started = False
+            for _attempt in range(6):  # Try for 6 seconds total
+                time.sleep(1)
+                try:
+                    response = requests.get("http://localhost:8001/health", timeout=3)
+                    if response.status_code == 200:
+                        health_data = response.json()
+                        uptime = health_data.get("uptime_seconds", 0)
+                        watchlist_size = health_data.get("watchlist_size", 0)
+                        fastapi_status = f"✅ Started successfully - {uptime:.0f}s uptime, {watchlist_size} stocks monitored"
+                        service_started = True
 
-                            # Open browser to monitoring status page
-                            try:
-                                webbrowser.open("http://localhost:8001/status/html")
-                                fastapi_status += " | 🌐 Browser opened"
-                            except Exception:
-                                # Browser opening failed, but service is running
-                                pass
-                            break
-                    except requests.exceptions.RequestException:
-                        continue
+                        # Open browser to monitoring status page
+                        try:
+                            webbrowser.open("http://localhost:8001/status/html")
+                            fastapi_status += " | 🌐 Browser opened"
+                        except Exception:
+                            # Browser opening failed, but service is running
+                            pass
+                        break
+                except requests.exceptions.RequestException:
+                    continue
 
-                if not service_started:
-                    fastapi_status = f"⚠️ Started but not responding yet (PID: {pid})"
-                else:
-                    # Check auto-trading status (disabled by default on startup)
-                    try:
+            if not service_started:
+                fastapi_status = f"⚠️ Started but not responding yet (PID: {pid})"
+            else:
+                # Check auto-trading status (disabled by default on startup)
+                try:
                         # Check if auto-trading is currently enabled
                         status_response = requests.get("http://localhost:8001/status", timeout=2)
                         if status_response.status_code == 200:
@@ -138,11 +145,9 @@ async def startup() -> str:
                                 fastapi_status += " | 🤖 Auto-trading ON"
                             else:
                                 fastapi_status += " | ⏸️ Auto-trading OFF (disabled by default - use enable_auto_trading.py to activate)"
-                    except Exception:
-                        # Auto-trading status check failed, but service is running
-                        fastapi_status += " | ❓ Auto-trading status unknown"
-            else:
-                fastapi_status = f"❌ Startup failed: {result.stderr[:50]}"
+                except Exception:
+                    # Auto-trading status check failed, but service is running
+                    fastapi_status += " | ❓ Auto-trading status unknown"
         except Exception as e:
             fastapi_status = f"❌ Failed to start: {str(e)[:50]}"
 

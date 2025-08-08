@@ -383,9 +383,9 @@ async def start_fastapi_monitoring_service() -> dict:
                                     ["xdg-open", dashboard_url], capture_output=True, check=False
                                 )
                             elif os.name == "nt":  # Windows
+                                # Use cmd.exe directly to avoid shell=True
                                 subprocess.run(
-                                    ["start", dashboard_url],
-                                    shell=True,
+                                    ["cmd", "/c", "start", "", dashboard_url],
                                     capture_output=True,
                                     check=False,
                                 )

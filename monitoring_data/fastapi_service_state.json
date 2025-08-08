@@ -1,22 +1,48 @@
 {
   "active": true,
-  "start_time": "2025-07-01T00:13:59.563144+00:00",
-  "last_check": "2025-07-01T00:14:04.744572+00:00",
-  "check_count": 1,
+  "start_time": "2025-08-08T18:01:49.465060+00:00",
+  "last_check": "2025-08-08T18:44:06.781462+00:00",
+  "check_count": 37,
   "error_count": 0,
-  "watchlist": [],
+  "watchlist": [
+    "SOUN"
+  ],
   "current_signals": [
     {
-      "symbol": "GNLN",
-      "signal_type": "fresh_peak",
-      "price": 5.04,
-      "current_price": 4.96,
-      "bars_ago": 10,
-      "action": "sell_candidate",
-      "detected_at": "2025-06-30T19:18:21.707385-04:00",
+      "symbol": "SOUN",
+      "signal_type": "fresh_trough",
+      "price": 13.6846,
+      "current_price": 13.7797,
+      "bars_ago": 4,
+      "action": "buy_candidate",
+      "detected_at": "2025-08-08T14:09:13.117264-04:00",
       "source": "plot_py_analysis",
-      "timestamp": "2025-06-30T19:18:21.707385-04:00",
-      "id": "GNLN_1751325501"
+      "timestamp": "2025-08-08T14:09:13.117264-04:00",
+      "id": "SOUN_1754676553"
+    },
+    {
+      "symbol": "SOUN",
+      "signal_type": "fresh_peak",
+      "price": 13.7797,
+      "current_price": 13.71,
+      "bars_ago": 8,
+      "action": "sell_candidate",
+      "detected_at": "2025-08-08T14:17:24.891397-04:00",
+      "source": "plot_py_analysis",
+      "timestamp": "2025-08-08T14:17:24.891397-04:00",
+      "id": "SOUN_1754677044"
+    },
+    {
+      "symbol": "SGBX",
+      "signal_type": "fresh_peak",
+      "price": 0.462,
+      "current_price": 0.4501,
+      "bars_ago": 2,
+      "action": "sell_candidate",
+      "detected_at": "2025-08-08T14:18:36.033455-04:00",
+      "source": "plot_py_analysis",
+      "timestamp": "2025-08-08T14:18:36.033455-04:00",
+      "id": "SGBX_1754677116"
     }
   ],
   "config": {

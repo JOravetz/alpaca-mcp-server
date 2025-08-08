@@ -12,7 +12,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from alpaca_mcp_server.tools.advanced_plotting_tool import generate_peak_trough_plots
+from alpaca_mcp_server  # noqa: E402.tools.advanced_plotting_tool import generate_peak_trough_plots  # noqa: E402
 
 
 async def test_plotting_tool():
@@ -164,9 +164,9 @@ async def test_plotting_tool():
     print("\n8. Testing plotting dependencies...")
     tests_total += 1
     try:
-        import matplotlib.pyplot as plt
-        import numpy as np
-        import scipy.signal
+        import matplotlib.pyplot as plt  # noqa: F401
+        import numpy as np  # noqa: F401
+        import scipy.signal  # noqa: F401
 
         tests_passed += 1
         print("   ✅ PASSED - All plotting dependencies available")

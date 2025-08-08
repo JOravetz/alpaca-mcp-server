@@ -13,9 +13,14 @@ import threading
 import webbrowser
 from datetime import datetime, timedelta
 
+# Set matplotlib backend BEFORE any other matplotlib imports
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pytz
 import requests
+from dateutil import parser as date_parser
 from scipy.signal import filtfilt
 from scipy.signal.windows import hann as hanning
 
@@ -31,9 +36,6 @@ except ImportError:
     HAS_MARKET_CALENDARS = False
     mcal = None
 
-# Set matplotlib backend BEFORE any other matplotlib imports
-import matplotlib
-
 # Always use Agg backend to avoid GUI issues
 matplotlib.use("Agg", force=True)
 INTERACTIVE_BACKEND = False
@@ -47,13 +49,9 @@ def setup_backend_for_args(no_plot=False):
     INTERACTIVE_BACKEND = False
 
 
-import matplotlib.pyplot as plt
-import pytz
-from dateutil import parser as date_parser
-
 # Add current directory to path to import peakdetect
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from peakdetect import peakdetect
+from peakdetect import peakdetect  # noqa: E402
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -189,7 +187,7 @@ def format_datetime_for_display(dt):
     """Format datetime for display in dd/mm/yyyy hh:mm format"""
     try:
         return dt.strftime("%d/%m/%Y %H:%M")
-    except (AttributeError, ValueError, TypeError) as e:
+    except (AttributeError, ValueError, TypeError):
         return str(dt)
 
 

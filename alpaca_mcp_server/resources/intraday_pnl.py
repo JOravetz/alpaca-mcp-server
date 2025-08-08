@@ -107,24 +107,28 @@ async def get_intraday_pnl(
             symbol_trades = symbol_data["trades"]
             symbol_trades.sort(key=lambda x: x["time"])
 
-            # Simple P&L calculation (buy negative, sell positive)
+            # Enhanced P&L calculation handling both long and short positions
             symbol_pnl = 0
-            position = 0
-            avg_cost = 0
+            position = 0  # Positive = long, Negative = short
+            avg_price = 0  # Average price for current position
 
             for trade in symbol_trades:
                 if trade["side"] == "buy":
-                    # Update average cost
-                    total_shares = position + trade["qty"]
-                    if total_shares > 0:
-                        avg_cost = (
-                            (position * avg_cost) + (trade["qty"] * trade["price"])
-                        ) / total_shares
-                    position += trade["qty"]
-                else:  # sell
-                    if position > 0:  # Had position to sell
-                        # Calculate P&L for this sell
-                        pnl = (trade["price"] - avg_cost) * min(trade["qty"], position)
+                    if position >= 0:  # Already long or flat
+                        # Adding to long position or initiating long
+                        if position == 0:
+                            avg_price = trade["price"]
+                        else:
+                            # Update weighted average price for long position
+                            avg_price = (
+                                (position * avg_price) + (trade["qty"] * trade["price"])
+                            ) / (position + trade["qty"])
+                        position += trade["qty"]
+                    else:  # Currently short (position < 0)
+                        # Covering short position
+                        qty_to_cover = min(trade["qty"], abs(position))
+                        # Calculate P&L on short cover (sold at avg_price, buying back at trade price)
+                        pnl = (avg_price - trade["price"]) * qty_to_cover
                         symbol_pnl += pnl
 
                         if pnl > 0:
@@ -134,10 +138,52 @@ async def get_intraday_pnl(
                             losing_trades += 1
                             largest_loss = min(largest_loss, pnl)
 
-                        # Check if this constitutes a day trade
                         day_trades += 1
 
-                    position -= trade["qty"]
+                        # Update position
+                        position += trade["qty"]
+
+                        # If we went from short to long
+                        if position > 0:
+                            avg_price = trade["price"]
+                        elif position == 0:
+                            avg_price = 0
+
+                else:  # sell
+                    if position <= 0:  # Already short or flat
+                        # Adding to short position or initiating short
+                        if position == 0:
+                            avg_price = trade["price"]
+                        else:
+                            # Update weighted average price for short position
+                            avg_price = (
+                                (abs(position) * avg_price) + (trade["qty"] * trade["price"])
+                            ) / (abs(position) + trade["qty"])
+                        position -= trade["qty"]
+                    else:  # Currently long (position > 0)
+                        # Closing long position
+                        qty_to_sell = min(trade["qty"], position)
+                        # Calculate P&L on long close (bought at avg_price, selling at trade price)
+                        pnl = (trade["price"] - avg_price) * qty_to_sell
+                        symbol_pnl += pnl
+
+                        if pnl > 0:
+                            winning_trades += 1
+                            largest_win = max(largest_win, pnl)
+                        else:
+                            losing_trades += 1
+                            largest_loss = min(largest_loss, pnl)
+
+                        day_trades += 1
+
+                        # Update position
+                        position -= trade["qty"]
+
+                        # If we went from long to short
+                        if position < 0:
+                            avg_price = trade["price"]
+                        elif position == 0:
+                            avg_price = 0
 
             trades_by_symbol[symbol]["realized_pnl"] = round(symbol_pnl, 2)
             realized_pnl += symbol_pnl

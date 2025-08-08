@@ -395,7 +395,7 @@ def print_latest_signals_table(all_results):
                     formatted_timestamp = nyc_timestamp.strftime("%H:%M:%S %Z")
                 else:
                     formatted_timestamp = raw_timestamp
-            except (ValueError, AttributeError, TypeError) as e:
+            except (ValueError, AttributeError, TypeError):
                 formatted_timestamp = raw_timestamp
 
             change_indicator = "+" if price_change >= 0 else "-"
@@ -702,10 +702,7 @@ def plot_single_symbol(results, save_plot=False, output_dir=".", dpi=400):
 
     if overlap:
         # Move stats to opposite corner
-        if stats_pos[1] > 0.5:  # Stats was in upper area
-            new_stats_pos = (0.02, 0.25)  # Move to lower
-        else:  # Stats was in lower area
-            new_stats_pos = (0.02, 0.98)  # Move to upper
+        new_stats_pos = (0.02, 0.25) if stats_pos[1] > 0.5 else (0.02, 0.98)
 
         # Remove old stats box and create new one
         stats_box.remove()
@@ -767,7 +764,7 @@ def plot_combined_subplots(all_results, save_plot=False, output_dir=".", dpi=400
             # Verify we have the right number of timestamps
             if len(timestamps) != len(results["original_prices"]):
                 timestamps = range(len(results["original_prices"]))
-        except (KeyError, ValueError, TypeError) as e:
+        except (KeyError, ValueError, TypeError):
             timestamps = range(len(results["original_prices"]))
 
         # Extract data
@@ -929,7 +926,7 @@ def plot_overlay(all_results, save_plot=False, output_dir=".", dpi=400):
             # Verify we have the right number of timestamps
             if len(timestamps) != len(results["original_prices"]):
                 timestamps = range(len(results["original_prices"]))
-        except (KeyError, ValueError, TypeError) as e:
+        except (KeyError, ValueError, TypeError):
             timestamps = range(len(results["original_prices"]))
 
         # Normalize prices to percentage change from first price
@@ -1057,7 +1054,7 @@ def plot_overlay(all_results, save_plot=False, output_dir=".", dpi=400):
             ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz=nyc_tz))
             plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
             ax.set_xlabel("Time (NYC/EDT)", fontsize=12, fontweight="bold")
-        except (ImportError, AttributeError, ValueError) as e:
+        except (ImportError, AttributeError, ValueError):
             ax.set_xlabel("Time", fontsize=12, fontweight="bold")
 
     plt.tight_layout()

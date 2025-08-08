@@ -1,6 +1,438 @@
 {
   "notifications": [
     {
+      "timestamp": "2025-08-08T18:18:29.376788+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SGBX",
+        "message": "SELL 5 shares @ $0.4518\nTotal: $2.26",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SGBX",
+          "side": "sell",
+          "quantity": 5,
+          "fill_price": 0.4518
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T18:17:39.581595+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SGBX",
+        "message": "BUY 223015 shares @ $0.4516\nTotal: $100713.57",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SGBX",
+          "side": "buy",
+          "quantity": 223015,
+          "fill_price": 0.4516
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T18:17:39.001479+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SGBX",
+        "message": "BUY 223015 shares @ $0.4500\nTotal: $100356.75",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SGBX",
+          "side": "buy",
+          "quantity": 223015,
+          "fill_price": 0.45
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T15:16:19.389816+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SOUN",
+        "message": "SELL 540 shares @ $13.8400\nTotal: $7473.60",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SOUN",
+          "side": "sell",
+          "quantity": 540,
+          "fill_price": 13.84
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T15:15:42.428798+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SOUN",
+        "message": "BUY 7262 shares @ $13.7800\nTotal: $100070.36",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SOUN",
+          "side": "buy",
+          "quantity": 7262,
+          "fill_price": 13.78
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T15:12:29.972743+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SOUN",
+        "message": "SELL 175 shares @ $13.7500\nTotal: $2406.25",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SOUN",
+          "side": "sell",
+          "quantity": 175,
+          "fill_price": 13.75
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T15:12:14.291245+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SOUN",
+        "message": "BUY 7293 shares @ $13.7000\nTotal: $99914.10",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SOUN",
+          "side": "buy",
+          "quantity": 7293,
+          "fill_price": 13.7
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T15:11:46.471675+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SOUN",
+        "message": "BUY 7204 shares @ $13.8900\nTotal: $100063.56",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SOUN",
+          "side": "buy",
+          "quantity": 7204,
+          "fill_price": 13.89
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T15:09:13.465594+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SOUN",
+        "message": "SELL 3594 shares @ $13.9100\nTotal: $49992.54",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SOUN",
+          "side": "sell",
+          "quantity": 3594,
+          "fill_price": 13.91
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T15:08:18.843009+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SOUN",
+        "message": "BUY 3594 shares @ $13.8900\nTotal: $49920.66",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SOUN",
+          "side": "buy",
+          "quantity": 3594,
+          "fill_price": 13.89
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T15:07:14.934139+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SOUN",
+        "message": "BUY 75000 shares @ $13.9500\nTotal: $1046250.00",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SOUN",
+          "side": "buy",
+          "quantity": 75000,
+          "fill_price": 13.95
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:55:11.277244+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SOUN",
+        "message": "SELL 25000 shares @ $14.2100\nTotal: $355250.00",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SOUN",
+          "side": "sell",
+          "quantity": 25000,
+          "fill_price": 14.21
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:52:54.930744+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SOUN",
+        "message": "SELL 25000 shares @ $14.1500\nTotal: $353750.00",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SOUN",
+          "side": "sell",
+          "quantity": 25000,
+          "fill_price": 14.15
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:48:58.849074+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: SOUN",
+        "message": "SELL 25000 shares @ $13.9300\nTotal: $348250.00",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "SOUN",
+          "side": "sell",
+          "quantity": 25000,
+          "fill_price": 13.93
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:28:08.374615+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: PAPL",
+        "message": "SELL 66609 shares @ $4.5000\nTotal: $299740.50",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "PAPL",
+          "side": "sell",
+          "quantity": 66609,
+          "fill_price": 4.5
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:26:46.438265+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: PAPL",
+        "message": "BUY 11389 shares @ $4.3800\nTotal: $49883.82",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "PAPL",
+          "side": "buy",
+          "quantity": 11389,
+          "fill_price": 4.38
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:23:00.496229+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: PAPL",
+        "message": "BUY 11441 shares @ $4.3400\nTotal: $49653.94",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "PAPL",
+          "side": "buy",
+          "quantity": 11441,
+          "fill_price": 4.34
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:20:41.176728+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: PAPL",
+        "message": "BUY 11135 shares @ $4.5000\nTotal: $50107.50",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "PAPL",
+          "side": "buy",
+          "quantity": 11135,
+          "fill_price": 4.5
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:20:23.063160+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: PAPL",
+        "message": "BUY 11092 shares @ $4.5100\nTotal: $50024.92",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "PAPL",
+          "side": "buy",
+          "quantity": 11092,
+          "fill_price": 4.51
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:19:30.790595+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: PAPL",
+        "message": "BUY 10869 shares @ $4.6300\nTotal: $50323.47",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "PAPL",
+          "side": "buy",
+          "quantity": 10869,
+          "fill_price": 4.63
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:19:02.224353+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: PAPL",
+        "message": "BUY 10683 shares @ $4.6400\nTotal: $49569.12",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "PAPL",
+          "side": "buy",
+          "quantity": 10683,
+          "fill_price": 4.64
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:17:22.303809+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: PAPL",
+        "message": "SELL 22185 shares @ $4.6400\nTotal: $102938.40",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "PAPL",
+          "side": "sell",
+          "quantity": 22185,
+          "fill_price": 4.64
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:16:16.266107+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: PAPL",
+        "message": "BUY 11547 shares @ $4.4300\nTotal: $51153.21",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "PAPL",
+          "side": "buy",
+          "quantity": 11547,
+          "fill_price": 4.43
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-08T14:15:38.901785+00:00",
+      "notification": {
+        "title": "\u2705 Order Filled: PAPL",
+        "message": "BUY 10638 shares @ $4.7600\nTotal: $50636.88",
+        "priority": "normal",
+        "category": "trading",
+        "sound": true,
+        "timeout": 8,
+        "actions": null,
+        "metadata": {
+          "symbol": "PAPL",
+          "side": "buy",
+          "quantity": 10638,
+          "fill_price": 4.76
+        }
+      }
+    },
+    {
       "timestamp": "2025-06-30T16:32:32.666619+00:00",
       "notification": {
         "title": "\u2705 Order Filled: ONEG",
@@ -467,439 +899,7 @@
           "fill_price": 0.375
         }
       }
-    },
-    {
-      "timestamp": "2025-06-25T13:46:19.166135+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: PSTV",
-        "message": "BUY 131578 shares @ $0.3772\nTotal: $49631.22",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "PSTV",
-          "side": "buy",
-          "quantity": 131578,
-          "fill_price": 0.3772
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T13:46:09.921853+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: ONDS",
-        "message": "BUY 27472 shares @ $1.8200\nTotal: $49999.04",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "ONDS",
-          "side": "buy",
-          "quantity": 27472,
-          "fill_price": 1.82
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T13:44:46.274765+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: BLNE",
-        "message": "BUY 30303 shares @ $1.6500\nTotal: $49999.95",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "BLNE",
-          "side": "buy",
-          "quantity": 30303,
-          "fill_price": 1.65
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T13:40:52.176773+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: ULY",
-        "message": "SELL 5707 shares @ $8.4852\nTotal: $48425.10",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "ULY",
-          "side": "sell",
-          "quantity": 5707,
-          "fill_price": 8.485211
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T13:38:00.222506+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: SONM",
-        "message": "SELL 30674 shares @ $1.6484\nTotal: $50563.76",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "SONM",
-          "side": "sell",
-          "quantity": 30674,
-          "fill_price": 1.648424
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T13:37:56.289054+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: SRFM",
-        "message": "SELL 10548 shares @ $5.0400\nTotal: $53161.92",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "SRFM",
-          "side": "sell",
-          "quantity": 10548,
-          "fill_price": 5.04
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T13:37:39.165466+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: SONM",
-        "message": "BUY 30674 shares @ $1.6300\nTotal: $49998.62",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "SONM",
-          "side": "buy",
-          "quantity": 30674,
-          "fill_price": 1.63
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T13:36:22.182884+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: ULY",
-        "message": "BUY 5707 shares @ $8.7600\nTotal: $49993.32",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "ULY",
-          "side": "buy",
-          "quantity": 5707,
-          "fill_price": 8.76
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T13:36:11.290898+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: SRFM",
-        "message": "BUY 10548 shares @ $4.7365\nTotal: $49960.61",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "SRFM",
-          "side": "buy",
-          "quantity": 10548,
-          "fill_price": 4.736501
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T13:14:06.987038+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: PSTV",
-        "message": "SELL 121951 shares @ $0.4206\nTotal: $51292.83",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "PSTV",
-          "side": "sell",
-          "quantity": 121951,
-          "fill_price": 0.420602
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T13:10:37.409368+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: PSTV",
-        "message": "BUY 121951 shares @ $0.4081\nTotal: $49768.20",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "PSTV",
-          "side": "buy",
-          "quantity": 121951,
-          "fill_price": 0.4081
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T12:54:51.882257+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: GCTK",
-        "message": "SELL 2381 shares @ $8.4000\nTotal: $20000.40",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "GCTK",
-          "side": "sell",
-          "quantity": 2381,
-          "fill_price": 8.4
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T12:52:21.825148+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: GCTK",
-        "message": "BUY 6134 shares @ $8.1422\nTotal: $49944.48",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "GCTK",
-          "side": "buy",
-          "quantity": 6134,
-          "fill_price": 8.142236
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T12:43:01.731006+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: GCTK",
-        "message": "SELL 9887 shares @ $9.4000\nTotal: $92937.80",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "GCTK",
-          "side": "sell",
-          "quantity": 9887,
-          "fill_price": 9.4
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T12:41:22.611031+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: GCTK",
-        "message": "BUY 6134 shares @ $8.1500\nTotal: $49992.10",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "GCTK",
-          "side": "buy",
-          "quantity": 6134,
-          "fill_price": 8.15
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T12:34:46.728657+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: SONM",
-        "message": "SELL 29069 shares @ $1.7200\nTotal: $49998.68",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "SONM",
-          "side": "sell",
-          "quantity": 29069,
-          "fill_price": 1.72
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-25T12:27:16.975076+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: SONM",
-        "message": "BUY 29069 shares @ $1.7200\nTotal: $49998.68",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "SONM",
-          "side": "buy",
-          "quantity": 29069,
-          "fill_price": 1.72
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-24T19:37:15.710711+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: HTZ",
-        "message": "BUY 6839 shares @ $7.3100\nTotal: $49993.09",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "HTZ",
-          "side": "buy",
-          "quantity": 6839,
-          "fill_price": 7.31
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-24T19:34:12.662804+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: RUN",
-        "message": "SELL 6858 shares @ $7.3000\nTotal: $50063.40",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "RUN",
-          "side": "sell",
-          "quantity": 6858,
-          "fill_price": 7.3
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-24T19:33:36.490436+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: RUN",
-        "message": "BUY 6858 shares @ $7.2900\nTotal: $49994.82",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "RUN",
-          "side": "buy",
-          "quantity": 6858,
-          "fill_price": 7.29
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-24T19:32:29.593568+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: SRFM",
-        "message": "SELL 12690 shares @ $3.9800\nTotal: $50506.20",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "SRFM",
-          "side": "sell",
-          "quantity": 12690,
-          "fill_price": 3.98
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-24T19:31:18.625310+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: SRFM",
-        "message": "BUY 12690 shares @ $3.9400\nTotal: $49998.60",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "SRFM",
-          "side": "buy",
-          "quantity": 12690,
-          "fill_price": 3.94
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-24T19:12:28.141151+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: RUN",
-        "message": "SELL 13764 shares @ $7.2800\nTotal: $100202.51",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "RUN",
-          "side": "sell",
-          "quantity": 13764,
-          "fill_price": 7.280043
-        }
-      }
-    },
-    {
-      "timestamp": "2025-06-24T19:10:57.531389+00:00",
-      "notification": {
-        "title": "\u2705 Order Filled: RUN",
-        "message": "BUY 6877 shares @ $7.2700\nTotal: $49995.79",
-        "priority": "normal",
-        "category": "trading",
-        "sound": true,
-        "timeout": 8,
-        "actions": null,
-        "metadata": {
-          "symbol": "RUN",
-          "side": "buy",
-          "quantity": 6877,
-          "fill_price": 7.27
-        }
-      }
     }
   ],
-  "last_updated": "2025-06-30T16:32:32.666619+00:00"
+  "last_updated": "2025-08-08T18:18:29.376788+00:00"
 }
