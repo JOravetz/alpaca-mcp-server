@@ -87,20 +87,20 @@ async def startup() -> str:
             # Start the service securely without shell=True
             import os
 
-            log_file = open("/tmp/fastapi_monitoring.log", "w")
-            process = subprocess.Popen(
-                [
-                    "python", "-m", "uvicorn",
-                    "alpaca_mcp_server.monitoring.fastapi_service:app",
-                    "--port", "8001",
-                    "--host", "0.0.0.0"
-                ],
-                stdout=log_file,
-                stderr=subprocess.STDOUT,
-                cwd="/home/jjoravet/alpaca-mcp-server-enhanced",
-                start_new_session=True,
-                preexec_fn=os.setsid  # Detach from parent process group
-            )
+            with open("/tmp/fastapi_monitoring.log", "w") as log_file:
+                process = subprocess.Popen(
+                    [
+                        "python", "-m", "uvicorn",
+                        "alpaca_mcp_server.monitoring.fastapi_service:app",
+                        "--port", "8001",
+                        "--host", "0.0.0.0"
+                    ],
+                    stdout=log_file,
+                    stderr=subprocess.STDOUT,
+                    cwd="/home/jjoravet/alpaca-mcp-server-enhanced",
+                    start_new_session=True,
+                    preexec_fn=os.setsid  # Detach from parent process group
+                )
 
             pid = str(process.pid)
             fastapi_status = f"🚀 Starting service (PID: {pid})..."

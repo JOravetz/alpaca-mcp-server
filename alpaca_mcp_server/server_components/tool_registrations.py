@@ -13,6 +13,7 @@ from ..tools import (
     order_tools,
     position_tools,
     streaming_tools,
+    volume_bars_tool,
     watchlist_tools,
 )
 from ..tools.cleanup_tool import cleanup_server
@@ -210,6 +211,104 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
             symbols, timeframe, days, window_len, lookahead, delta, min_peak_distance
         )
 
+    @mcp.tool()
+    async def get_volume_bars_from_history(
+        symbol: str,
+        volume_threshold: float = None,
+        days: int = 1,
+        auto_calculate_threshold: bool = True,
+        target_bars_per_day: int = 50,
+        use_bars: bool = True,
+        bar_timeframe: str = "1Min"
+    ) -> str:
+        """
+        Generate volume bars from historical data using López de Prado's methodology.
+
+        Volume bars sample by volume rather than time, providing better statistical properties
+        for machine learning and more responsive market microstructure analysis.
+
+        Args:
+            symbol: Stock symbol
+            volume_threshold: Volume per bar (if None, auto-calculates)
+            days: Number of days of history to process
+            auto_calculate_threshold: Whether to auto-calculate optimal threshold
+            target_bars_per_day: Target number of bars per day for auto-calculation
+            use_bars: If True, uses bar data with pre-computed VWAP; if False, uses trade data
+            bar_timeframe: Timeframe for bars ("1Min", "5Min", etc.) when use_bars=True
+
+        Returns:
+            Formatted volume bars analysis with statistical properties
+        """
+        return await volume_bars_tool.get_volume_bars_from_history(
+            symbol, volume_threshold, days, auto_calculate_threshold,
+            target_bars_per_day, use_bars, bar_timeframe
+        )
+
+    @mcp.tool()
+    async def compare_bar_types(
+        symbol: str,
+        days: int = 1,
+        time_bars_minutes: int = 5,
+        volume_threshold: float = None
+    ) -> str:
+        """
+        Compare statistical properties of time bars vs volume bars.
+
+        This comparison helps understand the benefits of volume bars over
+        traditional time-based sampling as described in López de Prado's book.
+
+        Args:
+            symbol: Stock symbol to analyze
+            days: Number of days to analyze
+            time_bars_minutes: Minute interval for time bars
+            volume_threshold: Volume threshold for volume bars
+
+        Returns:
+            Comparative analysis of both bar types including autocorrelation,
+            kurtosis, and suitability for machine learning
+        """
+        return await volume_bars_tool.compare_bar_types(
+            symbol, days, time_bars_minutes, volume_threshold
+        )
+
+    @mcp.tool()
+    async def start_volume_bar_streaming(
+        symbols: str,
+        volume_thresholds: str = None,
+        auto_calculate: bool = True,
+        target_bars_per_day: int = 50
+    ) -> str:
+        """
+        Start real-time volume bar aggregation using existing stream.
+
+        Integrates with the global stock stream to aggregate trades into volume bars.
+
+        Args:
+            symbols: Comma-separated symbols to track
+            volume_thresholds: Comma-separated thresholds or single value for all
+            auto_calculate: Auto-calculate thresholds based on ADV
+            target_bars_per_day: Target bars per day for auto-calculation
+
+        Returns:
+            Status message
+        """
+        return await volume_bars_tool.start_volume_bar_streaming(
+            symbols, volume_thresholds, auto_calculate, target_bars_per_day
+        )
+
+    @mcp.tool()
+    async def get_volume_bar_stats(symbol: str = None) -> str:
+        """
+        Get current volume bar statistics and recent bars.
+
+        Args:
+            symbol: Specific symbol or None for all
+
+        Returns:
+            Formatted statistics and recent bars
+        """
+        return await volume_bars_tool.get_volume_bar_stats(symbol)
+
 
 def register_scanner_tools(mcp):
     """Register market scanner tools."""
@@ -325,6 +424,34 @@ def register_scanner_tools(mcp):
         from ..tools.after_hours_scanner import get_enhanced_streaming_analytics as analytics_func
 
         return await analytics_func(symbol, analysis_minutes, include_orderbook)
+
+    @mcp.tool()
+    async def get_single_day_pnl(
+        date: str,
+        symbol_filter: str = None,
+        min_trade_value: float = 0.0,
+    ) -> str:
+        """
+        Calculate P&L for a SINGLE specific trading day only.
+
+        This tool correctly filters trades to show ONLY activity on the specified date,
+        unlike the intraday_pnl resource which shows cumulative data over multiple days.
+
+        Args:
+            date: Date to analyze in YYYY-MM-DD format (e.g., "2025-07-08")
+            symbol_filter: Optional symbol to filter trades (e.g., "AAPL")
+            min_trade_value: Minimum trade value to include (default: 0)
+
+        Returns:
+            Formatted P&L report for that specific day only with per-symbol breakdown
+
+        Example:
+            get_single_day_pnl("2025-07-08")  # Get P&L for July 8, 2025 only
+            get_single_day_pnl("2025-08-07", "FOXO")  # Get FOXO P&L for Aug 7 only
+        """
+        from ..tools.single_day_pnl import get_single_day_pnl as pnl_func
+
+        return await pnl_func(date, symbol_filter, min_trade_value)
 
 
 def register_watchlist_tools(mcp):

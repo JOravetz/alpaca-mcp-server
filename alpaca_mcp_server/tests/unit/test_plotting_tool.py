@@ -14,7 +14,7 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from alpaca_mcp_server  # noqa: E402.tools.advanced_plotting_tool import generate_peak_trough_plots
+from alpaca_mcp_server.tools.advanced_plotting_tool import generate_peak_trough_plots
 
 
 class TestAdvancedPlottingTool:

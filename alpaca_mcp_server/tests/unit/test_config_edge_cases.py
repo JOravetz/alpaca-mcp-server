@@ -17,7 +17,7 @@ sys.path.insert(0, str(project_root))
 
 import contextlib
 
-from alpaca_mcp_server  # noqa: E402.config.global_config import (
+from alpaca_mcp_server.config.global_config import (
     GlobalConfig,
 )
 

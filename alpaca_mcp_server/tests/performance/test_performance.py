@@ -16,11 +16,11 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from alpaca_mcp_server  # noqa: E402.prompts.day_trading_workflow import day_trading_workflow
-from alpaca_mcp_server  # noqa: E402.prompts.list_trading_capabilities import list_trading_capabilities
-from alpaca_mcp_server  # noqa: E402.prompts.market_session_workflow import market_session_workflow
-from alpaca_mcp_server  # noqa: E402.prompts.master_scanning_workflow import master_scanning_workflow
-from alpaca_mcp_server  # noqa: E402.prompts.pro_technical_workflow import pro_technical_workflow
+from alpaca_mcp_server.prompts.day_trading_workflow import day_trading_workflow  # noqa: E402
+from alpaca_mcp_server.prompts.list_trading_capabilities import list_trading_capabilities  # noqa: E402
+from alpaca_mcp_server.prompts.market_session_workflow import market_session_workflow  # noqa: E402
+from alpaca_mcp_server.prompts.master_scanning_workflow import master_scanning_workflow  # noqa: E402
+from alpaca_mcp_server.prompts.pro_technical_workflow import pro_technical_workflow  # noqa: E402
 
 
 class TestWorkflowPerformance:

@@ -51,7 +51,7 @@ def setup_backend_for_args(no_plot=False):
 
 # Add current directory to path to import peakdetect
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from peakdetect import peakdetect  # noqa: E402
+from peakdetect import peakdetect, peakdetect_savgol  # noqa: E402
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -549,7 +549,7 @@ class HistoricalDataFetcher:
 
 
 def process_bars_for_peaks(
-    symbol, bars, window_len=11, lookahead=1, company_name=None, timeframe="15Min"
+    symbol, bars, window_len=11, lookahead=1, company_name=None, timeframe="15Min", use_savgol=True
 ):
     """Process bars to compute filtered close prices and detect peaks/troughs - numpy arrays only"""
     try:
@@ -583,9 +583,20 @@ def process_bars_for_peaks(
         sample_indices = np.arange(len(close_prices))
 
         # Detect peaks and troughs using filtered prices
-        max_peaks, min_peaks = peakdetect(
-            filtered_prices, x_axis=sample_indices, lookahead=lookahead, delta=0
-        )
+        # Use Savitzky-Golay derivative method for better peak detection
+
+        if use_savgol:
+            # Use Savitzky-Golay filter for derivative-based peak detection
+            # This provides smoother derivatives and more accurate peak detection
+            max_peaks, min_peaks = peakdetect_savgol(
+                filtered_prices, x_axis=sample_indices,
+                window_length=3, polyorder=2, delta=1, min_distance=1
+            )
+        else:
+            # Use original peakdetect method
+            max_peaks, min_peaks = peakdetect(
+                filtered_prices, x_axis=sample_indices, lookahead=lookahead, delta=0
+            )
 
         logger.info("Found %d peaks and %d troughs", len(max_peaks), len(min_peaks))
 
@@ -1700,6 +1711,17 @@ def main():
         default=1,
         help="Peak detection lookahead parameter (1-50)",
     )
+    parser.add_argument(
+        "--use-savgol",
+        action="store_true",
+        default=True,
+        help="Use Savitzky-Golay filter for derivative-based peak detection (recommended)",
+    )
+    parser.add_argument(
+        "--use-classic",
+        action="store_true",
+        help="Use classic peakdetect method instead of Savitzky-Golay",
+    )
 
     parser.add_argument(
         "--feed",
@@ -1846,8 +1868,9 @@ def main():
             company_name = company_names.get(symbol, symbol)
 
             # Process bars for peaks
+            use_savgol = not args.use_classic  # Use Savgol unless classic is specified
             results = process_bars_for_peaks(
-                symbol, bars, window_len, lookahead, company_name, timeframe
+                symbol, bars, window_len, lookahead, company_name, timeframe, use_savgol
             )
 
             if results:

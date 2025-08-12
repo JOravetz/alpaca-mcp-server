@@ -15,27 +15,27 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import test modules
-from alpaca_mcp_server  # noqa: E402.tests.integration.test_mcp_server import (  # noqa: E402
+from alpaca_mcp_server.tests.integration.test_mcp_server import (  # noqa: E402
     TestMCPServerIntegration,
     TestPerformanceIntegration,
     TestRealDataIntegration,
     TestWorkflowExecution,
 )
-from alpaca_mcp_server  # noqa: E402.tests.performance.test_performance import (  # noqa: E402
+from alpaca_mcp_server.tests.performance.test_performance import (  # noqa: E402
     TestConcurrentPerformance,
     TestPerformanceBenchmarks,
     TestResourceUsage,
     TestScalabilityLimits,
     TestWorkflowPerformance,
 )
-from alpaca_mcp_server  # noqa: E402.tests.unit.test_error_handling import (  # noqa: E402
+from alpaca_mcp_server.tests.unit.test_error_handling import (  # noqa: E402
     TestDataValidation,
     TestEdgeCases,
     TestErrorHandling,
     TestFallbackScenarios,
     TestRecoveryMechanisms,
 )
-from alpaca_mcp_server  # noqa: E402.tests.unit.test_workflows import (  # noqa: E402
+from alpaca_mcp_server.tests.unit.test_workflows import (  # noqa: E402
     TestDayTradingWorkflow,
     TestListTradingCapabilities,
     TestMarketSessionWorkflow,

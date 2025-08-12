@@ -14,7 +14,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import the streaming tools module to access the start_global_stock_stream function
-from alpaca_mcp_server  # noqa: E402.tools.streaming_tools import start_global_stock_stream
+from alpaca_mcp_server.tools.streaming_tools import start_global_stock_stream
 
 
 class TestStartGlobalStockStream:

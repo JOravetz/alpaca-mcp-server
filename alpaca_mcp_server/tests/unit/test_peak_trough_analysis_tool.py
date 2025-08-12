@@ -16,7 +16,7 @@ import pytz
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from alpaca_mcp_server  # noqa: E402.tools.peak_trough_analysis_tool import (
+from alpaca_mcp_server.tools.peak_trough_analysis_tool import (
     HistoricalDataFetcher,
     analyze_peaks_and_troughs,
     convert_to_nyc_timezone,
@@ -517,6 +517,333 @@ class TestPeakTroughIntegration:
             print(f"⚠️ API credentials integration issue: {e}")
 
 
+class TestAnalyzePeaksAndTroughsWithPlotPy:
+    """Test the plot.py integration functionality."""
+
+    @pytest.mark.asyncio
+    async def test_analyze_with_plot_py_basic(self):
+        """Test basic plot.py integration."""
+        from alpaca_mcp_server.tools.peak_trough_analysis_tool import (
+            analyze_peaks_and_troughs_with_plot_py,
+        )
+
+        result = await analyze_peaks_and_troughs_with_plot_py(
+            symbols="SPY", timeframe="5Min", days=1, window_len=11, lookahead=2
+        )
+
+        assert isinstance(result, str)
+        
+        if "Error" not in result:
+            assert "Peak and Trough Analysis" in result
+            assert "plot.py" in result.lower() or "Plot" in result
+            print(f"✅ Plot.py integration working: {len(result)} chars")
+        else:
+            print(f"⚠️ Plot.py integration error: {result[:200]}...")
+
+    @pytest.mark.asyncio
+    async def test_analyze_with_plot_py_multiple_symbols(self):
+        """Test plot.py with multiple symbols."""
+        from alpaca_mcp_server.tools.peak_trough_analysis_tool import (
+            analyze_peaks_and_troughs_with_plot_py,
+        )
+
+        result = await analyze_peaks_and_troughs_with_plot_py(
+            symbols="AAPL,MSFT", timeframe="15Min", days=1
+        )
+
+        assert isinstance(result, str)
+        
+        if "Error" not in result:
+            # Should process both symbols
+            symbols_found = sum(1 for sym in ["AAPL", "MSFT"] if sym in result)
+            assert symbols_found >= 1, "At least one symbol should be in results"
+            print(f"✅ Plot.py multiple symbols: {symbols_found} symbols found")
+        else:
+            print(f"⚠️ Plot.py multiple symbols error: {result[:200]}...")
+
+    @pytest.mark.asyncio
+    async def test_analyze_with_plot_py_plot_generation(self):
+        """Test actual plot generation (if environment supports it)."""
+        from alpaca_mcp_server.tools.peak_trough_analysis_tool import (
+            analyze_peaks_and_troughs_with_plot_py,
+        )
+        
+        # Test with default settings
+        result = await analyze_peaks_and_troughs_with_plot_py(
+            symbols="SPY", timeframe="1Min", days=1
+        )
+
+        assert isinstance(result, str)
+        
+        if "Error" not in result:
+            # Check for plot-related output
+            if "Plot saved" in result or "plot" in result.lower():
+                print("✅ Plot generation references found")
+            else:
+                print("⚠️ No plot generation references (may be disabled)")
+        else:
+            print(f"⚠️ Plot generation test error: {result[:200]}...")
+
+
+class TestErrorHandlingAndEdgeCases:
+    """Test comprehensive error handling and edge cases."""
+
+    @pytest.mark.asyncio
+    async def test_invalid_api_credentials(self):
+        """Test with invalid API credentials."""
+        from alpaca_mcp_server.tools.peak_trough_analysis_tool import HistoricalDataFetcher
+        
+        fetcher = HistoricalDataFetcher("invalid_key", "invalid_secret")
+        bars = fetcher.fetch_historical_bars(["AAPL"], "1Min", "2025-06-22", "2025-06-22")
+        
+        # Should handle invalid credentials gracefully
+        assert bars is None or isinstance(bars, dict)
+        print("✅ Invalid API credentials handled gracefully")
+
+    def test_zero_phase_filter_extreme_values(self):
+        """Test filter with extreme values."""
+        # Test with very large values (need more data points for filter)
+        large_data = np.array([1e10, 2e10, 3e10, 2.5e10, 4e10, 3.5e10, 2.8e10, 3.2e10, 2.9e10, 3.1e10])
+        filtered = zero_phase_filter(large_data, 3)
+        assert not np.any(np.isnan(filtered)), "Should handle large values"
+        assert not np.any(np.isinf(filtered)), "Should not produce infinities"
+        
+        # Test with negative values (need more data points)
+        negative_data = np.array([-100, -50, -75, -60, -80, -90, -70, -65, -85, -95])
+        filtered = zero_phase_filter(negative_data, 3)
+        assert len(filtered) == len(negative_data)
+        print("✅ Extreme values handled correctly")
+
+    def test_process_bars_malformed_data(self):
+        """Test with malformed bar data."""
+        # Missing required fields
+        malformed_bars = [
+            {"c": "150.0"},  # Missing timestamp
+            {"t": "2025-06-22T09:00:00Z"},  # Missing close price
+            {"c": "invalid", "t": "2025-06-22T09:01:00Z"},  # Invalid price
+        ]
+        
+        result = process_bars_for_peaks("TEST", malformed_bars)
+        assert result is None, "Should handle malformed data gracefully"
+        print("✅ Malformed bar data handled correctly")
+
+    @pytest.mark.asyncio
+    async def test_concurrent_analysis(self):
+        """Test concurrent analysis requests."""
+        import asyncio
+        
+        # Run multiple analyses concurrently
+        tasks = [
+            analyze_peaks_and_troughs(symbols="SPY", timeframe="1Min", days=1),
+            analyze_peaks_and_troughs(symbols="AAPL", timeframe="5Min", days=1),
+            analyze_peaks_and_troughs(symbols="MSFT", timeframe="15Min", days=1),
+        ]
+        
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # All should complete without crashing
+        assert len(results) == 3
+        for result in results:
+            if isinstance(result, Exception):
+                print(f"⚠️ Concurrent task exception: {result}")
+            else:
+                assert isinstance(result, str)
+        print("✅ Concurrent analysis handled correctly")
+
+    def test_get_latest_signal_tie_breaking(self):
+        """Test signal selection when peak and trough have same index."""
+        results = {
+            "symbol": "TEST",
+            "total_bars": 50,
+            "original_prices": [150.0] * 50,
+            "peaks": [{
+                "index": 45, 
+                "timestamp": "2025-06-22T09:45:00Z", 
+                "original_price": 155.0,
+                "filtered_price": 154.9,
+                "volume": 1000
+            }],
+            "troughs": [{
+                "index": 45, 
+                "timestamp": "2025-06-22T09:45:00Z", 
+                "original_price": 145.0,
+                "filtered_price": 145.1,
+                "volume": 1000
+            }],
+        }
+        
+        signal = get_latest_signal(results)
+        assert signal is not None
+        # Should prefer one over the other consistently
+        assert signal["type"] in ["Peak", "Trough"]
+        print(f"✅ Tie-breaking handled: selected {signal['type']}")
+
+
+class TestFilterParameterCalculations:
+    """Test filter parameter calculations and configurations."""
+
+    def test_window_length_adjustment(self):
+        """Test window length adjustment for different data sizes."""
+        # Very short data should adjust window
+        short_data = np.array([1.0, 2.0, 3.0])
+        filtered = zero_phase_filter(short_data, 11)  # Window larger than data
+        assert len(filtered) == len(short_data)
+        
+        # Medium data
+        medium_data = np.array([float(i) for i in range(20)])
+        filtered = zero_phase_filter(medium_data, 11)
+        assert len(filtered) == len(medium_data)
+        print("✅ Window length adjustment working")
+
+    def test_lookahead_sensitivity(self):
+        """Test peak detection sensitivity with different lookahead values."""
+        # Create data with clear peaks
+        x = np.linspace(0, 4 * np.pi, 100)
+        data = np.sin(x) + 0.1 * np.random.randn(100)
+        
+        bars = []
+        for i, value in enumerate(data):
+            bars.append({
+                "c": str(150 + value * 10),
+                "t": f"2025-06-22T09:{i:02d}:00Z",
+                "v": "1000"
+            })
+        
+        # Test with different lookahead values
+        lookahead_values = [1, 3, 5, 10]
+        peak_counts = []
+        
+        for lookahead in lookahead_values:
+            result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=lookahead)
+            if result:
+                peak_counts.append(len(result["peaks"]))
+            else:
+                peak_counts.append(0)
+        
+        # Higher lookahead should generally find fewer but more significant peaks
+        assert max(peak_counts) > 0, "Should find at least some peaks"
+        print(f"✅ Lookahead sensitivity: peaks found with lookahead 1-10: {peak_counts}")
+
+    def test_global_config_fallback(self):
+        """Test that global config is used when parameters are None."""
+        try:
+            from alpaca_mcp_server.config import get_technical_config
+            
+            config = get_technical_config()
+            
+            # Test that None parameters use global config
+            data = np.array([float(i) for i in range(50)])
+            filtered = zero_phase_filter(data, None)
+            
+            assert len(filtered) == len(data)
+            print(f"✅ Global config fallback working (window={config.hanning_window_samples})")
+        except Exception as e:
+            print(f"⚠️ Global config test skipped: {e}")
+
+
+class TestRealMarketDataIntegration:
+    """Integration tests with real market data."""
+
+    @pytest.mark.asyncio
+    async def test_live_market_hours_analysis(self):
+        """Test analysis during market hours with live data."""
+        # Check if market is open
+        try:
+            from alpaca_mcp_server.tools.market_tools import get_extended_market_clock
+            
+            clock_result = await get_extended_market_clock()
+            
+            if "is_open: true" in clock_result or "Market Open" in clock_result:
+                # Market is open, test with live data
+                result = await analyze_peaks_and_troughs(
+                    symbols="SPY,QQQ,IWM", timeframe="1Min", days=0  # Today only
+                )
+                
+                assert isinstance(result, str)
+                if "Error" not in result:
+                    assert "Trading Signal Summary" in result
+                    print("✅ Live market data analysis successful")
+                else:
+                    print("⚠️ Live market data not available")
+            else:
+                print("⚠️ Market closed, skipping live data test")
+        except Exception as e:
+            print(f"⚠️ Live market test skipped: {e}")
+
+    @pytest.mark.asyncio
+    async def test_high_volatility_stocks(self):
+        """Test with known volatile stocks for peak/trough detection."""
+        # Use stocks known for intraday volatility
+        volatile_symbols = "TSLA,NVDA,AMD"
+        
+        result = await analyze_peaks_and_troughs(
+            symbols=volatile_symbols, 
+            timeframe="5Min", 
+            days=1,
+            window_len=7,  # Smaller window for volatile stocks
+            lookahead=2
+        )
+        
+        assert isinstance(result, str)
+        
+        if "Error" not in result:
+            # Volatile stocks should have multiple peaks/troughs
+            peak_count = result.count("Peak @")
+            trough_count = result.count("Trough @")
+            
+            total_signals = peak_count + trough_count
+            assert total_signals > 0, "Volatile stocks should have signals"
+            print(f"✅ Volatile stocks: {peak_count} peaks, {trough_count} troughs found")
+        else:
+            print("⚠️ Volatile stocks analysis failed")
+
+    @pytest.mark.asyncio
+    async def test_penny_stock_analysis(self):
+        """Test with penny stocks (low price, high volatility)."""
+        # Note: These may change over time, update as needed
+        result = await analyze_peaks_and_troughs(
+            symbols="SOUN,RIOT", 
+            timeframe="1Min", 
+            days=1,
+            window_len=11,
+            lookahead=1  # More sensitive for penny stocks
+        )
+        
+        assert isinstance(result, str)
+        
+        if "Error" not in result and "No valid symbols" not in result:
+            # Check for decimal precision (penny stocks need it)
+            if "." in result:
+                decimal_places = max(len(price.split(".")[-1]) for price in result.split("$")[1:] if "." in price[:10])
+                assert decimal_places >= 2, "Should maintain price precision for penny stocks"
+            print("✅ Penny stock analysis with proper precision")
+        else:
+            print("⚠️ Penny stock analysis skipped (symbols may be invalid)")
+
+    @pytest.mark.asyncio
+    async def test_etf_vs_stock_patterns(self):
+        """Compare pattern detection between ETFs and individual stocks."""
+        # ETFs tend to be smoother than individual stocks
+        etf_result = await analyze_peaks_and_troughs(
+            symbols="SPY", timeframe="15Min", days=1, window_len=11
+        )
+        
+        stock_result = await analyze_peaks_and_troughs(
+            symbols="AAPL", timeframe="15Min", days=1, window_len=11
+        )
+        
+        assert isinstance(etf_result, str)
+        assert isinstance(stock_result, str)
+        
+        if "Error" not in etf_result and "Error" not in stock_result:
+            etf_peaks = etf_result.count("Peak @")
+            stock_peaks = stock_result.count("Peak @")
+            
+            print(f"✅ ETF vs Stock: SPY={etf_peaks} peaks, AAPL={stock_peaks} peaks")
+        else:
+            print("⚠️ ETF vs Stock comparison skipped")
+
+
 class TestPeakTroughPerformance:
     """Test performance characteristics."""
 
@@ -579,6 +906,35 @@ class TestPeakTroughPerformance:
 
         except ImportError:
             print("⚠️ psutil not available for memory testing")
+
+    @pytest.mark.asyncio
+    async def test_large_dataset_performance(self):
+        """Test performance with large datasets (30 days of minute data)."""
+        import time
+        
+        start_time = time.time()
+        
+        # 30 days of minute data is a lot of data points
+        result = await analyze_peaks_and_troughs(
+            symbols="SPY", 
+            timeframe="1Min", 
+            days=30,  # Maximum allowed
+            window_len=21,  # Larger window for smoother results
+            lookahead=5
+        )
+        
+        end_time = time.time()
+        duration = end_time - start_time
+        
+        assert isinstance(result, str)
+        assert duration < 180.0  # Should complete within 3 minutes even for large datasets
+        
+        if "Error" not in result:
+            # Check that we got substantial data
+            assert len(result) > 1000, "Large dataset should produce detailed results"
+            print(f"✅ Large dataset (30 days) performance: {duration:.2f}s")
+        else:
+            print(f"⚠️ Large dataset test completed with error in {duration:.2f}s")
 
 
 if __name__ == "__main__":

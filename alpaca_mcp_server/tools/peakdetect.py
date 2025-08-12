@@ -13,6 +13,7 @@ __all__ = [
     "peakdetect_sine_locked",
     "peakdetect_spline",
     "peakdetect_zero_crossing",
+    "peakdetect_savgol",
     "zero_crossings",
     "zero_crossings_sine_fit",
     "_n",
@@ -846,6 +847,126 @@ def _smooth(x, window_len=11, window="hanning"):
     y = np.convolve(w / w.sum(), s, mode="valid")
 
     return y
+
+
+def peakdetect_savgol(y_axis, x_axis=None, window_length=5, polyorder=3, delta=1, min_distance=1):
+    """
+    Detect peaks and troughs using Savitzky-Golay filter for derivative calculation.
+    
+    This implementation uses scipy's find_peaks with prominence filtering to detect
+    only significant peaks and troughs, avoiding detection of minor fluctuations.
+    
+    keyword arguments:
+    y_axis -- A list containing the signal over which to find peaks
+    x_axis -- A x-axis whose values correspond to the y_axis list
+    window_length -- The length of the filter window for Savitzky-Golay (default: 5)
+    polyorder -- The order of the polynomial used to fit the samples (default: 3)
+    delta -- The spacing of the samples to which the filter will be applied (default: 1)
+    min_distance -- Minimum distance between peaks/troughs (default: 1)
+    
+    return: two lists [max_peaks, min_peaks] containing the positive and
+        negative peaks respectively. Each cell of the lists contains a tuple
+        of: (position, peak_value)
+    """
+    import numpy as np
+    from scipy import signal as scipy_signal
+
+    x_axis, y_axis = _datacheck_peakdetect(x_axis, y_axis)
+
+    # Ensure window_length is appropriate for the data
+    window_length = min(window_length, len(y_axis))
+    if window_length % 2 == 0:
+        window_length += 1
+    window_length = max(3, window_length)  # Use minimum of 3 as specified
+
+    # Ensure polyorder is valid
+    polyorder = min(polyorder, window_length - 1)
+
+    # First, apply additional smoothing to the already-filtered data
+    # This helps eliminate minor fluctuations
+    smoothed_y = scipy_signal.savgol_filter(
+        y_axis, window_length=min(31, len(y_axis) // 4) if min(31, len(y_axis) // 4) % 2 == 1 else min(31, len(y_axis) // 4) + 1,
+        polyorder=3, delta=delta
+    )
+
+    # Calculate first derivative using Savitzky-Golay filter on smoothed data
+    first_derivative = scipy_signal.savgol_filter(
+        smoothed_y, window_length=window_length,
+        polyorder=polyorder, deriv=1, delta=delta
+    )
+
+    # Use scipy's find_peaks with prominence to detect significant peaks
+    # Calculate prominence threshold based on the data range
+    data_range = np.ptp(smoothed_y)  # peak-to-peak range
+    prominence_threshold = data_range * 0.01  # 1% of data range for significance
+
+    # Find peaks (maxima) in the smoothed data
+    peak_indices, peak_properties = scipy_signal.find_peaks(
+        smoothed_y,
+        prominence=prominence_threshold,
+        distance=min_distance,
+        width=2  # Minimum width to avoid noise spikes
+    )
+
+    # Find troughs (minima) by inverting the signal
+    trough_indices, trough_properties = scipy_signal.find_peaks(
+        -smoothed_y,
+        prominence=prominence_threshold,
+        distance=min_distance,
+        width=2
+    )
+
+    # Further filter based on derivative sign changes for validation
+    max_peaks = []
+    for idx in peak_indices:
+        # Verify this is a true peak by checking derivative sign change
+        if idx > 0 and idx < len(first_derivative) - 1:
+            # Check if derivative goes from positive to negative
+            if first_derivative[idx-1] > 0 and first_derivative[idx+1] < 0 or abs(first_derivative[idx]) < np.std(first_derivative) * 0.1:
+                max_peaks.append((x_axis[idx], y_axis[idx]))
+
+    min_peaks = []
+    for idx in trough_indices:
+        # Verify this is a true trough by checking derivative sign change
+        if idx > 0 and idx < len(first_derivative) - 1:
+            # Check if derivative goes from negative to positive
+            if first_derivative[idx-1] < 0 and first_derivative[idx+1] > 0 or abs(first_derivative[idx]) < np.std(first_derivative) * 0.1:
+                min_peaks.append((x_axis[idx], y_axis[idx]))
+
+    # If we still have too many peaks/troughs, increase prominence filtering
+    if len(max_peaks) > 15:  # More than 15 peaks is likely too many
+        # Re-run with higher prominence threshold
+        prominence_threshold = data_range * 0.02  # 2% of range
+        peak_indices, _ = scipy_signal.find_peaks(
+            smoothed_y,
+            prominence=prominence_threshold,
+            distance=min_distance * 2
+        )
+        max_peaks = [(x_axis[idx], y_axis[idx]) for idx in peak_indices if idx < len(x_axis)]
+
+    if len(min_peaks) > 15:  # More than 15 troughs is likely too many
+        prominence_threshold = data_range * 0.02  # 2% of range
+        trough_indices, _ = scipy_signal.find_peaks(
+            -smoothed_y,
+            prominence=prominence_threshold,
+            distance=min_distance * 2
+        )
+        min_peaks = [(x_axis[idx], y_axis[idx]) for idx in trough_indices if idx < len(x_axis)]
+
+    return max_peaks, min_peaks
+
+
+def _filter_by_distance(peaks, min_distance):
+    """Filter peaks to ensure minimum distance between them."""
+    if not peaks:
+        return peaks
+
+    filtered = [peaks[0]]
+    for peak in peaks[1:]:
+        if abs(peak[0] - filtered[-1][0]) >= min_distance:
+            filtered.append(peak)
+
+    return filtered
 
 
 def zero_crossings(y_axis, window_len=11, window_f="hanning", offset_corrected=False):

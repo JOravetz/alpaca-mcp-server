@@ -27,17 +27,21 @@ async def get_intraday_pnl(
         account = client.get_account()
 
         # Calculate date range - Include full trading day with pre-market and extended hours
-        target_date = datetime.now().date() - timedelta(days=days_back)
-        # Start at 4:00 AM (pre-market open) and end at 8:00 PM (post-market close)
-        day_start = datetime.combine(target_date, time(4, 0))
-        day_end = datetime.combine(target_date, time(20, 0))
+        # For days_back > 0, we want to fetch ALL days from (today - days_back) to today
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=days_back)
+
+        # Start at 4:00 AM (pre-market open) of the start date
+        day_start = datetime.combine(start_date, time(4, 0))
+        # End at 8:00 PM (post-market close) of the end date
+        day_end = datetime.combine(end_date, time(20, 0))
 
         # Get orders for the specified period
         orders_request = GetOrdersRequest(
             status=QueryOrderStatus.CLOSED,
             after=day_start,
             until=day_end,
-            limit=500,  # Increased limit for active traders
+            limit=10000,  # Maximum limit to fetch all trades
         )
 
         orders = client.get_orders(orders_request)
@@ -66,7 +70,7 @@ async def get_intraday_pnl(
         for order in orders:
             if (
                 order.filled_at
-                and order.filled_at.date() == target_date
+                and start_date <= order.filled_at.date() <= end_date
                 and order.filled_avg_price
                 and order.filled_qty
             ):
@@ -221,7 +225,8 @@ async def get_intraday_pnl(
         profit_factor = avg_win / avg_loss if avg_loss > 0 else float("inf") if avg_win > 0 else 0
 
         return {
-            "analysis_date": target_date.isoformat(),
+            "analysis_date": end_date.isoformat(),
+            "date_range": f"{start_date.isoformat()} to {end_date.isoformat()}",
             "days_back": days_back,
             "realized_pnl": round(realized_pnl, 2),
             "unrealized_pnl": (round(unrealized_pnl, 2) if include_open_positions else None),
@@ -251,9 +256,12 @@ async def get_intraday_pnl(
         }
 
     except Exception as e:
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=days_back)
         return {
             "error": str(e),
-            "analysis_date": (datetime.now().date() - timedelta(days=days_back)).isoformat(),
+            "analysis_date": end_date.isoformat(),
+            "date_range": f"{start_date.isoformat()} to {end_date.isoformat()}",
             "parameters": {
                 "days_back": days_back,
                 "include_open_positions": include_open_positions,
