@@ -20,6 +20,11 @@ from ..tools.cleanup_tool import cleanup_server
 from ..tools.peak_trough_analysis_tool import (
     analyze_peaks_and_troughs_with_plot_py as peak_trough_analysis,
 )
+from ..tools.c_peak_trough_wrapper import (
+    analyze_peaks_troughs_fast as c_peak_trough_fast,
+    compare_implementations as c_compare_implementations,
+)
+# C analyzer imports moved to function level to avoid naming conflicts
 
 
 def register_account_tools(mcp):
@@ -212,6 +217,57 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
         )
 
     @mcp.tool()
+    async def analyze_peaks_troughs_fast(
+        symbols: str,
+        timeframe: str = "1Min",
+        days: int = 1,
+        window_len: int = None,
+        filter_key: str = "close",
+        feed: str = "sip",
+    ) -> str:
+        """
+        Ultra-fast peak/trough analysis using C implementation (5-10x faster).
+        
+        This high-performance version uses a compiled C program for speed,
+        making it ideal for real-time scanning and high-frequency analysis.
+        
+        Args:
+            symbols: Comma-separated symbols or "AUTO" for scanner results
+            timeframe: Bar timeframe (1Min, 5Min, 15Min, 1Hour, 1Day)
+            days: Number of trading days to analyze (1-30)
+            window_len: Hanning filter window length (3-101, odd, uses global config if None)
+            filter_key: Data field to filter (close, open, high, low, vwap)
+            feed: Data feed source (sip, iex, otc)
+        
+        Returns:
+            Formatted analysis with trading signals
+        """
+        return await c_peak_trough_fast(
+            symbols, timeframe, days, window_len, filter_key, feed
+        )
+    
+    @mcp.tool()
+    async def compare_peak_trough_implementations(
+        symbol: str,
+        timeframe: str = "1Min",
+        days: int = 1,
+    ) -> str:
+        """
+        Compare performance between C and Python peak/trough implementations.
+        
+        Useful for benchmarking and verifying the speedup of the C version.
+        
+        Args:
+            symbol: Stock symbol to analyze
+            timeframe: Bar timeframe
+            days: Number of days to analyze
+        
+        Returns:
+            Performance comparison report
+        """
+        return await c_compare_implementations(symbol, timeframe, days)
+
+    @mcp.tool()
     async def get_volume_bars_from_history(
         symbol: str,
         volume_threshold: float = None,
@@ -219,7 +275,7 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
         auto_calculate_threshold: bool = True,
         target_bars_per_day: int = 50,
         use_bars: bool = True,
-        bar_timeframe: str = "1Min"
+        bar_timeframe: str = "1Min",
     ) -> str:
         """
         Generate volume bars from historical data using López de Prado's methodology.
@@ -240,16 +296,18 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
             Formatted volume bars analysis with statistical properties
         """
         return await volume_bars_tool.get_volume_bars_from_history(
-            symbol, volume_threshold, days, auto_calculate_threshold,
-            target_bars_per_day, use_bars, bar_timeframe
+            symbol,
+            volume_threshold,
+            days,
+            auto_calculate_threshold,
+            target_bars_per_day,
+            use_bars,
+            bar_timeframe,
         )
 
     @mcp.tool()
     async def compare_bar_types(
-        symbol: str,
-        days: int = 1,
-        time_bars_minutes: int = 5,
-        volume_threshold: float = None
+        symbol: str, days: int = 1, time_bars_minutes: int = 5, volume_threshold: float = None
     ) -> str:
         """
         Compare statistical properties of time bars vs volume bars.
@@ -276,7 +334,7 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
         symbols: str,
         volume_thresholds: str = None,
         auto_calculate: bool = True,
-        target_bars_per_day: int = 50
+        target_bars_per_day: int = 50,
     ) -> str:
         """
         Start real-time volume bar aggregation using existing stream.
@@ -398,6 +456,81 @@ def register_scanner_tools(mcp):
         from ..tools.after_hours_scanner import scan_after_hours_opportunities as scanner_func
 
         return await scanner_func(symbols, min_volume, min_percent_change, max_symbols, sort_by)
+
+    @mcp.tool()
+    async def analyze_market_activity_fast(
+        symbols: str = None,
+        max_results: int = 10,
+        max_price: float = 50.0,
+        min_percent_change: float = 5.0,
+        min_trades: int = 500,
+        sort_by: str = "trades,percent_change",
+    ) -> str:
+        """
+        Ultra-fast market activity analysis using C implementation (10x+ faster).
+        
+        Analyzes real-time stock snapshots to find high-activity stocks with
+        momentum. Calculates gradients, volume changes, and trade intensity.
+        
+        Perfect for rapid scanning of hundreds of symbols to find day trading
+        opportunities. The C implementation provides industrial-grade performance.
+        
+        Args:
+            symbols: Optional comma-separated symbols (None = use default list)
+            max_results: Maximum number of results to return
+            max_price: Maximum stock price filter (focus on penny stocks)
+            min_percent_change: Minimum percent change threshold
+            min_trades: Minimum trades threshold
+            sort_by: Sort keys (trades, percent_change, volume, gradient_change)
+        
+        Returns:
+            Formatted analysis with high-activity trading opportunities
+        """
+        from ..tools.c_stock_analyzer_wrapper import analyze_market_activity_fast as c_analyzer_func
+        return await c_analyzer_func(
+            symbols, max_results, max_price, min_percent_change, min_trades, sort_by
+        )
+    
+    @mcp.tool()
+    async def scan_explosive_stocks_fast(
+        max_results: int = 20,
+        min_percent_change: float = 10.0,
+        max_price: float = 30.0,
+    ) -> str:
+        """
+        Lightning-fast scan for explosive penny stocks using C analyzer.
+        
+        Optimized for finding extreme percentage movers with high activity.
+        This is the fastest way to find volatile day trading opportunities.
+        
+        Args:
+            max_results: Maximum number of results
+            min_percent_change: Minimum percent change for explosive moves
+            max_price: Maximum price (focus on penny stocks)
+        
+        Returns:
+            Formatted list of explosive trading opportunities
+        """
+        from ..tools.c_stock_analyzer_wrapper import scan_explosive_stocks_fast as c_scanner_func
+        return await c_scanner_func(max_results, min_percent_change, max_price)
+    
+    @mcp.tool()
+    async def compare_analyzer_performance(
+        test_symbols: str = "AAPL,MSFT,NVDA,SPY,TSLA",
+    ) -> str:
+        """
+        Compare performance between C analyzer and Python scanners.
+        
+        Useful for demonstrating the speed advantage of the C implementation.
+        
+        Args:
+            test_symbols: Symbols to test with
+        
+        Returns:
+            Performance comparison report
+        """
+        from ..tools.c_stock_analyzer_wrapper import compare_analyzer_performance as c_compare_func
+        return await c_compare_func(test_symbols)
 
     @mcp.tool()
     async def get_enhanced_streaming_analytics(

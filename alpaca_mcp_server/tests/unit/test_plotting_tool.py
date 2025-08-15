@@ -14,7 +14,7 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from alpaca_mcp_server.tools.advanced_plotting_tool import generate_peak_trough_plots
+from alpaca_mcp_server.tools.advanced_plotting_tool import generate_peak_trough_plots  # noqa: E402
 
 
 class TestAdvancedPlottingTool:
@@ -265,7 +265,7 @@ class TestPlottingDependencies:
     def test_matplotlib_available(self):
         """Test matplotlib dependency."""
         try:
-            import matplotlib.pyplot as plt
+            import matplotlib.pyplot as plt  # noqa: F401
 
             print("✅ Matplotlib available")
             return True
@@ -276,7 +276,7 @@ class TestPlottingDependencies:
     def test_scipy_available(self):
         """Test scipy dependency."""
         try:
-            import scipy.signal
+            import scipy.signal  # noqa: F401
 
             print("✅ Scipy available")
             return True
@@ -287,7 +287,7 @@ class TestPlottingDependencies:
     def test_numpy_available(self):
         """Test numpy dependency."""
         try:
-            import numpy as np
+            import numpy as np  # noqa: F401
 
             print("✅ Numpy available")
             return True

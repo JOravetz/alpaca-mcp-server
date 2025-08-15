@@ -19,15 +19,15 @@ import asyncio
 import logging
 import os
 from collections import deque
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from alpaca.data.live import StockDataStream
 from alpaca.data.models import Bar, Trade
-from alpaca.data.timeframe import TimeFrame
 
 logger = logging.getLogger(__name__)
 
@@ -52,36 +52,36 @@ class VolumeBar:
     volume_imbalance: float  # (buy_volume - sell_volume) / total_volume
     tick_count: int
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for DataFrame creation"""
         return {
-            'symbol': self.symbol,
-            'open': self.open,
-            'high': self.high,
-            'low': self.low,
-            'close': self.close,
-            'volume': self.volume,
-            'vwap': self.vwap,
-            'trade_count': self.trade_count,
-            'timestamp_open': self.timestamp_open,
-            'timestamp_close': self.timestamp_close,
-            'dollar_volume': self.dollar_volume,
-            'buy_volume': self.buy_volume,
-            'sell_volume': self.sell_volume,
-            'volume_imbalance': self.volume_imbalance,
-            'tick_count': self.tick_count,
-            'duration_seconds': (self.timestamp_close - self.timestamp_open).total_seconds()
+            "symbol": self.symbol,
+            "open": self.open,
+            "high": self.high,
+            "low": self.low,
+            "close": self.close,
+            "volume": self.volume,
+            "vwap": self.vwap,
+            "trade_count": self.trade_count,
+            "timestamp_open": self.timestamp_open,
+            "timestamp_close": self.timestamp_close,
+            "dollar_volume": self.dollar_volume,
+            "buy_volume": self.buy_volume,
+            "sell_volume": self.sell_volume,
+            "volume_imbalance": self.volume_imbalance,
+            "tick_count": self.tick_count,
+            "duration_seconds": (self.timestamp_close - self.timestamp_open).total_seconds(),
         }
 
 
 class VolumeBarAggregator:
     """
     Aggregates trades OR bars into volume bars based on López de Prado's methodology
-    
+
     Can work with either:
     1. Trade data - for finest granularity
     2. Bar data (1-min, 5-min, etc.) - uses pre-computed VWAP and trade counts
-    
+
     Args:
         symbol: Stock symbol to track
         volume_threshold: Volume threshold to trigger new bar creation
@@ -95,8 +95,8 @@ class VolumeBarAggregator:
         symbol: str,
         volume_threshold: float,
         lookback_bars: int = 100,
-        on_bar_complete: Optional[Callable[[VolumeBar], None]] = None,
-        use_bars: bool = False
+        on_bar_complete: Callable[[VolumeBar], None] | None = None,
+        use_bars: bool = False,
     ):
         self.symbol = symbol
         self.volume_threshold = volume_threshold
@@ -106,13 +106,13 @@ class VolumeBarAggregator:
 
         # Current bar construction
         self.current_volume = 0.0
-        self.current_trades: List[Trade] = []
-        self.current_bars: List[Bar] = []  # For bar-based aggregation
-        self.current_prices: List[float] = []
-        self.current_volumes: List[float] = []
-        self.current_vwaps: List[float] = []  # Store VWAPs from bars
-        self.current_trade_counts: List[int] = []  # Store trade counts from bars
-        self.previous_price: Optional[float] = None
+        self.current_trades: list[Trade] = []
+        self.current_bars: list[Bar] = []  # For bar-based aggregation
+        self.current_prices: list[float] = []
+        self.current_volumes: list[float] = []
+        self.current_vwaps: list[float] = []  # Store VWAPs from bars
+        self.current_trade_counts: list[int] = []  # Store trade counts from bars
+        self.previous_price: float | None = None
 
         # Historical bars
         self.completed_bars: deque = deque(maxlen=lookback_bars)
@@ -121,18 +121,20 @@ class VolumeBarAggregator:
         self.volume_history: deque = deque(maxlen=50)
         self.use_dynamic_threshold = False
 
-    def process_trade(self, trade: Trade) -> Optional[VolumeBar]:
+    def process_trade(self, trade: Trade) -> VolumeBar | None:
         """
         Process a single trade and return completed bar if threshold is reached
-        
+
         Args:
             trade: Alpaca Trade object
-            
+
         Returns:
             Completed VolumeBar if threshold reached, None otherwise
         """
         if self.use_bars:
-            raise ValueError("Aggregator is configured for bars, not trades. Use process_bar() instead.")
+            raise ValueError(
+                "Aggregator is configured for bars, not trades. Use process_bar() instead."
+            )
 
         # Add trade to current bar
         self.current_trades.append(trade)
@@ -159,20 +161,22 @@ class VolumeBarAggregator:
         self.previous_price = trade.price
         return None
 
-    def process_bar(self, bar: Bar) -> Optional[VolumeBar]:
+    def process_bar(self, bar: Bar) -> VolumeBar | None:
         """
         Process a bar (e.g., 1-minute bar) and return completed volume bar if threshold is reached
-        
+
         Uses the pre-computed VWAP and trade_count from Alpaca bars for efficiency.
-        
+
         Args:
             bar: Alpaca Bar object with OHLCV, VWAP, and trade_count
-            
+
         Returns:
             Completed VolumeBar if threshold reached, None otherwise
         """
         if not self.use_bars:
-            raise ValueError("Aggregator is configured for trades, not bars. Use process_trade() instead.")
+            raise ValueError(
+                "Aggregator is configured for trades, not bars. Use process_trade() instead."
+            )
 
         # Add bar to current accumulation
         self.current_bars.append(bar)
@@ -181,8 +185,8 @@ class VolumeBarAggregator:
         # Store bar data for volume bar creation
         self.current_prices.extend([bar.open, bar.high, bar.low, bar.close])
         self.current_volumes.append(bar.volume)
-        self.current_vwaps.append(bar.vwap if hasattr(bar, 'vwap') else bar.close)
-        self.current_trade_counts.append(bar.trade_count if hasattr(bar, 'trade_count') else 1)
+        self.current_vwaps.append(bar.vwap if hasattr(bar, "vwap") else bar.close)
+        self.current_trade_counts.append(bar.trade_count if hasattr(bar, "trade_count") else 1)
 
         # Check if we should complete the volume bar
         if self.current_volume >= self._get_volume_threshold():
@@ -237,13 +241,17 @@ class VolumeBarAggregator:
                     sell_volume += trade.size / 2
             elif i > 0:
                 # Compare with previous trade
-                if trade.price > self.current_trades[i-1].price:
+                if trade.price > self.current_trades[i - 1].price:
                     buy_volume += trade.size
-                elif trade.price < self.current_trades[i-1].price:
+                elif trade.price < self.current_trades[i - 1].price:
                     sell_volume += trade.size
                 else:
                     # No change - use previous classification
-                    if i > 0 and self.current_trades[i-1].price > self.current_trades[max(0, i-2)].price:
+                    if (
+                        i > 0
+                        and self.current_trades[i - 1].price
+                        > self.current_trades[max(0, i - 2)].price
+                    ):
                         buy_volume += trade.size
                     else:
                         sell_volume += trade.size
@@ -270,7 +278,7 @@ class VolumeBarAggregator:
             buy_volume=buy_volume,
             sell_volume=sell_volume,
             volume_imbalance=volume_imbalance,
-            tick_count=len(self.current_trades)
+            tick_count=len(self.current_trades),
         )
 
     def _create_bar_from_bars(self) -> VolumeBar:
@@ -292,10 +300,13 @@ class VolumeBarAggregator:
         # Each bar's VWAP is already volume-weighted, so we weight by volume again
         total_volume = sum(bar.volume for bar in self.current_bars)
         if total_volume > 0:
-            weighted_vwap = sum(
-                bar.vwap * bar.volume if hasattr(bar, 'vwap') else bar.close * bar.volume
-                for bar in self.current_bars
-            ) / total_volume
+            weighted_vwap = (
+                sum(
+                    bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume
+                    for bar in self.current_bars
+                )
+                / total_volume
+            )
         else:
             weighted_vwap = close_price
 
@@ -317,7 +328,7 @@ class VolumeBarAggregator:
                     sell_volume += bar.volume / 2
             elif i > 0:
                 # Compare with previous bar's close
-                prev_bar = self.current_bars[i-1]
+                prev_bar = self.current_bars[i - 1]
                 if bar.close > prev_bar.close:
                     buy_volume += bar.volume
                 elif bar.close < prev_bar.close:
@@ -338,14 +349,13 @@ class VolumeBarAggregator:
 
         # Calculate dollar volume
         dollar_volume = sum(
-            bar.vwap * bar.volume if hasattr(bar, 'vwap') else bar.close * bar.volume
+            bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume
             for bar in self.current_bars
         )
 
         # Sum trade counts
         total_trade_count = sum(
-            bar.trade_count if hasattr(bar, 'trade_count') else 1
-            for bar in self.current_bars
+            bar.trade_count if hasattr(bar, "trade_count") else 1 for bar in self.current_bars
         )
 
         return VolumeBar(
@@ -363,7 +373,7 @@ class VolumeBarAggregator:
             buy_volume=buy_volume,
             sell_volume=sell_volume,
             volume_imbalance=volume_imbalance,
-            tick_count=len(self.current_bars)  # Number of bars aggregated
+            tick_count=len(self.current_bars),  # Number of bars aggregated
         )
 
     def _reset_current_bar(self):
@@ -379,7 +389,7 @@ class VolumeBarAggregator:
     def _get_volume_threshold(self) -> float:
         """
         Get volume threshold (static or dynamic based on recent history)
-        
+
         Dynamic threshold uses exponentially weighted average of recent bars
         """
         if not self.use_dynamic_threshold or len(self.volume_history) < 10:
@@ -391,9 +401,7 @@ class VolumeBarAggregator:
         dynamic_threshold = np.average(list(self.volume_history), weights=weights)
 
         # Bound between 0.5x and 2x original threshold
-        return np.clip(dynamic_threshold,
-                      self.volume_threshold * 0.5,
-                      self.volume_threshold * 2.0)
+        return np.clip(dynamic_threshold, self.volume_threshold * 0.5, self.volume_threshold * 2.0)
 
     def get_bars_dataframe(self) -> pd.DataFrame:
         """Get completed bars as a pandas DataFrame"""
@@ -402,10 +410,10 @@ class VolumeBarAggregator:
 
         bars_data = [bar.to_dict() for bar in self.completed_bars]
         df = pd.DataFrame(bars_data)
-        df.set_index('timestamp_close', inplace=True)
+        df.set_index("timestamp_close", inplace=True)
         return df
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get statistics about the volume bars"""
         if not self.completed_bars:
             return {}
@@ -413,29 +421,29 @@ class VolumeBarAggregator:
         df = self.get_bars_dataframe()
 
         # Calculate returns
-        df['returns'] = df['close'].pct_change()
+        df["returns"] = df["close"].pct_change()
 
         return {
-            'total_bars': len(self.completed_bars),
-            'avg_volume_per_bar': df['volume'].mean(),
-            'avg_duration_seconds': df['duration_seconds'].mean(),
-            'avg_trade_count': df['trade_count'].mean(),
-            'avg_dollar_volume': df['dollar_volume'].mean(),
-            'avg_volume_imbalance': df['volume_imbalance'].mean(),
-            'returns_mean': df['returns'].mean(),
-            'returns_std': df['returns'].std(),
-            'returns_skew': df['returns'].skew(),
-            'returns_kurtosis': df['returns'].kurtosis(),
-            'autocorrelation_lag1': df['returns'].autocorr(lag=1) if len(df) > 1 else None
+            "total_bars": len(self.completed_bars),
+            "avg_volume_per_bar": df["volume"].mean(),
+            "avg_duration_seconds": df["duration_seconds"].mean(),
+            "avg_trade_count": df["trade_count"].mean(),
+            "avg_dollar_volume": df["dollar_volume"].mean(),
+            "avg_volume_imbalance": df["volume_imbalance"].mean(),
+            "returns_mean": df["returns"].mean(),
+            "returns_std": df["returns"].std(),
+            "returns_skew": df["returns"].skew(),
+            "returns_kurtosis": df["returns"].kurtosis(),
+            "autocorrelation_lag1": df["returns"].autocorr(lag=1) if len(df) > 1 else None,
         }
 
 
 class MultiSymbolVolumeBarAggregator:
     """
     Manages volume bar aggregation for multiple symbols simultaneously
-    
+
     Can work with either Trade or Bar data sources.
-    
+
     Args:
         symbol_thresholds: Dictionary mapping symbols to their volume thresholds
         lookback_bars: Number of bars to keep per symbol
@@ -445,12 +453,12 @@ class MultiSymbolVolumeBarAggregator:
 
     def __init__(
         self,
-        symbol_thresholds: Dict[str, float],
+        symbol_thresholds: dict[str, float],
         lookback_bars: int = 100,
-        on_bar_complete: Optional[Callable[[VolumeBar], None]] = None,
-        use_bars: bool = False
+        on_bar_complete: Callable[[VolumeBar], None] | None = None,
+        use_bars: bool = False,
     ):
-        self.aggregators: Dict[str, VolumeBarAggregator] = {}
+        self.aggregators: dict[str, VolumeBarAggregator] = {}
         self.use_bars = use_bars
 
         # Create aggregator for each symbol
@@ -460,45 +468,39 @@ class MultiSymbolVolumeBarAggregator:
                 volume_threshold=threshold,
                 lookback_bars=lookback_bars,
                 on_bar_complete=on_bar_complete,
-                use_bars=use_bars
+                use_bars=use_bars,
             )
 
-    def process_trade(self, trade: Trade) -> Optional[VolumeBar]:
+    def process_trade(self, trade: Trade) -> VolumeBar | None:
         """Process trade for the appropriate symbol"""
         if trade.symbol in self.aggregators:
             return self.aggregators[trade.symbol].process_trade(trade)
         return None
 
-    def process_bar(self, bar: Bar) -> Optional[VolumeBar]:
+    def process_bar(self, bar: Bar) -> VolumeBar | None:
         """Process bar for the appropriate symbol"""
         if bar.symbol in self.aggregators:
             return self.aggregators[bar.symbol].process_bar(bar)
         return None
 
-    def get_all_statistics(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_statistics(self) -> dict[str, dict[str, Any]]:
         """Get statistics for all symbols"""
-        return {
-            symbol: agg.get_statistics()
-            for symbol, agg in self.aggregators.items()
-        }
+        return {symbol: agg.get_statistics() for symbol, agg in self.aggregators.items()}
 
-    def get_all_dataframes(self) -> Dict[str, pd.DataFrame]:
+    def get_all_dataframes(self) -> dict[str, pd.DataFrame]:
         """Get DataFrames for all symbols"""
-        return {
-            symbol: agg.get_bars_dataframe()
-            for symbol, agg in self.aggregators.items()
-        }
+        return {symbol: agg.get_bars_dataframe() for symbol, agg in self.aggregators.items()}
 
 
 async def stream_volume_bars(
-    symbols: List[str],
-    volume_thresholds: Dict[str, float],
+    symbols: list[str],
+    volume_thresholds: dict[str, float],
     data_feed: str = "sip",
-    on_bar_complete: Optional[Callable[[VolumeBar], None]] = None
+    on_bar_complete: Callable[[VolumeBar], None] | None = None,
 ) -> None:
     """
     Stream trades and aggregate into volume bars in real-time
-    
+
     Args:
         symbols: List of symbols to track
         volume_thresholds: Volume thresholds per symbol
@@ -507,15 +509,14 @@ async def stream_volume_bars(
     """
     # Create multi-symbol aggregator
     aggregator = MultiSymbolVolumeBarAggregator(
-        symbol_thresholds=volume_thresholds,
-        on_bar_complete=on_bar_complete
+        symbol_thresholds=volume_thresholds, on_bar_complete=on_bar_complete
     )
 
     # Set up stream
     stream = StockDataStream(
         api_key=os.environ.get("APCA_API_KEY_ID"),
         secret_key=os.environ.get("APCA_API_SECRET_KEY"),
-        feed=data_feed
+        feed=data_feed,
     )
 
     # Trade handler
@@ -523,10 +524,12 @@ async def stream_volume_bars(
         """Process incoming trades"""
         bar = aggregator.process_trade(trade)
         if bar:
-            logger.info(f"Volume bar completed for {bar.symbol}: "
-                       f"OHLC=[{bar.open:.2f}, {bar.high:.2f}, {bar.low:.2f}, {bar.close:.2f}], "
-                       f"Volume={bar.volume:.0f}, VWAP={bar.vwap:.2f}, "
-                       f"Imbalance={bar.volume_imbalance:.2%}")
+            logger.info(
+                f"Volume bar completed for {bar.symbol}: "
+                f"OHLC=[{bar.open:.2f}, {bar.high:.2f}, {bar.low:.2f}, {bar.close:.2f}], "
+                f"Volume={bar.volume:.0f}, VWAP={bar.vwap:.2f}, "
+                f"Imbalance={bar.volume_imbalance:.2%}"
+            )
 
     # Subscribe to trades
     for symbol in symbols:
@@ -538,20 +541,18 @@ async def stream_volume_bars(
 
 
 def calculate_optimal_threshold(
-    symbol: str,
-    lookback_days: int = 20,
-    target_bars_per_day: int = 50
+    symbol: str, lookback_days: int = 20, target_bars_per_day: int = 50
 ) -> float:
     """
     Calculate optimal volume threshold based on historical data
-    
+
     Uses average daily volume to target a specific number of bars per day
-    
+
     Args:
         symbol: Stock symbol
         lookback_days: Days of history to analyze
         target_bars_per_day: Desired number of bars per trading day
-        
+
     Returns:
         Suggested volume threshold
     """
@@ -570,16 +571,15 @@ if __name__ == "__main__":
 
     # Set up logging
     logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     # Example symbols and thresholds
     symbols = ["AAPL", "MSFT", "TSLA"]
     thresholds = {
         "AAPL": 100000,  # 100k shares per bar
-        "MSFT": 50000,   # 50k shares per bar
-        "TSLA": 75000    # 75k shares per bar
+        "MSFT": 50000,  # 50k shares per bar
+        "TSLA": 75000,  # 75k shares per bar
     }
 
     # Bar completion callback
@@ -595,11 +595,11 @@ if __name__ == "__main__":
 
     # Run streaming
     try:
-        asyncio.run(stream_volume_bars(
-            symbols=symbols,
-            volume_thresholds=thresholds,
-            on_bar_complete=on_bar
-        ))
+        asyncio.run(
+            stream_volume_bars(
+                symbols=symbols, volume_thresholds=thresholds, on_bar_complete=on_bar
+            )
+        )
     except KeyboardInterrupt:
         logger.info("Volume bar streaming stopped by user")
         sys.exit(0)

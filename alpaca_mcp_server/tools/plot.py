@@ -589,8 +589,12 @@ def process_bars_for_peaks(
             # Use Savitzky-Golay filter for derivative-based peak detection
             # This provides smoother derivatives and more accurate peak detection
             max_peaks, min_peaks = peakdetect_savgol(
-                filtered_prices, x_axis=sample_indices,
-                window_length=3, polyorder=2, delta=1, min_distance=1
+                filtered_prices,
+                x_axis=sample_indices,
+                window_length=3,
+                polyorder=2,
+                delta=1,
+                min_distance=1,
             )
         else:
             # Use original peakdetect method

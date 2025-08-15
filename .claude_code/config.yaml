@@ -1,0 +1,25 @@
+# Claude Code Configuration
+# This file configures Claude Code to use the correct Python environment
+
+# Python runner configuration
+python:
+  runner: "uv run python"
+  
+# Default shell for running commands
+shell:
+  default: "/bin/bash"
+
+# Environment variables
+environment:
+  CLAUDE_CODE_PYTHON_RUNNER: "uv run python"
+  
+# Project-specific settings
+project:
+  name: "alpaca-mcp-server-enhanced"
+  type: "python"
+  package_manager: "uv"
+  
+# Auto-detect and use virtual environment
+virtualenv:
+  auto_activate: true
+  manager: "uv"

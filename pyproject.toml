@@ -41,6 +41,7 @@ dependencies = [
     "fastapi>=0.115.13",
     "uvicorn>=0.34.3",
     "feedparser>=6.0.11",
+    "toml>=0.10.2",
 ]
 
 [project.scripts]

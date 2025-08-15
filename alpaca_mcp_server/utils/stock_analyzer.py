@@ -307,12 +307,15 @@ def run(args: argparse.Namespace) -> None:
             f.write(html_content)
         # Use subprocess instead of os.system for security
         import subprocess
+
         subprocess.run(
             [
-                "scp", "-q", "latest.html",
-                "stockminer@www.stockminer.net:/home/71/00/8200071/public_html/latest/index.html"
+                "scp",
+                "-q",
+                "latest.html",
+                "stockminer@www.stockminer.net:/home/71/00/8200071/public_html/latest/index.html",
             ],
-            check=True
+            check=True,
         )
         print(f"Updated {timestamp}")
     except Exception as e:

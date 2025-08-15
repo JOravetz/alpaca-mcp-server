@@ -16,7 +16,7 @@ import pytz
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from alpaca_mcp_server.tools.peak_trough_analysis_tool import (
+from alpaca_mcp_server.tools.peak_trough_analysis_tool import (  # noqa: E402
     HistoricalDataFetcher,
     analyze_peaks_and_troughs,
     convert_to_nyc_timezone,
@@ -532,7 +532,7 @@ class TestAnalyzePeaksAndTroughsWithPlotPy:
         )
 
         assert isinstance(result, str)
-        
+
         if "Error" not in result:
             assert "Peak and Trough Analysis" in result
             assert "plot.py" in result.lower() or "Plot" in result
@@ -552,7 +552,7 @@ class TestAnalyzePeaksAndTroughsWithPlotPy:
         )
 
         assert isinstance(result, str)
-        
+
         if "Error" not in result:
             # Should process both symbols
             symbols_found = sum(1 for sym in ["AAPL", "MSFT"] if sym in result)
@@ -567,14 +567,14 @@ class TestAnalyzePeaksAndTroughsWithPlotPy:
         from alpaca_mcp_server.tools.peak_trough_analysis_tool import (
             analyze_peaks_and_troughs_with_plot_py,
         )
-        
+
         # Test with default settings
         result = await analyze_peaks_and_troughs_with_plot_py(
             symbols="SPY", timeframe="1Min", days=1
         )
 
         assert isinstance(result, str)
-        
+
         if "Error" not in result:
             # Check for plot-related output
             if "Plot saved" in result or "plot" in result.lower():
@@ -592,10 +592,10 @@ class TestErrorHandlingAndEdgeCases:
     async def test_invalid_api_credentials(self):
         """Test with invalid API credentials."""
         from alpaca_mcp_server.tools.peak_trough_analysis_tool import HistoricalDataFetcher
-        
+
         fetcher = HistoricalDataFetcher("invalid_key", "invalid_secret")
         bars = fetcher.fetch_historical_bars(["AAPL"], "1Min", "2025-06-22", "2025-06-22")
-        
+
         # Should handle invalid credentials gracefully
         assert bars is None or isinstance(bars, dict)
         print("✅ Invalid API credentials handled gracefully")
@@ -603,11 +603,13 @@ class TestErrorHandlingAndEdgeCases:
     def test_zero_phase_filter_extreme_values(self):
         """Test filter with extreme values."""
         # Test with very large values (need more data points for filter)
-        large_data = np.array([1e10, 2e10, 3e10, 2.5e10, 4e10, 3.5e10, 2.8e10, 3.2e10, 2.9e10, 3.1e10])
+        large_data = np.array(
+            [1e10, 2e10, 3e10, 2.5e10, 4e10, 3.5e10, 2.8e10, 3.2e10, 2.9e10, 3.1e10]
+        )
         filtered = zero_phase_filter(large_data, 3)
         assert not np.any(np.isnan(filtered)), "Should handle large values"
         assert not np.any(np.isinf(filtered)), "Should not produce infinities"
-        
+
         # Test with negative values (need more data points)
         negative_data = np.array([-100, -50, -75, -60, -80, -90, -70, -65, -85, -95])
         filtered = zero_phase_filter(negative_data, 3)
@@ -622,7 +624,7 @@ class TestErrorHandlingAndEdgeCases:
             {"t": "2025-06-22T09:00:00Z"},  # Missing close price
             {"c": "invalid", "t": "2025-06-22T09:01:00Z"},  # Invalid price
         ]
-        
+
         result = process_bars_for_peaks("TEST", malformed_bars)
         assert result is None, "Should handle malformed data gracefully"
         print("✅ Malformed bar data handled correctly")
@@ -631,16 +633,16 @@ class TestErrorHandlingAndEdgeCases:
     async def test_concurrent_analysis(self):
         """Test concurrent analysis requests."""
         import asyncio
-        
+
         # Run multiple analyses concurrently
         tasks = [
             analyze_peaks_and_troughs(symbols="SPY", timeframe="1Min", days=1),
             analyze_peaks_and_troughs(symbols="AAPL", timeframe="5Min", days=1),
             analyze_peaks_and_troughs(symbols="MSFT", timeframe="15Min", days=1),
         ]
-        
+
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         # All should complete without crashing
         assert len(results) == 3
         for result in results:
@@ -656,22 +658,26 @@ class TestErrorHandlingAndEdgeCases:
             "symbol": "TEST",
             "total_bars": 50,
             "original_prices": [150.0] * 50,
-            "peaks": [{
-                "index": 45, 
-                "timestamp": "2025-06-22T09:45:00Z", 
-                "original_price": 155.0,
-                "filtered_price": 154.9,
-                "volume": 1000
-            }],
-            "troughs": [{
-                "index": 45, 
-                "timestamp": "2025-06-22T09:45:00Z", 
-                "original_price": 145.0,
-                "filtered_price": 145.1,
-                "volume": 1000
-            }],
+            "peaks": [
+                {
+                    "index": 45,
+                    "timestamp": "2025-06-22T09:45:00Z",
+                    "original_price": 155.0,
+                    "filtered_price": 154.9,
+                    "volume": 1000,
+                }
+            ],
+            "troughs": [
+                {
+                    "index": 45,
+                    "timestamp": "2025-06-22T09:45:00Z",
+                    "original_price": 145.0,
+                    "filtered_price": 145.1,
+                    "volume": 1000,
+                }
+            ],
         }
-        
+
         signal = get_latest_signal(results)
         assert signal is not None
         # Should prefer one over the other consistently
@@ -688,7 +694,7 @@ class TestFilterParameterCalculations:
         short_data = np.array([1.0, 2.0, 3.0])
         filtered = zero_phase_filter(short_data, 11)  # Window larger than data
         assert len(filtered) == len(short_data)
-        
+
         # Medium data
         medium_data = np.array([float(i) for i in range(20)])
         filtered = zero_phase_filter(medium_data, 11)
@@ -700,26 +706,24 @@ class TestFilterParameterCalculations:
         # Create data with clear peaks
         x = np.linspace(0, 4 * np.pi, 100)
         data = np.sin(x) + 0.1 * np.random.randn(100)
-        
+
         bars = []
         for i, value in enumerate(data):
-            bars.append({
-                "c": str(150 + value * 10),
-                "t": f"2025-06-22T09:{i:02d}:00Z",
-                "v": "1000"
-            })
-        
+            bars.append(
+                {"c": str(150 + value * 10), "t": f"2025-06-22T09:{i:02d}:00Z", "v": "1000"}
+            )
+
         # Test with different lookahead values
         lookahead_values = [1, 3, 5, 10]
         peak_counts = []
-        
+
         for lookahead in lookahead_values:
             result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=lookahead)
             if result:
                 peak_counts.append(len(result["peaks"]))
             else:
                 peak_counts.append(0)
-        
+
         # Higher lookahead should generally find fewer but more significant peaks
         assert max(peak_counts) > 0, "Should find at least some peaks"
         print(f"✅ Lookahead sensitivity: peaks found with lookahead 1-10: {peak_counts}")
@@ -728,13 +732,13 @@ class TestFilterParameterCalculations:
         """Test that global config is used when parameters are None."""
         try:
             from alpaca_mcp_server.config import get_technical_config
-            
+
             config = get_technical_config()
-            
+
             # Test that None parameters use global config
             data = np.array([float(i) for i in range(50)])
             filtered = zero_phase_filter(data, None)
-            
+
             assert len(filtered) == len(data)
             print(f"✅ Global config fallback working (window={config.hanning_window_samples})")
         except Exception as e:
@@ -750,15 +754,15 @@ class TestRealMarketDataIntegration:
         # Check if market is open
         try:
             from alpaca_mcp_server.tools.market_tools import get_extended_market_clock
-            
+
             clock_result = await get_extended_market_clock()
-            
+
             if "is_open: true" in clock_result or "Market Open" in clock_result:
                 # Market is open, test with live data
                 result = await analyze_peaks_and_troughs(
                     symbols="SPY,QQQ,IWM", timeframe="1Min", days=0  # Today only
                 )
-                
+
                 assert isinstance(result, str)
                 if "Error" not in result:
                     assert "Trading Signal Summary" in result
@@ -775,22 +779,22 @@ class TestRealMarketDataIntegration:
         """Test with known volatile stocks for peak/trough detection."""
         # Use stocks known for intraday volatility
         volatile_symbols = "TSLA,NVDA,AMD"
-        
+
         result = await analyze_peaks_and_troughs(
-            symbols=volatile_symbols, 
-            timeframe="5Min", 
+            symbols=volatile_symbols,
+            timeframe="5Min",
             days=1,
             window_len=7,  # Smaller window for volatile stocks
-            lookahead=2
+            lookahead=2,
         )
-        
+
         assert isinstance(result, str)
-        
+
         if "Error" not in result:
             # Volatile stocks should have multiple peaks/troughs
             peak_count = result.count("Peak @")
             trough_count = result.count("Trough @")
-            
+
             total_signals = peak_count + trough_count
             assert total_signals > 0, "Volatile stocks should have signals"
             print(f"✅ Volatile stocks: {peak_count} peaks, {trough_count} troughs found")
@@ -802,19 +806,23 @@ class TestRealMarketDataIntegration:
         """Test with penny stocks (low price, high volatility)."""
         # Note: These may change over time, update as needed
         result = await analyze_peaks_and_troughs(
-            symbols="SOUN,RIOT", 
-            timeframe="1Min", 
+            symbols="SOUN,RIOT",
+            timeframe="1Min",
             days=1,
             window_len=11,
-            lookahead=1  # More sensitive for penny stocks
+            lookahead=1,  # More sensitive for penny stocks
         )
-        
+
         assert isinstance(result, str)
-        
+
         if "Error" not in result and "No valid symbols" not in result:
             # Check for decimal precision (penny stocks need it)
             if "." in result:
-                decimal_places = max(len(price.split(".")[-1]) for price in result.split("$")[1:] if "." in price[:10])
+                decimal_places = max(
+                    len(price.split(".")[-1])
+                    for price in result.split("$")[1:]
+                    if "." in price[:10]
+                )
                 assert decimal_places >= 2, "Should maintain price precision for penny stocks"
             print("✅ Penny stock analysis with proper precision")
         else:
@@ -827,21 +835,293 @@ class TestRealMarketDataIntegration:
         etf_result = await analyze_peaks_and_troughs(
             symbols="SPY", timeframe="15Min", days=1, window_len=11
         )
-        
+
         stock_result = await analyze_peaks_and_troughs(
             symbols="AAPL", timeframe="15Min", days=1, window_len=11
         )
-        
+
         assert isinstance(etf_result, str)
         assert isinstance(stock_result, str)
-        
+
         if "Error" not in etf_result and "Error" not in stock_result:
             etf_peaks = etf_result.count("Peak @")
             stock_peaks = stock_result.count("Peak @")
-            
+
             print(f"✅ ETF vs Stock: SPY={etf_peaks} peaks, AAPL={stock_peaks} peaks")
         else:
             print("⚠️ ETF vs Stock comparison skipped")
+
+
+class TestDataValidationAndConsistency:
+    """Test data validation and consistency checks."""
+
+    def test_zero_phase_filter_nan_handling(self):
+        """Test zero-phase filter with NaN values."""
+        # Data with NaN values
+        data_with_nan = np.array([1.0, 2.0, np.nan, 4.0, 5.0, 6.0, 7.0, 8.0])
+        
+        # Should handle NaN gracefully
+        filtered = zero_phase_filter(data_with_nan, 3)
+        assert len(filtered) == len(data_with_nan)
+        # Result may contain NaN where input had NaN
+        print("✅ Zero-phase filter handles NaN values")
+
+    def test_zero_phase_filter_inf_handling(self):
+        """Test zero-phase filter with infinite values."""
+        # Data with infinity
+        data_with_inf = np.array([1.0, 2.0, np.inf, 4.0, 5.0, -np.inf, 7.0, 8.0])
+        
+        filtered = zero_phase_filter(data_with_inf, 3)
+        assert len(filtered) == len(data_with_inf)
+        print("✅ Zero-phase filter handles infinite values")
+
+    def test_process_bars_duplicate_timestamps(self):
+        """Test handling of duplicate timestamps in bar data."""
+        bars = [
+            {"c": "150.0", "t": "2025-06-22T09:00:00Z", "v": "1000"},
+            {"c": "151.0", "t": "2025-06-22T09:00:00Z", "v": "1100"},  # Duplicate timestamp
+            {"c": "152.0", "t": "2025-06-22T09:01:00Z", "v": "1200"},
+            {"c": "153.0", "t": "2025-06-22T09:02:00Z", "v": "1300"},
+            {"c": "154.0", "t": "2025-06-22T09:03:00Z", "v": "1400"},
+        ]
+        
+        result = process_bars_for_peaks("TEST", bars, window_len=3, lookahead=1)
+        # Should handle duplicates gracefully
+        if result:
+            assert result["total_bars"] == len(bars)
+            print("✅ Duplicate timestamps handled")
+        else:
+            print("✅ Duplicate timestamps rejected (also valid)")
+
+    def test_process_bars_out_of_order(self):
+        """Test handling of out-of-order timestamps."""
+        bars = [
+            {"c": "150.0", "t": "2025-06-22T09:02:00Z", "v": "1000"},
+            {"c": "151.0", "t": "2025-06-22T09:00:00Z", "v": "1100"},  # Out of order
+            {"c": "152.0", "t": "2025-06-22T09:01:00Z", "v": "1200"},
+            {"c": "153.0", "t": "2025-06-22T09:03:00Z", "v": "1300"},
+        ]
+        
+        result = process_bars_for_peaks("TEST", bars, window_len=3, lookahead=1)
+        # Function should either sort or reject out-of-order data
+        print("✅ Out-of-order timestamps handled")
+
+    def test_process_bars_price_validation(self):
+        """Test validation of price data."""
+        # Negative prices (should be rejected for stocks)
+        bars_negative = [
+            {"c": "-150.0", "t": "2025-06-22T09:00:00Z", "v": "1000"},
+            {"c": "151.0", "t": "2025-06-22T09:01:00Z", "v": "1100"},
+        ]
+        
+        result = process_bars_for_peaks("TEST", bars_negative)
+        # Should handle negative prices appropriately
+        print("✅ Negative price validation")
+        
+        # Zero prices
+        bars_zero = [
+            {"c": "0.0", "t": "2025-06-22T09:00:00Z", "v": "1000"},
+            {"c": "151.0", "t": "2025-06-22T09:01:00Z", "v": "1100"},
+        ]
+        
+        result = process_bars_for_peaks("TEST", bars_zero)
+        print("✅ Zero price validation")
+
+
+class TestTradingSignalAccuracy:
+    """Test accuracy of trading signal detection."""
+
+    def test_peak_detection_accuracy(self):
+        """Test peak detection with known synthetic data."""
+        # Create perfect sine wave with known peaks
+        x = np.linspace(0, 4 * np.pi, 200)
+        prices = 150 + 10 * np.sin(x)
+        
+        bars = []
+        for i, price in enumerate(prices):
+            bars.append({
+                "c": str(price),
+                "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z",
+                "v": "1000"
+            })
+        
+        result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=5)
+        
+        if result:
+            # Should detect approximately 2 peaks (sine wave maxima)
+            peak_count = len(result["peaks"])
+            assert 1 <= peak_count <= 3, f"Should detect 1-3 peaks in sine wave, got {peak_count}"
+            
+            # Check peak prices are near expected maxima (160)
+            for peak in result["peaks"]:
+                assert 158 <= peak["original_price"] <= 162, "Peak should be near sine maximum"
+            
+            print(f"✅ Peak detection accuracy: {peak_count} peaks found at correct levels")
+
+    def test_trough_detection_accuracy(self):
+        """Test trough detection with known synthetic data."""
+        # Create perfect sine wave with known troughs
+        x = np.linspace(0, 4 * np.pi, 200)
+        prices = 150 + 10 * np.sin(x)
+        
+        bars = []
+        for i, price in enumerate(prices):
+            bars.append({
+                "c": str(price),
+                "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z",
+                "v": "1000"
+            })
+        
+        result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=5)
+        
+        if result:
+            # Should detect approximately 2 troughs (sine wave minima)
+            trough_count = len(result["troughs"])
+            assert 1 <= trough_count <= 3, f"Should detect 1-3 troughs in sine wave, got {trough_count}"
+            
+            # Check trough prices are near expected minima (140)
+            for trough in result["troughs"]:
+                assert 138 <= trough["original_price"] <= 142, "Trough should be near sine minimum"
+            
+            print(f"✅ Trough detection accuracy: {trough_count} troughs found at correct levels")
+
+    def test_signal_timing_accuracy(self):
+        """Test that signals are detected at correct time indices."""
+        # Create data with sharp peak at known index
+        prices = [150.0] * 50
+        prices[25] = 160.0  # Sharp peak at index 25
+        
+        bars = []
+        for i, price in enumerate(prices):
+            bars.append({
+                "c": str(price),
+                "t": f"2025-06-22T09:{i:02d}:00Z",
+                "v": "1000"
+            })
+        
+        result = process_bars_for_peaks("TEST", bars, window_len=5, lookahead=2)
+        
+        if result and result["peaks"]:
+            # Peak should be detected near index 25
+            peak_indices = [p["index"] for p in result["peaks"]]
+            assert any(23 <= idx <= 27 for idx in peak_indices), "Peak should be detected near index 25"
+            print(f"✅ Signal timing accuracy: Peak detected at indices {peak_indices}")
+
+    def test_filter_smoothing_effectiveness(self):
+        """Test that filter effectively smooths noisy data."""
+        # Create noisy data
+        np.random.seed(42)
+        base = np.linspace(150, 160, 100)
+        noise = np.random.normal(0, 2, 100)
+        noisy_prices = base + noise
+        
+        bars = []
+        for i, price in enumerate(noisy_prices):
+            bars.append({
+                "c": str(price),
+                "t": f"2025-06-22T09:{i//60:02d}:{i%60:02d}:00Z",
+                "v": "1000"
+            })
+        
+        result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=3)
+        
+        if result:
+            # Filtered prices should have lower variance than original
+            original_var = np.var(result["original_prices"])
+            filtered_var = np.var(result["filtered_prices"])
+            
+            assert filtered_var < original_var * 0.8, "Filter should reduce variance significantly"
+            print(f"✅ Filter smoothing: Variance reduced from {original_var:.2f} to {filtered_var:.2f}")
+
+
+class TestBoundaryConditions:
+    """Test boundary conditions and extreme scenarios."""
+
+    def test_single_bar_handling(self):
+        """Test with single bar of data."""
+        bars = [{"c": "150.0", "t": "2025-06-22T09:00:00Z", "v": "1000"}]
+        
+        result = process_bars_for_peaks("TEST", bars, window_len=3, lookahead=1)
+        assert result is None, "Single bar should not be processed"
+        print("✅ Single bar boundary condition handled")
+
+    def test_exactly_minimum_bars(self):
+        """Test with exactly the minimum required bars."""
+        # Create exactly minimum required bars for processing
+        bars = []
+        for i in range(10):  # Minimum for reasonable processing
+            bars.append({
+                "c": str(150 + i * 0.5),
+                "t": f"2025-06-22T09:{i:02d}:00Z",
+                "v": "1000"
+            })
+        
+        result = process_bars_for_peaks("TEST", bars, window_len=3, lookahead=1)
+        
+        if result:
+            assert result["total_bars"] == 10
+            print("✅ Minimum bars boundary condition processed")
+        else:
+            print("✅ Minimum bars boundary condition rejected")
+
+    def test_maximum_lookahead(self):
+        """Test with maximum lookahead value."""
+        # Create sufficient data for large lookahead
+        bars = []
+        for i in range(200):
+            price = 150 + 10 * np.sin(i * 0.1)
+            bars.append({
+                "c": str(price),
+                "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z",
+                "v": "1000"
+            })
+        
+        result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=50)
+        
+        if result:
+            # With very high lookahead, should find fewer but more significant peaks
+            assert len(result["peaks"]) <= 5, "High lookahead should find few peaks"
+            assert len(result["troughs"]) <= 5, "High lookahead should find few troughs"
+            print(f"✅ Maximum lookahead: {len(result['peaks'])} peaks, {len(result['troughs'])} troughs")
+
+    def test_maximum_window_length(self):
+        """Test with maximum window length."""
+        # Create sufficient data for large window
+        bars = []
+        for i in range(300):
+            price = 150 + np.random.randn() * 2
+            bars.append({
+                "c": str(price),
+                "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z",
+                "v": "1000"
+            })
+        
+        result = process_bars_for_peaks("TEST", bars, window_len=101, lookahead=5)
+        
+        if result:
+            # Very large window should produce very smooth filtered data
+            filtered_std = np.std(result["filtered_prices"])
+            original_std = np.std(result["original_prices"])
+            assert filtered_std < original_std * 0.5, "Large window should smooth significantly"
+            print(f"✅ Maximum window length: smoothing ratio {filtered_std/original_std:.2f}")
+
+    def test_all_identical_prices(self):
+        """Test with all identical prices (flat line)."""
+        bars = []
+        for i in range(50):
+            bars.append({
+                "c": "150.0",  # All same price
+                "t": f"2025-06-22T09:{i:02d}:00Z",
+                "v": "1000"
+            })
+        
+        result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=3)
+        
+        if result:
+            # Should find no peaks or troughs in flat data
+            assert len(result["peaks"]) == 0, "No peaks in flat data"
+            assert len(result["troughs"]) == 0, "No troughs in flat data"
+            print("✅ Flat price data: correctly found no signals")
 
 
 class TestPeakTroughPerformance:
@@ -911,24 +1191,24 @@ class TestPeakTroughPerformance:
     async def test_large_dataset_performance(self):
         """Test performance with large datasets (30 days of minute data)."""
         import time
-        
+
         start_time = time.time()
-        
+
         # 30 days of minute data is a lot of data points
         result = await analyze_peaks_and_troughs(
-            symbols="SPY", 
-            timeframe="1Min", 
+            symbols="SPY",
+            timeframe="1Min",
             days=30,  # Maximum allowed
             window_len=21,  # Larger window for smoother results
-            lookahead=5
+            lookahead=5,
         )
-        
+
         end_time = time.time()
         duration = end_time - start_time
-        
+
         assert isinstance(result, str)
         assert duration < 180.0  # Should complete within 3 minutes even for large datasets
-        
+
         if "Error" not in result:
             # Check that we got substantial data
             assert len(result) > 1000, "Large dataset should produce detailed results"

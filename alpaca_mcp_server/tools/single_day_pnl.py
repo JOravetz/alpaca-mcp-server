@@ -1,12 +1,16 @@
 """Single day P&L tool for accurate daily trading analysis."""
 
 from datetime import datetime, time
-from typing import Any, Optional
+from typing import Any
+import pytz
 
 from alpaca.trading.enums import QueryOrderStatus
 from alpaca.trading.requests import GetOrdersRequest
 
 from ..config.settings import get_trading_client
+
+# NYC timezone for proper market time display
+NYC_TZ = pytz.timezone('America/New_York')
 
 
 def format_currency(value: float) -> str:
@@ -16,16 +20,16 @@ def format_currency(value: float) -> str:
 
 async def get_single_day_pnl(
     date: str,
-    symbol_filter: Optional[str] = None,
+    symbol_filter: str | None = None,
     min_trade_value: float = 0.0,
 ) -> str:
     """Calculate P&L for a SINGLE specific trading day only.
-    
+
     Args:
         date: Date to analyze in YYYY-MM-DD format (e.g., "2025-07-08")
         symbol_filter: Optional symbol to filter trades
         min_trade_value: Minimum trade value to include (default: 0)
-    
+
     Returns:
         Formatted P&L report for that specific day only
     """
@@ -52,7 +56,8 @@ async def get_single_day_pnl(
         # Filter by symbol if specified
         if symbol_filter:
             orders = [
-                order for order in orders
+                order
+                for order in orders
                 if hasattr(order, "symbol") and order.symbol.upper() == symbol_filter.upper()
             ]
 
@@ -89,7 +94,7 @@ async def get_single_day_pnl(
                 "qty": float(order.filled_qty),
                 "price": float(order.filled_avg_price),
                 "value": trade_value,
-                "time": order.filled_at.strftime("%H:%M:%S"),
+                "time": order.filled_at.astimezone(NYC_TZ).strftime("%H:%M:%S EDT"),
                 "order_id": order.id,
             }
 
@@ -119,7 +124,9 @@ async def get_single_day_pnl(
                         if position == 0:
                             avg_price = trade["price"]
                         else:
-                            avg_price = ((position * avg_price) + (trade["qty"] * trade["price"])) / (position + trade["qty"])
+                            avg_price = (
+                                (position * avg_price) + (trade["qty"] * trade["price"])
+                            ) / (position + trade["qty"])
                         position += trade["qty"]
                     else:  # Short position
                         qty_to_cover = min(trade["qty"], abs(position))
@@ -142,7 +149,9 @@ async def get_single_day_pnl(
                         if position == 0:
                             avg_price = trade["price"]
                         else:
-                            avg_price = ((abs(position) * avg_price) + (trade["qty"] * trade["price"])) / (abs(position) + trade["qty"])
+                            avg_price = (
+                                (abs(position) * avg_price) + (trade["qty"] * trade["price"])
+                            ) / (abs(position) + trade["qty"])
                         position -= trade["qty"]
                     else:  # Long position
                         qty_to_sell = min(trade["qty"], position)
@@ -165,7 +174,10 @@ async def get_single_day_pnl(
 
         # Format the output
         output = []
+        # Get current NYC time for report header
+        current_time_nyc = datetime.now(NYC_TZ).strftime("%I:%M %p EDT")
         output.append(f"📊 SINGLE DAY P&L REPORT: {target_date.strftime('%A, %B %d, %Y')}")
+        output.append(f"⏰ Report Generated: {current_time_nyc}")
         output.append("=" * 60)
 
         if trade_count == 0:
@@ -191,9 +203,7 @@ async def get_single_day_pnl(
 
         # Sort by P&L
         sorted_symbols = sorted(
-            trades_by_symbol.items(),
-            key=lambda x: x[1]["realized_pnl"],
-            reverse=True
+            trades_by_symbol.items(), key=lambda x: x[1]["realized_pnl"], reverse=True
         )
 
         for symbol, data in sorted_symbols:

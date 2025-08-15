@@ -90,16 +90,20 @@ async def startup() -> str:
             with open("/tmp/fastapi_monitoring.log", "w") as log_file:
                 process = subprocess.Popen(
                     [
-                        "python", "-m", "uvicorn",
+                        "python",
+                        "-m",
+                        "uvicorn",
                         "alpaca_mcp_server.monitoring.fastapi_service:app",
-                        "--port", "8001",
-                        "--host", "0.0.0.0"
+                        "--port",
+                        "8001",
+                        "--host",
+                        "0.0.0.0",
                     ],
                     stdout=log_file,
                     stderr=subprocess.STDOUT,
                     cwd="/home/jjoravet/alpaca-mcp-server-enhanced",
                     start_new_session=True,
-                    preexec_fn=os.setsid  # Detach from parent process group
+                    preexec_fn=os.setsid,  # Detach from parent process group
                 )
 
             pid = str(process.pid)
@@ -136,15 +140,15 @@ async def startup() -> str:
             else:
                 # Check auto-trading status (disabled by default on startup)
                 try:
-                        # Check if auto-trading is currently enabled
-                        status_response = requests.get("http://localhost:8001/status", timeout=2)
-                        if status_response.status_code == 200:
-                            status_data = status_response.json()
-                            auto_trading_enabled = status_data.get("auto_trading_enabled", False)
-                            if auto_trading_enabled:
-                                fastapi_status += " | 🤖 Auto-trading ON"
-                            else:
-                                fastapi_status += " | ⏸️ Auto-trading OFF (disabled by default - use enable_auto_trading.py to activate)"
+                    # Check if auto-trading is currently enabled
+                    status_response = requests.get("http://localhost:8001/status", timeout=2)
+                    if status_response.status_code == 200:
+                        status_data = status_response.json()
+                        auto_trading_enabled = status_data.get("auto_trading_enabled", False)
+                        if auto_trading_enabled:
+                            fastapi_status += " | 🤖 Auto-trading ON"
+                        else:
+                            fastapi_status += " | ⏸️ Auto-trading OFF (disabled by default - use enable_auto_trading.py to activate)"
                 except Exception:
                     # Auto-trading status check failed, but service is running
                     fastapi_status += " | ❓ Auto-trading status unknown"

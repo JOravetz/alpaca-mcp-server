@@ -17,12 +17,12 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from alpaca_mcp_server.config import get_technical_config, get_trading_config
-from alpaca_mcp_server.config.global_config import (
+from alpaca_mcp_server.config import get_technical_config, get_trading_config  # noqa: E402
+from alpaca_mcp_server.config.global_config import (  # noqa: E402
     GlobalConfig,
     reload_global_config,
 )
-from alpaca_mcp_server.monitoring.fastapi_service import MonitoringServiceAPI
+from alpaca_mcp_server.monitoring.fastapi_service import MonitoringServiceAPI  # noqa: E402
 
 
 class TestRuntimeConfigChanges:

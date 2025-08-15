@@ -1,11 +1,15 @@
 """Intraday P&L resource with configurable parameters."""
 
 from datetime import datetime, time, timedelta
+import pytz
 
 from alpaca.trading.enums import QueryOrderStatus
 from alpaca.trading.requests import GetOrdersRequest
 
 from ..config.settings import get_trading_client
+
+# NYC timezone for proper market time display
+NYC_TZ = pytz.timezone('America/New_York')
 
 
 async def get_intraday_pnl(
@@ -96,7 +100,7 @@ async def get_intraday_pnl(
                     "qty": float(order.filled_qty),
                     "price": float(order.filled_avg_price),
                     "value": trade_value,
-                    "time": order.filled_at,
+                    "time": order.filled_at.isoformat(),
                     "order_id": order.id,
                 }
 
@@ -224,9 +228,13 @@ async def get_intraday_pnl(
         avg_loss = abs(largest_loss) / losing_trades if losing_trades > 0 else 0
         profit_factor = avg_win / avg_loss if avg_loss > 0 else float("inf") if avg_win > 0 else 0
 
+        # Get current NYC time for timestamps
+        current_time_nyc = datetime.now(NYC_TZ)
+        
         return {
             "analysis_date": end_date.isoformat(),
             "date_range": f"{start_date.isoformat()} to {end_date.isoformat()}",
+            "report_time_edt": current_time_nyc.strftime("%Y-%m-%d %H:%M:%S EDT"),
             "days_back": days_back,
             "realized_pnl": round(realized_pnl, 2),
             "unrealized_pnl": (round(unrealized_pnl, 2) if include_open_positions else None),
@@ -252,7 +260,7 @@ async def get_intraday_pnl(
                 "min_trade_value": min_trade_value,
                 "symbol_filter": symbol_filter,
             },
-            "last_updated": datetime.now().isoformat(),
+            "last_updated": datetime.now(NYC_TZ).strftime("%Y-%m-%d %H:%M:%S EDT"),
         }
 
     except Exception as e:
@@ -268,5 +276,5 @@ async def get_intraday_pnl(
                 "min_trade_value": min_trade_value,
                 "symbol_filter": symbol_filter,
             },
-            "last_updated": datetime.now().isoformat(),
+            "last_updated": datetime.now(NYC_TZ).strftime("%Y-%m-%d %H:%M:%S EDT"),
         }

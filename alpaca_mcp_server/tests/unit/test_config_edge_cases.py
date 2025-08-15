@@ -3,6 +3,7 @@ Config File Edge Cases Tests - REAL tests for resilience.
 Tests malformed files, permissions, corruption scenarios - NO MOCKING.
 """
 
+import contextlib
 import json
 import os
 import sys
@@ -15,9 +16,7 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-import contextlib
-
-from alpaca_mcp_server.config.global_config import (
+from alpaca_mcp_server.config.global_config import (  # noqa: E402
     GlobalConfig,
 )
 

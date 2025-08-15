@@ -8,11 +8,11 @@ import sys
 import time
 from pathlib import Path
 
+import pytest
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
-
-import pytest  # noqa: E402
 
 from alpaca_mcp_server.config import (  # noqa: E402
     get_scanner_config,
@@ -21,7 +21,7 @@ from alpaca_mcp_server.config import (  # noqa: E402
 )
 from alpaca_mcp_server.monitoring.fastapi_service import MonitoringServiceAPI  # noqa: E402
 from alpaca_mcp_server.tools.day_trading_scanner import scan_day_trading_opportunities  # noqa: E402
-from alpaca_mcp_server.tools.peak_trough_analysis_tool import (  # noqa: E402; noqa: E402
+from alpaca_mcp_server.tools.peak_trough_analysis_tool import (  # noqa: E402
     analyze_peaks_and_troughs,
 )
 

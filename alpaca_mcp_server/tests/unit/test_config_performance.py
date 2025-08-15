@@ -17,7 +17,7 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from alpaca_mcp_server.config import (
+from alpaca_mcp_server.config import (  # noqa: E402
     get_global_config,
     get_technical_config,
     get_trading_config,
@@ -240,23 +240,23 @@ class TestConfigPerformance:
             access_results = []
             errors = []
 
-            def worker():
+            def worker(results_list, errors_list):
                 try:
                     start_time = time.time()
                     for _ in range(100):
                         get_trading_config()
                         get_technical_config()
                     duration = time.time() - start_time
-                    access_results.append(duration)
+                    results_list.append(duration)
                 except Exception as e:
-                    errors.append(e)
+                    errors_list.append(e)
 
             # Run test with current thread count
             threads = []
             start_time = time.time()
 
             for _ in range(thread_count):
-                thread = threading.Thread(target=worker)
+                thread = threading.Thread(target=worker, args=(access_results, errors))
                 threads.append(thread)
                 thread.start()
 

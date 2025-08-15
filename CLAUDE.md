@@ -15,6 +15,16 @@ Professional Alpaca trading system with MCP (Model Context Protocol) integration
 4. **CAPTURE FIRST PROFIT SPIKE** - Profits appear 0-10 seconds after entry
 5. **USE MANUAL LIMIT ORDERS** for entries at exact signal prices
 
+## Python Execution (IMPORTANT)
+
+**This project uses `uv` for dependency management. ALWAYS use one of these methods to run Python:**
+
+1. **Preferred:** `uv run python script.py`
+2. **Alternative:** `./run.sh script.py` 
+3. **Makefile:** `make run-script SCRIPT=script.py`
+
+**NEVER use bare `python` commands** - they will fail with missing dependencies!
+
 ## Essential Commands
 
 ### Development & Testing
@@ -24,6 +34,9 @@ uv sync
 
 # Run MCP server
 uv run python -m alpaca_mcp_server.main
+
+# Run any Python script (ALWAYS use uv run)
+uv run python path/to/script.py
 
 # Code quality pipeline (run in order)
 uv run black alpaca_mcp_server/
