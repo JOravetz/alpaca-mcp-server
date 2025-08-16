@@ -220,6 +220,28 @@ def display_market_feed(data, format_type='full'):
                 print(f"   📝 {summary}")
             print(f"   🔗 {article['link']}\n")
 
+def read_symbols_from_file(filepath):
+    """Read stock symbols from a file, one per line or comma-separated"""
+    symbols = []
+    try:
+        with open(filepath, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):  # Skip empty lines and comments
+                    if ',' in line:
+                        # Handle comma-separated values
+                        symbols.extend([s.strip().upper() for s in line.split(',') if s.strip()])
+                    else:
+                        # Single symbol per line
+                        symbols.append(line.upper())
+        return list(dict.fromkeys(symbols))  # Remove duplicates while preserving order
+    except FileNotFoundError:
+        print(f"❌ File not found: {filepath}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error reading file {filepath}: {e}")
+        sys.exit(1)
+
 def main():
     parser = argparse.ArgumentParser(
         description='Fetch Yahoo Finance RSS feeds for stocks',
@@ -234,6 +256,13 @@ Examples:
   
   # Your watchlist
   python %(prog)s IMG KAVL AVAH LZMH SKYT
+  
+  # Read symbols from file
+  python %(prog)s -i watchlist.txt
+  python %(prog)s --input-file symbols.txt -n 10
+  
+  # Combine file input with command-line symbols
+  python %(prog)s AAPL -i more_symbols.txt
   
   # Compact format
   python %(prog)s TSLA -f compact
@@ -251,10 +280,27 @@ Examples:
   
   # Combine stocks and market news
   python %(prog)s SPY QQQ --market topstories
+  
+File Format:
+  The input file can contain symbols in these formats:
+  - One symbol per line
+  - Comma-separated symbols on a line
+  - Lines starting with # are treated as comments
+  
+  Example file:
+    # Tech stocks
+    AAPL
+    MSFT, GOOGL
+    NVDA
+    # Energy
+    XOM
+    CVX
         """
     )
     
     parser.add_argument('symbols', nargs='*', help='Stock symbol(s)')
+    parser.add_argument('-i', '--input-file', dest='input_file', 
+                       help='Read symbols from file (one per line or comma-separated)')
     parser.add_argument('-n', '--number', type=int, default=20, 
                        help='Number of articles to fetch (default: 20)')
     parser.add_argument('-f', '--format', choices=['full', 'compact', 'urls'], 
@@ -265,9 +311,29 @@ Examples:
     
     args = parser.parse_args()
     
+    # Collect symbols from both file and command line
+    all_symbols = []
+    
+    # Read from file if provided
+    if args.input_file:
+        file_symbols = read_symbols_from_file(args.input_file)
+        all_symbols.extend(file_symbols)
+        print(f"📂 Read {len(file_symbols)} symbols from {args.input_file}")
+    
+    # Add command-line symbols
+    if args.symbols:
+        for symbol_arg in args.symbols:
+            if ',' in symbol_arg:
+                all_symbols.extend([s.strip().upper() for s in symbol_arg.split(',') if s.strip()])
+            else:
+                all_symbols.append(symbol_arg.strip().upper())
+    
+    # Remove duplicates while preserving order
+    all_symbols = list(dict.fromkeys(all_symbols))
+    
     # Validate input
-    if not args.symbols and not args.market:
-        print("❌ Please provide stock symbols or use --market option")
+    if not all_symbols and not args.market:
+        print("❌ Please provide stock symbols (via command line or file) or use --market option")
         parser.print_help()
         sys.exit(1)
     
@@ -281,27 +347,16 @@ Examples:
         display_results(market_data, args.format)
     
     # Fetch stock-specific news
-    if args.symbols:
-        # Parse symbols (handle comma-separated)
-        symbols = []
-        for symbol_arg in args.symbols:
-            if ',' in symbol_arg:
-                symbols.extend([s.strip().upper() for s in symbol_arg.split(',') if s.strip()])
-            else:
-                symbols.append(symbol_arg.strip().upper())
-        
-        # Remove duplicates
-        symbols = list(dict.fromkeys(symbols))
-        
-        if len(symbols) == 1:
-            print(f"📡 Fetching RSS feed for {symbols[0]}...")
-            data = fetch_stock_rss(symbols[0], args.number)
+    if all_symbols:
+        if len(all_symbols) == 1:
+            print(f"📡 Fetching RSS feed for {all_symbols[0]}...")
+            data = fetch_stock_rss(all_symbols[0], args.number)
             results.append(data)
             display_results(data, args.format)
         else:
-            print(f"📡 Fetching RSS feeds for {len(symbols)} stocks...")
-            print(f"   Stocks: {', '.join(symbols)}\n")
-            stock_results = fetch_multiple_stocks_parallel(symbols, args.number)
+            print(f"📡 Fetching RSS feeds for {len(all_symbols)} stocks...")
+            print(f"   Stocks: {', '.join(all_symbols)}\n")
+            stock_results = fetch_multiple_stocks_parallel(all_symbols, args.number)
             results.extend(stock_results)
             display_results(stock_results, args.format)
     
@@ -310,7 +365,7 @@ Examples:
         save_data = {
             'timestamp': datetime.now().isoformat(),
             'query': {
-                'symbols': args.symbols or [],
+                'symbols': all_symbols or [],
                 'market': args.market
             },
             'results': results
