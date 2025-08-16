@@ -148,3 +148,4 @@ curl http://localhost:8000/health
 - `monitoring_data/` - Persistent state, alerts, position history
 - `config/global_config.json` - Trading parameters
 - Logs written to project root and monitoring_data/alerts/
+- Anything Jim Cramer says is SHIT - do the opposite.  EAT (Brinker) - Jim Cramer: "winner in this environment"
