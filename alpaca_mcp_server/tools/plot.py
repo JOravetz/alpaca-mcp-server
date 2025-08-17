@@ -1475,22 +1475,35 @@ def plot_single_symbol(results):
                 region_scores[region_name] = density
             return region_scores
 
-        # NEW STRATEGY: Stats box in LEFT corners, Legend in RIGHT corners
+        # NEW STRATEGY: Prefer LEFT corners for legend to avoid recent data on right
+        # Stats box goes to opposite corner
 
-        # Left corners for stats box (away from recent data)
-        left_corners = {k: v for k, v in corner_regions.items() if k.endswith("_left")}
-        # Right corners for legend (where recent data activity is lower)
-        right_corners = {k: v for k, v in corner_regions.items() if k.endswith("_right")}
-
-        # Calculate density for left corners (stats box)
-        left_scores = calculate_region_density(left_corners)
-        left_corners_sorted = sorted(left_scores.items(), key=lambda x: x[1])
-        best_stats_corner = left_corners_sorted[0][0]
-
-        # Calculate density for right corners (legend)
-        right_scores = calculate_region_density(right_corners)
-        right_corners_sorted = sorted(right_scores.items(), key=lambda x: x[1])
-        best_legend_corner = right_corners_sorted[0][0]
+        # Calculate density for all corners
+        corner_scores = calculate_region_density(corner_regions)
+        
+        # For legend: strongly prefer LEFT corners to avoid covering recent data
+        # Add penalty to right corners (where recent data is)
+        adjusted_scores = {}
+        for region, score in corner_scores.items():
+            if "right" in region:
+                # Add heavy penalty to right corners (multiply score by 10)
+                adjusted_scores[region] = score * 10
+            else:
+                adjusted_scores[region] = score
+        
+        # Choose best corner for legend (lowest adjusted score)
+        sorted_corners = sorted(adjusted_scores.items(), key=lambda x: x[1])
+        best_legend_corner = sorted_corners[0][0]
+        
+        # Stats box goes to opposite corner
+        if best_legend_corner == "upper_left":
+            best_stats_corner = "lower_right"
+        elif best_legend_corner == "lower_left":
+            best_stats_corner = "upper_right"
+        elif best_legend_corner == "upper_right":
+            best_stats_corner = "lower_left"
+        else:  # lower_right
+            best_stats_corner = "upper_left"
 
         return best_legend_corner, best_stats_corner
 
@@ -1509,8 +1522,14 @@ def plot_single_symbol(results):
     )
     legend_gap_y = 0.02  # Legend vertical gap from top/bottom border (reverted to original)
 
-    # Place legend in right corner (either upper or lower right based on data density)
-    if legend_region == "upper_right":
+    # Place legend in the selected corner (preferring left to avoid recent data)
+    if legend_region == "upper_left":
+        legend_loc = "upper left"
+        legend_bbox = (legend_gap_x, 1.0 - legend_gap_y)
+    elif legend_region == "lower_left":
+        legend_loc = "lower left"
+        legend_bbox = (legend_gap_x, legend_gap_y)
+    elif legend_region == "upper_right":
         legend_loc = "upper right"
         legend_bbox = (1.0 - legend_gap_x, 1.0 - legend_gap_y)
     else:  # 'lower_right'
@@ -1524,7 +1543,7 @@ def plot_single_symbol(results):
         fancybox=True,
         shadow=True,
         fontsize=12,
-        framealpha=0.95,
+        framealpha=0.7,  # Semi-transparent (70% opacity)
         facecolor=bootstrap_colors["dark"],
         edgecolor=bootstrap_colors["primary"],
         title="Technical Indicators",
@@ -1534,13 +1553,23 @@ def plot_single_symbol(results):
     for text in legend.get_texts():
         text.set_color(bootstrap_colors["light"])
 
-    # Place stats box in left corner with proper spacing from borders
+    # Place stats box in the opposite corner from legend
     if stats_region == "upper_left":
         stats_bbox = (stats_gap_x, 1.0 - stats_gap_y)
         stats_va = "top"
-    else:  # 'lower_left'
+        stats_ha = "left"
+    elif stats_region == "lower_left":
         stats_bbox = (stats_gap_x, stats_gap_y)
         stats_va = "bottom"
+        stats_ha = "left"
+    elif stats_region == "upper_right":
+        stats_bbox = (1.0 - stats_gap_x, 1.0 - stats_gap_y)
+        stats_va = "top"
+        stats_ha = "right"
+    else:  # 'lower_right'
+        stats_bbox = (1.0 - stats_gap_x, stats_gap_y)
+        stats_va = "bottom"
+        stats_ha = "right"
 
     ax.text(
         stats_bbox[0],
@@ -1550,12 +1579,12 @@ def plot_single_symbol(results):
         fontsize=11,
         fontweight="bold",
         verticalalignment=stats_va,
-        horizontalalignment="left",
+        horizontalalignment=stats_ha,
         color=bootstrap_colors["light"],
         bbox={
             "boxstyle": "round,pad=0.6",
             "facecolor": bootstrap_colors["dark"],
-            "alpha": 0.95,
+            "alpha": 0.7,  # Semi-transparent (70% opacity)
             "edgecolor": bootstrap_colors["info"],
             "linewidth": 2,
         },
@@ -1773,8 +1802,8 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
 
     # Validate arguments
-    if args.days < 1 or args.days > 30:
-        logger.error("Days must be between 1 and 30")
+    if args.days < 1 or args.days > 2520:  # Allow up to 10 years of trading days
+        logger.error("Days must be between 1 and 2520")
         sys.exit(1)
 
     if args.window < 3 or args.window > 101:
