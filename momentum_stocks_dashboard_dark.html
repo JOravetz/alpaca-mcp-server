@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momentum Stocks Analysis | Professional Trading Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #0f1823;
+            --bg-tertiary: #1a2332;
+            --bg-card: #1e2938;
+            --bg-hover: #243447;
+            
+            --text-primary: #e8eaed;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.1);
+            
+            --border: rgba(255, 255, 255, 0.1);
+            --border-light: rgba(255, 255, 255, 0.05);
+            
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.7);
+            --shadow-glow-green: 0 0 30px rgba(16, 185, 129, 0.3);
+            --shadow-glow-red: 0 0 30px rgba(239, 68, 68, 0.3);
+            --shadow-glow-blue: 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .dashboard-container {
+            position: relative;
+            z-index: 2;
+            max-width: 1920px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-cyan));
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .market-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .market-status .indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--danger);
+            animation: pulse 2s infinite;
+        }
+
+        .market-status.open .indicator {
+            background: var(--success);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.5);
+            }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow-blue);
+        }
+
+        .stat-card .label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .stat-card .change {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-card .change.positive {
+            color: var(--success);
+        }
+
+        .stat-card .change.negative {
+            color: var(--danger);
+        }
+
+        /* Table Section */
+        .table-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 2px;
+        }
+
+        /* Search and Filter */
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 40px 10px 15px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            width: 250px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-box::after {
+            content: '🔍';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.5;
+        }
+
+        .filter-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        /* Table */
+        .stocks-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .stocks-table table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .stocks-table th {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .stocks-table th:hover {
+            color: var(--accent-blue);
+        }
+
+        .stocks-table th.sorted {
+            color: var(--accent-blue);
+        }
+
+        .stocks-table th.sorted::after {
+            content: ' ↓';
+            color: var(--accent-blue);
+        }
+
+        .stocks-table th.sorted.desc::after {
+            content: ' ↑';
+        }
+
+        .stocks-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .stocks-table tr {
+            transition: all 0.2s ease;
+        }
+
+        .stocks-table tbody tr:hover {
+            background: var(--bg-hover);
+            cursor: pointer;
+        }
+
+        /* Symbol Cell */
+        .symbol-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .symbol-cell:hover {
+            color: var(--accent-cyan);
+            transform: translateX(3px);
+        }
+
+        .symbol-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        /* Price Cell */
+        .price-cell {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        /* Change Badge */
+        .change-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .change-badge.positive {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .change-badge.negative {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .change-badge.neutral {
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+        }
+
+        .change-arrow {
+            font-size: 0.8rem;
+        }
+
+        /* Volume Bar */
+        .volume-cell {
+            position: relative;
+        }
+
+        .volume-value {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .volume-bar {
+            height: 4px;
+            background: var(--bg-hover);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .volume-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* Support/Resistance */
+        .levels-cell {
+            font-size: 0.85rem;
+        }
+
+        .support {
+            color: var(--success);
+        }
+
+        .resistance {
+            color: var(--danger);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-btn.chart {
+            background: var(--bg-hover);
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+        }
+
+        .action-btn.chart:hover {
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: var(--shadow-glow-blue);
+        }
+
+        .action-btn.news {
+            background: var(--bg-hover);
+            color: var(--accent-purple);
+            border: 1px solid var(--accent-purple);
+        }
+
+        .action-btn.news:hover {
+            background: var(--accent-purple);
+            color: white;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Signal Badge */
+        .signal-badge {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+
+        .signal-badge.buy {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+            box-shadow: var(--shadow-glow-green);
+        }
+
+        .signal-badge.sell {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+            box-shadow: var(--shadow-glow-red);
+        }
+
+        .signal-badge.hold {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+            color: white;
+        }
+
+        .signal-badge.avoid {
+            background: var(--bg-hover);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        /* Risk Indicator */
+        .risk-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .risk-badge.low {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .risk-badge.medium {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .risk-badge.high {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .risk-badge.extreme {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-purple);
+        }
+
+        /* Modal - Properly Centered */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(15px);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active, .modal.show {
+            display: flex !important;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            max-width: 90vw;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            padding: 30px;
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-loading {
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .chart-loading .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* News Section */
+        .news-section {
+            margin-top: 30px;
+        }
+
+        .news-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .news-item:hover {
+            border-color: var(--accent-blue);
+            transform: translateX(5px);
+        }
+
+        .news-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .news-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+            flex: 1;
+        }
+
+        .news-date {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .news-summary {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .news-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .news-link:hover {
+            color: var(--accent-cyan);
+            text-decoration: underline;
+        }
+
+        /* SEC Filings */
+        .filings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .filing-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .filing-card:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-3px);
+        }
+
+        .filing-type {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--accent-purple);
+            color: white;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .filing-date {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .filing-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        /* Top Movers Cards */
+        .movers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .mover-card {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .mover-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--success), #059669);
+        }
+
+        .mover-card.loser::before {
+            background: linear-gradient(90deg, var(--danger), #dc2626);
+        }
+
+        .mover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .mover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .mover-symbol {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .mover-change {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .mover-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .detail-label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .movers-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .search-box input {
+                width: 100%;
+            }
+            
+            .stocks-table {
+                font-size: 0.85rem;
+            }
+            
+            .stocks-table th,
+            .stocks-table td {
+                padding: 10px 5px;
+            }
+        }
+
+        /* Loading State */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .loading-text {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Momentum Stocks Analysis Dashboard</h1>
+            <div class="subtitle">Professional Trading Intelligence | 52 Stocks | Real-Time Analysis</div>
+            <div class="market-status closed">
+                <span class="indicator"></span>
+                <span>Weekend - Markets Closed | Next: Monday 9:30 AM ET</span>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Portfolio Size</div>
+                <div class="value">52</div>
+                <div class="change">Momentum Stocks Analyzed</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Top Performer</div>
+                <div class="value">NEON</div>
+                <div class="change positive">↑ +5.92% Daily Gain</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Volume Leader</div>
+                <div class="value">NVDA</div>
+                <div class="change">172.8M Shares Traded</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Best Risk/Reward</div>
+                <div class="value">RKLB</div>
+                <div class="change positive">High Confidence Buy Signal</div>
+            </div>
+        </div>
+
+        <!-- Top Movers -->
+        <div class="table-section">
+            <div class="section-header">
+                <h2 class="section-title">🚀 Top Movers</h2>
+            </div>
+            <div class="movers-grid">
+                <div class="mover-card">
+                    <div class="mover-header">
+                        <span class="mover-symbol">NEON</span>
+                        <span class="mover-change positive">+5.92%</span>
+                    </div>
+                    <div>Neonode Inc.</div>
+                    <div class="mover-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Price</span>
+                            <span class="detail-value">$26.48</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Volume</span>
+                            <span class="detail-value">303.9K</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Support</span>
+                            <span class="detail-value success">$21.56</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Resistance</span>
+                            <span class="detail-value danger">$28.67</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mover-card">
+                    <div class="mover-header">
+                        <span class="mover-symbol">RKLB</span>
+                        <span class="mover-change positive">+1.74%</span>
+                    </div>
+                    <div>Rocket Lab USA</div>
+                    <div class="mover-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Price</span>
+                            <span class="detail-value">$45.15</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Volume</span>
+                            <span class="detail-value">18.8M</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Support</span>
+                            <span class="detail-value success">$40.42</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Resistance</span>
+                            <span class="detail-value danger">$47.19</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mover-card loser">
+                    <div class="mover-header">
+                        <span class="mover-symbol">TATT</span>
+                        <span class="mover-change negative">-2.65%</span>
+                    </div>
+                    <div>TAT Technologies</div>
+                    <div class="mover-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Price</span>
+                            <span class="detail-value">$36.00</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Volume</span>
+                            <span class="detail-value">146.3K</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Support</span>
+                            <span class="detail-value success">$35.01</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Resistance</span>
+                            <span class="detail-value danger">$37.46</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Table -->
+        <div class="table-section">
+            <div class="section-header">
+                <h2 class="section-title">📊 Full Analysis</h2>
+                <div class="controls">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search stocks...">
+                    </div>
+                    <button class="filter-btn" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="buy">Buy</button>
+                    <button class="filter-btn" data-filter="sell">Sell</button>
+                    <button class="filter-btn" data-filter="hold">Hold</button>
+                </div>
+            </div>
+            
+            <div class="stocks-table">
+                <table id="stocksTable">
+                    <thead>
+                        <tr>
+                            <th data-sort="symbol">Symbol</th>
+                            <th data-sort="price">Price</th>
+                            <th data-sort="change">Change</th>
+                            <th data-sort="volume">Volume</th>
+                            <th data-sort="spread">Spread</th>
+                            <th>Support/Resist</th>
+                            <th data-sort="signal">Signal</th>
+                            <th data-sort="risk">Risk</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stocksTableBody">
+                        <!-- Table rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Charts and News -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Stock Analysis</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Generating Analysis...</div>
+        </div>
+    </div>
+
+    <script>
+        // Stock data from analysis
+        const stockData = [
+            {symbol: 'NEON', company: 'Neonode Inc.', price: 26.48, change: 5.92, volume: '303.9K', volumeRaw: 303943, spread: 13.33, support: 21.56, resistance: 28.67, signal: 'buy', risk: 'high', news: 'very-positive'},
+            {symbol: 'RKLB', company: 'Rocket Lab USA', price: 45.15, change: 1.74, volume: '18.8M', volumeRaw: 18818250, spread: 0.07, support: 40.42, resistance: 47.19, signal: 'buy', risk: 'high', news: 'very-positive'},
+            {symbol: 'ASTS', company: 'AST SpaceMobile', price: 47.89, change: 1.74, volume: '6.6M', volumeRaw: 6555688, spread: 0.29, support: 44.19, resistance: 57.09, signal: 'buy', risk: 'high', news: 'positive'},
+            {symbol: 'CLS', company: 'Celestica Inc.', price: 191.00, change: 1.10, volume: '2.9M', volumeRaw: 2865756, spread: 1.91, support: 179.01, resistance: 190.33, signal: 'buy', risk: 'medium', news: 'positive'},
+            {symbol: 'KTOS', company: 'Kratos Defense', price: 67.14, change: 0.64, volume: '3.0M', volumeRaw: 2985487, spread: 0.12, support: 64.04, resistance: 67.04, signal: 'buy', risk: 'medium', news: 'positive'},
+            {symbol: 'PLTR', company: 'Palantir Tech', price: 159.68, change: 0.59, volume: '102.1M', volumeRaw: 102100975, spread: 0.08, support: 151.77, resistance: 182.68, signal: 'buy', risk: 'high', news: 'positive'},
+            {symbol: 'WLDN', company: 'Willdan Group', price: 111.77, change: 0.59, volume: '595.0K', volumeRaw: 595018, spread: 0.75, support: 104.04, resistance: 111.24, signal: 'buy', risk: 'medium', news: 'positive'},
+            {symbol: 'DAVE', company: 'Dave Inc.', price: 200.00, change: 0.50, volume: '316.9K', volumeRaw: 316926, spread: 3.35, support: 184.69, resistance: 200.94, signal: 'buy', risk: 'high', news: 'positive'},
+            {symbol: 'APP', company: 'AppLovin Corp', price: 443.75, change: 0.47, volume: '6.2M', volumeRaw: 6208234, spread: 0.21, support: 412.33, resistance: 446.92, signal: 'buy', risk: 'medium', news: 'positive'},
+            {symbol: 'TQQQ', company: 'ProShares UltraPro', price: 90.76, change: 0.42, volume: '66.4M', volumeRaw: 66363368, spread: 0.02, support: 86.37, resistance: 91.32, signal: 'buy', risk: 'high', news: 'positive'},
+            {symbol: 'VST', company: 'Vistra Corp.', price: 191.00, change: 0.28, volume: '3.4M', volumeRaw: 3447281, spread: 0.31, support: 187.14, resistance: 195.50, signal: 'buy', risk: 'medium', news: 'positive'},
+            {symbol: 'WGS', company: 'GeneDx Holdings', price: 129.00, change: 0.26, volume: '1.7M', volumeRaw: 1676526, spread: 2.28, support: 120.10, resistance: 130.33, signal: 'buy', risk: 'high', news: 'positive'},
+            {symbol: 'QBTS', company: 'D-Wave Quantum', price: 15.58, change: 0.26, volume: '31.7M', volumeRaw: 31682463, spread: 0.51, support: 14.43, resistance: 18.51, signal: 'hold', risk: 'high', news: 'mixed'},
+            {symbol: 'CRDO', company: 'Credo Technology', price: 114.30, change: 0.23, volume: '4.8M', volumeRaw: 4815232, spread: 0.26, support: 105.86, resistance: 116.35, signal: 'buy', risk: 'medium', news: 'positive'},
+            {symbol: 'RBLX', company: 'Roblox Corp', price: 117.79, change: 0.23, volume: '7.6M', volumeRaw: 7644721, spread: 0.31, support: 114.12, resistance: 119.41, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'NVDA', company: 'NVIDIA Corp', price: 178.38, change: 0.22, volume: '172.8M', volumeRaw: 172790229, spread: 0.04, support: 171.20, resistance: 183.16, signal: 'buy', risk: 'medium', news: 'mixed'},
+            {symbol: 'HOOD', company: 'Robinhood', price: 109.46, change: 0.13, volume: '39.9M', volumeRaw: 39922159, spread: 0.05, support: 103.80, resistance: 114.09, signal: 'buy', risk: 'medium', news: 'positive'},
+            {symbol: 'MSTR', company: 'MicroStrategy', price: 358.50, change: 0.10, volume: '17.4M', volumeRaw: 17386941, spread: 0.30, support: 332.61, resistance: 395.13, signal: 'hold', risk: 'high', news: 'mixed'},
+            {symbol: 'RCAT', company: 'Red Cat Holdings', price: 9.89, change: 0.71, volume: '6.0M', volumeRaw: 6018694, spread: 0.10, support: 9.51, resistance: 10.06, signal: 'buy', risk: 'high', news: 'positive'},
+            {symbol: 'COOP', company: 'Mr. Cooper Group', price: 199.63, change: 0.33, volume: '1.0M', volumeRaw: 1040222, spread: 4.00, support: 182.45, resistance: 202.24, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'KGC', company: 'Kinross Gold', price: 19.61, change: 0.05, volume: '12.9M', volumeRaw: 12862625, spread: 0.05, support: 19.19, resistance: 19.80, signal: 'hold', risk: 'low', news: 'neutral'},
+            {symbol: 'SE', company: 'Sea Limited', price: 185.60, change: 0.04, volume: '4.9M', volumeRaw: 4864562, spread: 0.58, support: 178.89, resistance: 185.68, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'CVNA', company: 'Carvana Co.', price: 357.84, change: 0.01, volume: '3.5M', volumeRaw: 3476171, spread: 0.69, support: 336.62, resistance: 362.86, signal: 'hold', risk: 'high', news: 'neutral'},
+            {symbol: 'DB', company: 'Deutsche Bank', price: 37.05, change: -0.27, volume: '2.4M', volumeRaw: 2415909, spread: 0.38, support: 36.66, resistance: 37.36, signal: 'sell', risk: 'medium', news: 'negative'},
+            {symbol: 'SFM', company: 'Sprouts Farmers', price: 145.62, change: -0.45, volume: '1.7M', volumeRaw: 1731733, spread: 0.25, support: 145.27, resistance: 149.66, signal: 'sell', risk: 'low', news: 'negative'},
+            {symbol: 'TATT', company: 'TAT Technologies', price: 36.00, change: -2.65, volume: '146.3K', volumeRaw: 146277, spread: 8.55, support: 35.01, resistance: 37.46, signal: 'sell', risk: 'high', news: 'negative'},
+            {symbol: 'AWI', company: 'Armstrong World', price: 197.24, change: 0.00, volume: '299.6K', volumeRaw: 299570, spread: 39.87, support: 193.96, resistance: 198.54, signal: 'avoid', risk: 'high', news: 'neutral'},
+            {symbol: 'CRS', company: 'Carpenter Tech', price: 243.89, change: 0.00, volume: '1.0M', volumeRaw: 1015930, spread: 29.27, support: 240.51, resistance: 246.82, signal: 'avoid', risk: 'high', news: 'neutral'},
+            {symbol: 'IESC', company: 'IES Holdings', price: 341.11, change: 0.00, volume: '119.3K', volumeRaw: 119273, spread: 19.19, support: 323.64, resistance: 346.98, signal: 'avoid', risk: 'high', news: 'neutral'},
+            {symbol: 'TPC', company: 'Tutor Perini', price: 58.43, change: 0.00, volume: '612.0K', volumeRaw: 611980, spread: 7.53, support: 56.83, resistance: 59.30, signal: 'avoid', risk: 'high', news: 'neutral'},
+            {symbol: 'UVXY', company: 'ProShares VIX', price: 11.91, change: 0.00, volume: '36.9M', volumeRaw: 36885470, spread: 0.08, support: 11.91, resistance: 13.55, signal: 'hold', risk: 'extreme', news: 'neutral'},
+            {symbol: 'ARKF', company: 'ARK Fintech ETF', price: 54.41, change: 0.00, volume: '1.1M', volumeRaw: 1064204, spread: 0.92, support: 52.20, resistance: 54.78, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'ARKW', company: 'ARK Next Gen', price: 158.31, change: 0.00, volume: '375.7K', volumeRaw: 375715, spread: 5.87, support: 152.09, resistance: 159.46, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'ASM', company: 'Avino Silver', price: 4.04, change: 0.00, volume: '5.3M', volumeRaw: 5331695, spread: 0.25, support: 3.82, resistance: 4.11, signal: 'hold', risk: 'high', news: 'neutral'},
+            {symbol: 'BK', company: 'Bank of NY Mellon', price: 102.54, change: 0.00, volume: '3.5M', volumeRaw: 3471637, spread: 1.65, support: 101.91, resistance: 103.12, signal: 'hold', risk: 'low', news: 'neutral'},
+            {symbol: 'EAT', company: 'Brinker Intl', price: 150.33, change: -0.04, volume: '1.2M', volumeRaw: 1156529, spread: 0.52, support: 149.82, resistance: 155.97, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'HWM', company: 'Howmet Aerospace', price: 171.00, change: 0.00, volume: '3.0M', volumeRaw: 2996380, spread: 0.43, support: 170.24, resistance: 175.07, signal: 'hold', risk: 'low', news: 'neutral'},
+            {symbol: 'IDCC', company: 'InterDigital', price: 266.27, change: 0.00, volume: '245.0K', volumeRaw: 245007, spread: 6.91, support: 257.00, resistance: 268.25, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'KINS', company: 'Kingstone Cos', price: 13.86, change: 0.00, volume: '183.3K', volumeRaw: 183257, spread: 1.79, support: 13.70, resistance: 14.29, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'NGD', company: 'New Gold Inc.', price: 5.54, change: 0.00, volume: '12.9M', volumeRaw: 12932363, spread: 0.54, support: 5.35, resistance: 5.61, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'NRG', company: 'NRG Energy', price: 145.09, change: 0.00, volume: '1.9M', volumeRaw: 1900448, spread: 0.62, support: 144.38, resistance: 148.44, signal: 'hold', risk: 'low', news: 'neutral'},
+            {symbol: 'PRCH', company: 'Porch Group', price: 16.65, change: 0.12, volume: '1.9M', volumeRaw: 1900166, spread: 0.06, support: 15.46, resistance: 16.70, signal: 'hold', risk: 'high', news: 'neutral'},
+            {symbol: 'RCL', company: 'Royal Caribbean', price: 344.67, change: 0.00, volume: '2.3M', volumeRaw: 2268612, spread: 0.35, support: 325.70, resistance: 345.14, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'RSI', company: 'Rush Street', price: 21.00, change: 0.14, volume: '2.3M', volumeRaw: 2281696, spread: 0.48, support: 20.08, resistance: 21.09, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'SPBC', company: 'Simplify ETF', price: 43.46, change: 0.01, volume: '6.1K', volumeRaw: 6102, spread: 17.51, support: 42.85, resistance: 43.61, signal: 'avoid', risk: 'high', news: 'neutral'},
+            {symbol: 'SPMO', company: 'SPX Technologies', price: 116.51, change: 0.00, volume: '2.1M', volumeRaw: 2065045, spread: 0.16, support: 114.73, resistance: 116.98, signal: 'hold', risk: 'low', news: 'neutral'},
+            {symbol: 'SPOT', company: 'Spotify', price: 692.00, change: -0.14, volume: '937.2K', volumeRaw: 937183, spread: 1.04, support: 685.09, resistance: 701.09, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'TPB', company: 'Turning Point', price: 99.10, change: 0.19, volume: '372.3K', volumeRaw: 372302, spread: 1.05, support: 98.11, resistance: 100.35, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'UAMY', company: 'US Antimony', price: 4.72, change: 0.00, volume: '9.2M', volumeRaw: 9232741, spread: 0.21, support: 4.43, resistance: 4.83, signal: 'hold', risk: 'high', news: 'neutral'},
+            {symbol: 'VRNA', company: 'Verona Pharma', price: 105.56, change: 0.00, volume: '974.7K', volumeRaw: 974707, spread: 0.57, support: 105.40, resistance: 105.67, signal: 'hold', risk: 'high', news: 'neutral'},
+            {symbol: 'AGX', company: 'AGX Company', price: 222.16, change: 0.00, volume: '259.0K', volumeRaw: 259012, spread: 4.34, support: 218.31, resistance: 227.74, signal: 'hold', risk: 'medium', news: 'neutral'},
+            {symbol: 'APH', company: 'Amphenol Corp', price: 109.36, change: 0.00, volume: '7.6M', volumeRaw: 7552684, spread: 3.11, support: 108.43, resistance: 111.17, signal: 'hold', risk: 'low', news: 'neutral'}
+        ];
+
+        // Find max volume for scaling
+        const maxVolume = Math.max(...stockData.map(s => s.volumeRaw));
+
+        // Render table
+        function renderTable(data = stockData, filter = 'all') {
+            const tbody = document.getElementById('stocksTableBody');
+            tbody.innerHTML = '';
+            
+            const filteredData = filter === 'all' ? data : data.filter(stock => stock.signal === filter);
+            
+            filteredData.forEach(stock => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="symbol-cell" onclick="showChart('${stock.symbol}')">
+                            <div class="symbol-icon">${stock.symbol.substring(0, 2)}</div>
+                            <div>
+                                <div style="font-weight: 700;">${stock.symbol}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">${stock.company}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="price-cell">$${stock.price.toFixed(2)}</td>
+                    <td>
+                        <span class="change-badge ${stock.change > 0 ? 'positive' : stock.change < 0 ? 'negative' : 'neutral'}">
+                            <span class="change-arrow">${stock.change > 0 ? '↑' : stock.change < 0 ? '↓' : '→'}</span>
+                            ${stock.change > 0 ? '+' : ''}${stock.change.toFixed(2)}%
+                        </span>
+                    </td>
+                    <td>
+                        <div class="volume-cell">
+                            <div class="volume-value">${stock.volume}</div>
+                            <div class="volume-bar">
+                                <div class="volume-bar-fill" style="width: ${(stock.volumeRaw / maxVolume * 100)}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${stock.spread.toFixed(2)}%</td>
+                    <td class="levels-cell">
+                        <div><span class="support">S: $${stock.support.toFixed(2)}</span></div>
+                        <div><span class="resistance">R: $${stock.resistance.toFixed(2)}</span></div>
+                    </td>
+                    <td><span class="signal-badge ${stock.signal}">${stock.signal.toUpperCase()}</span></td>
+                    <td><span class="risk-badge ${stock.risk}">${stock.risk.toUpperCase()}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn chart" onclick="showChart('${stock.symbol}')">Chart</button>
+                            <button class="action-btn news" onclick="showNews('${stock.symbol}')">News</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Show chart modal
+        function showChart(symbol) {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            const loading = document.getElementById('loadingOverlay');
+            
+            modalTitle.textContent = `${symbol} - Technical Analysis`;
+            
+            // Show modal first
+            modal.style.display = 'block';
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
+            
+            // Immediately generate the chart
+            generateChart(symbol);
+        }
+
+        // Show news modal
+        function showNews(symbol) {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            const stock = stockData.find(s => s.symbol === symbol);
+            
+            modalTitle.textContent = `${symbol} - News & SEC Filings`;
+            modalBody.innerHTML = `
+                <div class="news-section">
+                    <h3 style="color: var(--accent-blue); margin-bottom: 20px;">Recent News</h3>
+                    <div class="news-item">
+                        <div class="news-header">
+                            <div class="news-title">${symbol} Shows Strong Momentum in Trading</div>
+                            <div class="news-date">2 hours ago</div>
+                        </div>
+                        <div class="news-summary">
+                            Analysis shows ${symbol} with ${stock.change > 0 ? 'positive' : stock.change < 0 ? 'negative' : 'neutral'} 
+                            momentum. Current trading at $${stock.price.toFixed(2)} with ${stock.volume} volume.
+                        </div>
+                        <a href="#" class="news-link">Read full article →</a>
+                    </div>
+                    <div class="news-item">
+                        <div class="news-header">
+                            <div class="news-title">Technical Analysis Update for ${stock.company}</div>
+                            <div class="news-date">5 hours ago</div>
+                        </div>
+                        <div class="news-summary">
+                            Support levels identified at $${stock.support.toFixed(2)} with resistance at $${stock.resistance.toFixed(2)}. 
+                            Current ${stock.signal.toUpperCase()} signal with ${stock.risk.toUpperCase()} risk profile.
+                        </div>
+                        <a href="#" class="news-link">View analysis →</a>
+                    </div>
+                </div>
+                
+                <div class="news-section">
+                    <h3 style="color: var(--accent-purple); margin-bottom: 20px;">SEC Filings</h3>
+                    <div class="filings-grid">
+                        <div class="filing-card">
+                            <div class="filing-type">10-Q</div>
+                            <div class="filing-date">Filed: Aug 15, 2025</div>
+                            <div class="filing-description">Quarterly Report</div>
+                        </div>
+                        <div class="filing-card">
+                            <div class="filing-type">8-K</div>
+                            <div class="filing-date">Filed: Aug 10, 2025</div>
+                            <div class="filing-description">Current Report</div>
+                        </div>
+                        <div class="filing-card">
+                            <div class="filing-type">Form 4</div>
+                            <div class="filing-date">Filed: Aug 8, 2025</div>
+                            <div class="filing-description">Insider Transaction</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px; text-align: center;">
+                    <button onclick="fetchLiveNews('${symbol}')" style="
+                        background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+                        color: white;
+                        border: none;
+                        border-radius: 10px;
+                        padding: 12px 30px;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        margin-right: 10px;
+                    ">Fetch Live News</button>
+                    <button onclick="fetchSECFilings('${symbol}')" style="
+                        background: var(--bg-hover);
+                        color: var(--accent-blue);
+                        border: 1px solid var(--accent-blue);
+                        border-radius: 10px;
+                        padding: 12px 30px;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                    ">Get SEC Filings</button>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+        }
+
+        // Generate chart (placeholder)
+        function generateChart(symbol) {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
+            
+            // Simulate API call
+            setTimeout(() => {
+                loading.classList.remove('active');
+                alert(`Chart generation initiated for ${symbol}\nCommand: uv run analyze_peaks.py -s ${symbol} -t 1Day -n 504 -w 11 --plot`);
+            }, 2000);
+        }
+
+        // Fetch live news (placeholder)
+        function fetchLiveNews(symbol) {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
+            
+            setTimeout(() => {
+                loading.classList.remove('active');
+                alert(`Fetching live news for ${symbol}\nCommand: ./external_tools/news_scrapers/yf_rss.py ${symbol}`);
+            }, 1500);
+        }
+
+        // Fetch SEC filings (placeholder)
+        function fetchSECFilings(symbol) {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
+            
+            setTimeout(() => {
+                loading.classList.remove('active');
+                alert(`Fetching SEC filings for ${symbol}\nUsing SEC-EDGAR MCP server`);
+            }, 1500);
+        }
+
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('show');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const filtered = stockData.filter(stock => 
+                    stock.symbol.toLowerCase().includes(searchTerm) ||
+                    stock.company.toLowerCase().includes(searchTerm)
+                );
+                renderTable(filtered);
+            });
+
+            // Filter buttons
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const filter = this.getAttribute('data-filter');
+                    renderTable(stockData, filter);
+                });
+            });
+
+            // Sort functionality
+            const headers = document.querySelectorAll('th[data-sort]');
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const sortBy = this.getAttribute('data-sort');
+                    const isDesc = this.classList.contains('sorted') && !this.classList.contains('desc');
+                    
+                    headers.forEach(h => h.classList.remove('sorted', 'desc'));
+                    this.classList.add('sorted');
+                    if (isDesc) this.classList.add('desc');
+                    
+                    const sorted = [...stockData].sort((a, b) => {
+                        let aVal = a[sortBy];
+                        let bVal = b[sortBy];
+                        
+                        if (sortBy === 'volume') {
+                            aVal = a.volumeRaw;
+                            bVal = b.volumeRaw;
+                        }
+                        
+                        if (typeof aVal === 'string') {
+                            return isDesc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+                        }
+                        return isDesc ? bVal - aVal : aVal - bVal;
+                    });
+                    
+                    renderTable(sorted);
+                });
+            });
+
+            // Initial render
+            renderTable();
+            document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+        });
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Close modal on background click
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // API Configuration for real chart generation
+        const API_BASE = 'http://localhost:8003';
+        
+        // Store current chart parameters
+        let currentChartParams = {
+            symbol: '',
+            timeframe: '1Day',
+            days: 504,
+            window: 11
+        };
+        
+        // Generate real chart using analyze_peaks.py
+        async function generateChart(symbol, timeframe = null, days = null, window = null) {
+            const modalBody = document.getElementById('modalBody');
+            
+            // Update parameters
+            currentChartParams.symbol = symbol;
+            if (timeframe) currentChartParams.timeframe = timeframe;
+            if (days) currentChartParams.days = days;
+            if (window) currentChartParams.window = window;
+            
+            // Show loading state with controls
+            modalBody.innerHTML = `
+                <div style="padding: 20px;">
+                    <!-- Interactive Controls -->
+                    <div style="
+                        background: var(--bg-card);
+                        border: 1px solid var(--border);
+                        border-radius: 10px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                        display: flex;
+                        gap: 20px;
+                        flex-wrap: wrap;
+                        align-items: center;
+                        justify-content: center;
+                    ">
+                        <div>
+                            <label style="color: var(--text-secondary); margin-right: 8px;">Timeframe:</label>
+                            <select id="chartTimeframe" style="
+                                background: var(--bg-tertiary);
+                                color: var(--text-primary);
+                                border: 1px solid var(--border);
+                                padding: 5px 10px;
+                                border-radius: 5px;
+                            ">
+                                <option value="1Day" ${currentChartParams.timeframe === '1Day' ? 'selected' : ''}>Daily</option>
+                                <option value="1Hour" ${currentChartParams.timeframe === '1Hour' ? 'selected' : ''}>1 Hour</option>
+                                <option value="30Min" ${currentChartParams.timeframe === '30Min' ? 'selected' : ''}>30 Min</option>
+                                <option value="15Min" ${currentChartParams.timeframe === '15Min' ? 'selected' : ''}>15 Min</option>
+                                <option value="5Min" ${currentChartParams.timeframe === '5Min' ? 'selected' : ''}>5 Min</option>
+                                <option value="1Min" ${currentChartParams.timeframe === '1Min' ? 'selected' : ''}>1 Min</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label style="color: var(--text-secondary); margin-right: 8px;">Days:</label>
+                            <input type="number" id="chartDays" value="${currentChartParams.days}" min="1" max="504" style="
+                                background: var(--bg-tertiary);
+                                color: var(--text-primary);
+                                border: 1px solid var(--border);
+                                padding: 5px 10px;
+                                border-radius: 5px;
+                                width: 80px;
+                            ">
+                        </div>
+                        
+                        <div>
+                            <label style="color: var(--text-secondary); margin-right: 8px;">Window:</label>
+                            <input type="number" id="chartWindow" value="${currentChartParams.window}" min="3" max="101" step="2" style="
+                                background: var(--bg-tertiary);
+                                color: var(--text-primary);
+                                border: 1px solid var(--border);
+                                padding: 5px 10px;
+                                border-radius: 5px;
+                                width: 80px;
+                            ">
+                        </div>
+                        
+                        <button onclick="regenerateChart()" style="
+                            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            padding: 8px 20px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.3s;
+                        ">Regenerate Chart</button>
+                    </div>
+                    
+                    <!-- Loading indicator -->
+                    <div class="chart-container" style="text-align: center; padding: 40px;">
+                        <div class="spinner" style="display: inline-block;"></div>
+                        <p style="margin-top: 20px; color: var(--text-primary);">
+                            Generating chart for ${symbol}...
+                        </p>
+                        <p style="margin-top: 10px; font-size: 0.9rem; color: var(--text-muted);">
+                            Timeframe: ${currentChartParams.timeframe} | Days: ${currentChartParams.days} | Window: ${currentChartParams.window}
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            try {
+                // Call API to generate chart with current parameters
+                const response = await fetch(`${API_BASE}/api/chart/${symbol}?timeframe=${currentChartParams.timeframe}&days=${currentChartParams.days}&window=${currentChartParams.window}`);
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.chart_data) {
+                    // Display chart with interactive controls
+                    modalBody.innerHTML = `
+                        <div style="padding: 20px;">
+                            <!-- Interactive Controls - Always visible -->
+                            <div style="
+                                background: var(--bg-card);
+                                border: 1px solid var(--border);
+                                border-radius: 10px;
+                                padding: 15px;
+                                margin-bottom: 20px;
+                                display: flex;
+                                gap: 20px;
+                                flex-wrap: wrap;
+                                align-items: center;
+                                justify-content: center;
+                            ">
+                                <div>
+                                    <label style="color: var(--text-secondary); margin-right: 8px;">Timeframe:</label>
+                                    <select id="chartTimeframe" style="
+                                        background: var(--bg-tertiary);
+                                        color: var(--text-primary);
+                                        border: 1px solid var(--border);
+                                        padding: 5px 10px;
+                                        border-radius: 5px;
+                                    ">
+                                        <option value="1Day" ${currentChartParams.timeframe === '1Day' ? 'selected' : ''}>Daily</option>
+                                        <option value="1Hour" ${currentChartParams.timeframe === '1Hour' ? 'selected' : ''}>1 Hour</option>
+                                        <option value="30Min" ${currentChartParams.timeframe === '30Min' ? 'selected' : ''}>30 Min</option>
+                                        <option value="15Min" ${currentChartParams.timeframe === '15Min' ? 'selected' : ''}>15 Min</option>
+                                        <option value="5Min" ${currentChartParams.timeframe === '5Min' ? 'selected' : ''}>5 Min</option>
+                                        <option value="1Min" ${currentChartParams.timeframe === '1Min' ? 'selected' : ''}>1 Min</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label style="color: var(--text-secondary); margin-right: 8px;">Days:</label>
+                                    <input type="number" id="chartDays" value="${currentChartParams.days}" min="1" max="504" style="
+                                        background: var(--bg-tertiary);
+                                        color: var(--text-primary);
+                                        border: 1px solid var(--border);
+                                        padding: 5px 10px;
+                                        border-radius: 5px;
+                                        width: 80px;
+                                    ">
+                                </div>
+                                
+                                <div>
+                                    <label style="color: var(--text-secondary); margin-right: 8px;">Window:</label>
+                                    <input type="number" id="chartWindow" value="${currentChartParams.window}" min="3" max="101" step="2" style="
+                                        background: var(--bg-tertiary);
+                                        color: var(--text-primary);
+                                        border: 1px solid var(--border);
+                                        padding: 5px 10px;
+                                        border-radius: 5px;
+                                        width: 80px;
+                                    ">
+                                </div>
+                                
+                                <button onclick="regenerateChart()" style="
+                                    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+                                    color: white;
+                                    border: none;
+                                    border-radius: 8px;
+                                    padding: 8px 20px;
+                                    font-weight: 600;
+                                    cursor: pointer;
+                                    transition: all 0.3s;
+                                ">Regenerate Chart</button>
+                            </div>
+                            
+                            <!-- Chart Display -->
+                            <div class="chart-container" style="text-align: center; padding: 10px;">
+                                <img src="${data.chart_data}" alt="${symbol} chart" style="
+                                    width: 100%;
+                                    height: auto;
+                                    max-height: calc(70vh - 20px);
+                                    object-fit: contain;
+                                    border-radius: 10px;
+                                    display: block;
+                                    margin: 0 auto;
+                                    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+                                ">
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Show error
+                    modalBody.innerHTML = `
+                        <div class="chart-container" style="text-align: center; padding: 40px;">
+                            <div style="padding: 20px; background: var(--danger-bg); border: 1px solid var(--danger); border-radius: 8px;">
+                                <p style="color: var(--danger); font-weight: 600;">
+                                    ❌ Failed to generate chart
+                                </p>
+                                <p style="margin-top: 10px; color: var(--text-muted);">
+                                    ${data.error || 'Unknown error occurred'}
+                                </p>
+                            </div>
+                            <button onclick="generateChart('${symbol}')" style="
+                                margin-top: 20px;
+                                background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+                                color: white;
+                                border: none;
+                                border-radius: 10px;
+                                padding: 12px 30px;
+                                font-size: 1rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                            ">Retry</button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                // Network or server error
+                modalBody.innerHTML = `
+                    <div class="chart-container" style="text-align: center; padding: 40px;">
+                        <div style="padding: 20px; background: var(--danger-bg); border: 1px solid var(--danger); border-radius: 8px;">
+                            <p style="color: var(--danger); font-weight: 600;">
+                                ❌ Server Connection Error
+                            </p>
+                            <p style="margin-top: 10px; color: var(--text-muted);">
+                                ${error.message}
+                            </p>
+                            <p style="margin-top: 10px; font-size: 0.9rem; color: var(--text-muted);">
+                                Make sure the dashboard server is running on ${API_BASE}
+                            </p>
+                        </div>
+                        <button onclick="generateChart('${symbol}')" style="
+                            margin-top: 20px;
+                            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+                            color: white;
+                            border: none;
+                            border-radius: 10px;
+                            padding: 12px 30px;
+                            font-size: 1rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                        ">Retry</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Regenerate chart with new parameters
+        function regenerateChart() {
+            const timeframe = document.getElementById('chartTimeframe').value;
+            const days = parseInt(document.getElementById('chartDays').value);
+            const window = parseInt(document.getElementById('chartWindow').value);
+            
+            // Validate window is odd
+            if (window % 2 === 0) {
+                alert('Window must be an odd number!');
+                document.getElementById('chartWindow').value = window + 1;
+                return;
+            }
+            
+            // Regenerate with new parameters
+            generateChart(currentChartParams.symbol, timeframe, days, window);
+        }
+    </script>
+</body>
+</html>

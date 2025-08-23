@@ -1,0 +1,1372 @@
+{
+  "analysis_timestamp": "2025-08-23 08:57:00 EDT",
+  "analysis_type": "comprehensive_momentum_analysis",
+  "total_stocks_analyzed": 52,
+  "market_status": "PRE-MARKET (Markets closed - weekend/holiday)",
+  "analysis_summary": {
+    "high_momentum_stocks": ["NEON", "RKLB", "ASTS", "CLS", "DAVE", "KTOS", "PLTR", "WLDN", "VST"],
+    "negative_momentum_stocks": ["TATT", "SFM", "DB"],
+    "volatility_leaders": ["CVNA", "MSTR", "NVDA", "PLTR", "CRDO", "WGS"],
+    "volume_leaders": ["NVDA", "PLTR", "HOOD", "TQQQ", "UVXY"]
+  },
+  "stocks": [
+    {
+      "symbol": "AGX",
+      "company_name": "AGX Company",
+      "current_price": 222.16,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 227.74,
+      "session_low": 218.31,
+      "volume": 259012,
+      "spread_percent": 4.34,
+      "technical_analysis": {
+        "support_levels": [218.31],
+        "resistance_levels": [227.74],
+        "trend": "Consolidating",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "LOW",
+        "reason": "Consolidating with wide spread"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "APH",
+      "company_name": "Amphenol Corporation",
+      "current_price": 109.36,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 111.17,
+      "session_low": 108.43,
+      "volume": 7552684,
+      "spread_percent": 3.11,
+      "technical_analysis": {
+        "support_levels": [108.43],
+        "resistance_levels": [111.17],
+        "trend": "Consolidating",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "LOW",
+        "reason": "Large volume but no directional movement"
+      },
+      "risk_assessment": "LOW",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "APP",
+      "company_name": "AppLovin Corporation",
+      "current_price": 443.75,
+      "daily_change_percent": 0.47,
+      "daily_change_amount": 2.07,
+      "session_high": 446.92,
+      "session_low": 412.33,
+      "volume": 6208234,
+      "spread_percent": 0.21,
+      "technical_analysis": {
+        "support_levels": [412.33],
+        "resistance_levels": [446.92],
+        "trend": "Slight Uptrend",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "MEDIUM",
+        "reason": "High volume with positive momentum and tight spread"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "ARKF",
+      "company_name": "ARK Fintech Innovation ETF",
+      "current_price": 54.41,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 54.78,
+      "session_low": 52.20,
+      "volume": 1064204,
+      "spread_percent": 0.92,
+      "technical_analysis": {
+        "support_levels": [52.20],
+        "resistance_levels": [54.78],
+        "trend": "Consolidating",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "ETF showing consolidation pattern"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "ETF",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "ARKW",
+      "company_name": "ARK Next Generation Internet ETF",
+      "current_price": 158.31,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 159.46,
+      "session_low": 152.09,
+      "volume": 375715,
+      "spread_percent": 5.87,
+      "technical_analysis": {
+        "support_levels": [152.09],
+        "resistance_levels": [159.46],
+        "trend": "Consolidating",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "LOW",
+        "reason": "Wide spread indicates poor liquidity"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "ETF",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "ASM",
+      "company_name": "Avino Silver & Gold Mines Ltd",
+      "current_price": 4.04,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 4.11,
+      "session_low": 3.82,
+      "volume": 5331695,
+      "spread_percent": 0.25,
+      "technical_analysis": {
+        "support_levels": [3.82],
+        "resistance_levels": [4.11],
+        "trend": "Consolidating",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "High volume penny stock with tight spread"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "ASTS",
+      "company_name": "AST SpaceMobile, Inc.",
+      "current_price": 47.89,
+      "daily_change_percent": 1.74,
+      "daily_change_amount": 0.82,
+      "session_high": 47.47,
+      "session_low": 44.19,
+      "volume": 6555688,
+      "spread_percent": 0.29,
+      "technical_analysis": {
+        "support_levels": [44.19, 40.69],
+        "resistance_levels": [47.47, 57.09],
+        "trend": "Positive Momentum",
+        "volatility": "High",
+        "peak_trough_signal": "17.55% below recent peak at $57.09"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "Strong positive momentum with high volume and recovering from support"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "AWI",
+      "company_name": "Armstrong World Industries, Inc.",
+      "current_price": 197.24,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 198.54,
+      "session_low": 193.96,
+      "volume": 299570,
+      "spread_percent": 39.87,
+      "technical_analysis": {
+        "support_levels": [193.96],
+        "resistance_levels": [198.54],
+        "trend": "Consolidating",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "AVOID",
+        "confidence": "HIGH",
+        "reason": "Extremely wide spread indicates illiquid market"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "BK",
+      "company_name": "The Bank of New York Mellon Corporation",
+      "current_price": 102.54,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 103.12,
+      "session_low": 101.91,
+      "volume": 3471637,
+      "spread_percent": 1.65,
+      "technical_analysis": {
+        "support_levels": [101.91],
+        "resistance_levels": [103.12],
+        "trend": "Consolidating",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Stable banking stock with good volume"
+      },
+      "risk_assessment": "LOW",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "CLS",
+      "company_name": "Celestica Inc.",
+      "current_price": 191.00,
+      "daily_change_percent": 1.10,
+      "daily_change_amount": 2.08,
+      "session_high": 190.33,
+      "session_low": 179.01,
+      "volume": 2865756,
+      "spread_percent": 1.91,
+      "technical_analysis": {
+        "support_levels": [179.01],
+        "resistance_levels": [190.33],
+        "trend": "Positive Momentum",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "Strong positive momentum with good volume"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "COOP",
+      "company_name": "Mr. Cooper Group Inc.",
+      "current_price": 199.63,
+      "daily_change_percent": 0.33,
+      "daily_change_amount": 0.65,
+      "session_high": 202.24,
+      "session_low": 182.45,
+      "volume": 1040222,
+      "spread_percent": 4.00,
+      "technical_analysis": {
+        "support_levels": [182.45],
+        "resistance_levels": [202.24],
+        "trend": "Slight Uptrend",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Modest positive momentum but wide spread"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "CRDO",
+      "company_name": "Credo Technology Group Holding Ltd",
+      "current_price": 114.30,
+      "daily_change_percent": 0.23,
+      "daily_change_amount": 0.26,
+      "session_high": 116.35,
+      "session_low": 105.86,
+      "volume": 4815232,
+      "spread_percent": 0.26,
+      "technical_analysis": {
+        "support_levels": [105.86],
+        "resistance_levels": [116.35],
+        "trend": "Slight Uptrend",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "High volume with tight spread and positive momentum"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "CRS",
+      "company_name": "Carpenter Technology Corporation",
+      "current_price": 243.89,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 246.82,
+      "session_low": 240.51,
+      "volume": 1015930,
+      "spread_percent": 29.27,
+      "technical_analysis": {
+        "support_levels": [240.51],
+        "resistance_levels": [246.82],
+        "trend": "Consolidating",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "AVOID",
+        "confidence": "HIGH",
+        "reason": "Extremely wide spread indicates poor liquidity"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "CVNA",
+      "company_name": "Carvana Co.",
+      "current_price": 357.84,
+      "daily_change_percent": 0.01,
+      "daily_change_amount": 0.03,
+      "session_high": 362.86,
+      "session_low": 336.62,
+      "volume": 3476171,
+      "spread_percent": 0.69,
+      "technical_analysis": {
+        "support_levels": [336.62],
+        "resistance_levels": [362.86],
+        "trend": "Consolidating",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "High volatility with good volume but no clear direction"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "DAVE",
+      "company_name": "Dave Inc.",
+      "current_price": 200.00,
+      "daily_change_percent": 0.50,
+      "daily_change_amount": 1.00,
+      "session_high": 200.94,
+      "session_low": 184.69,
+      "volume": 316926,
+      "spread_percent": 3.35,
+      "technical_analysis": {
+        "support_levels": [184.69],
+        "resistance_levels": [200.94],
+        "trend": "Positive Momentum",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "MEDIUM",
+        "reason": "Positive momentum with good range, but moderate volume"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "DB",
+      "company_name": "Deutsche Bank AG",
+      "current_price": 37.05,
+      "daily_change_percent": -0.27,
+      "daily_change_amount": -0.10,
+      "session_high": 37.36,
+      "session_low": 36.66,
+      "volume": 2415909,
+      "spread_percent": 0.38,
+      "technical_analysis": {
+        "support_levels": [36.66],
+        "resistance_levels": [37.36],
+        "trend": "Slight Downtrend",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "SELL",
+        "confidence": "MEDIUM",
+        "reason": "Negative momentum with good volume"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEGATIVE"
+    },
+    {
+      "symbol": "EAT",
+      "company_name": "Brinker International, Inc.",
+      "current_price": 150.33,
+      "daily_change_percent": -0.04,
+      "daily_change_amount": -0.07,
+      "session_high": 155.97,
+      "session_low": 149.82,
+      "volume": 1156529,
+      "spread_percent": 0.52,
+      "technical_analysis": {
+        "support_levels": [149.82],
+        "resistance_levels": [155.97],
+        "trend": "Consolidating",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Tight spread with good volume but no clear direction"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "HOOD",
+      "company_name": "Robinhood Markets, Inc.",
+      "current_price": 109.46,
+      "daily_change_percent": 0.13,
+      "daily_change_amount": 0.14,
+      "session_high": 111.88,
+      "session_low": 103.80,
+      "volume": 39922159,
+      "spread_percent": 0.05,
+      "technical_analysis": {
+        "support_levels": [103.80, 101.93],
+        "resistance_levels": [111.88, 114.09],
+        "trend": "Slight Uptrend",
+        "volatility": "High",
+        "peak_trough_signal": "4.18% below recent peak at $114.09"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "Extremely high volume with tight spread and positive momentum"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "HWM",
+      "company_name": "Howmet Aerospace Inc.",
+      "current_price": 171.00,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 175.07,
+      "session_low": 170.24,
+      "volume": 2996380,
+      "spread_percent": 0.43,
+      "technical_analysis": {
+        "support_levels": [170.24],
+        "resistance_levels": [175.07],
+        "trend": "Consolidating",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Good volume with tight spread but no momentum"
+      },
+      "risk_assessment": "LOW",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "IDCC",
+      "company_name": "InterDigital, Inc.",
+      "current_price": 266.27,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 268.25,
+      "session_low": 257.00,
+      "volume": 245007,
+      "spread_percent": 6.91,
+      "technical_analysis": {
+        "support_levels": [257.00],
+        "resistance_levels": [268.25],
+        "trend": "Consolidating",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "LOW",
+        "reason": "Wide spread indicates poor liquidity"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "IESC",
+      "company_name": "IES Holdings, Inc.",
+      "current_price": 341.11,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 346.98,
+      "session_low": 323.64,
+      "volume": 119273,
+      "spread_percent": 19.19,
+      "technical_analysis": {
+        "support_levels": [323.64],
+        "resistance_levels": [346.98],
+        "trend": "Consolidating",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "AVOID",
+        "confidence": "HIGH",
+        "reason": "Extremely wide spread with low volume"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "KGC",
+      "company_name": "Kinross Gold Corporation",
+      "current_price": 19.61,
+      "daily_change_percent": 0.05,
+      "daily_change_amount": 0.01,
+      "session_high": 19.80,
+      "session_low": 19.19,
+      "volume": 12862625,
+      "spread_percent": 0.05,
+      "technical_analysis": {
+        "support_levels": [19.19],
+        "resistance_levels": [19.80],
+        "trend": "Slight Uptrend",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "High volume with tight spread but minimal movement"
+      },
+      "risk_assessment": "LOW",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "KINS",
+      "company_name": "Kingstone Companies, Inc.",
+      "current_price": 13.86,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 14.29,
+      "session_low": 13.70,
+      "volume": 183257,
+      "spread_percent": 1.79,
+      "technical_analysis": {
+        "support_levels": [13.70],
+        "resistance_levels": [14.29],
+        "trend": "Consolidating",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "LOW",
+        "reason": "Low volume with moderate spread"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "KTOS",
+      "company_name": "Kratos Defense & Security Solutions, Inc.",
+      "current_price": 67.14,
+      "daily_change_percent": 0.64,
+      "daily_change_amount": 0.43,
+      "session_high": 67.04,
+      "session_low": 64.04,
+      "volume": 2985487,
+      "spread_percent": 0.12,
+      "technical_analysis": {
+        "support_levels": [64.04],
+        "resistance_levels": [67.04],
+        "trend": "Positive Momentum",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "Positive momentum with high volume and tight spread"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "MSTR",
+      "company_name": "Strategy Inc",
+      "current_price": 358.50,
+      "daily_change_percent": 0.10,
+      "daily_change_amount": 0.37,
+      "session_high": 359.53,
+      "session_low": 332.61,
+      "volume": 17386941,
+      "spread_percent": 0.30,
+      "technical_analysis": {
+        "support_levels": [332.61, 389.24],
+        "resistance_levels": [359.53, 395.13],
+        "trend": "Slight Uptrend",
+        "volatility": "High",
+        "peak_trough_signal": "9.36% below recent peak at $395.13"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "High volume Bitcoin proxy but below recent peak"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "MIXED"
+    },
+    {
+      "symbol": "NEON",
+      "company_name": "Neonode Inc.",
+      "current_price": 26.48,
+      "daily_change_percent": 5.92,
+      "daily_change_amount": 1.48,
+      "session_high": 26.01,
+      "session_low": 24.60,
+      "volume": 303943,
+      "spread_percent": 13.33,
+      "technical_analysis": {
+        "support_levels": [24.60, 21.56],
+        "resistance_levels": [26.01, 28.67],
+        "trend": "Strong Upward Movement",
+        "volatility": "High",
+        "peak_trough_signal": "15.96% above recent trough at $21.56"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "Strongest daily gainer with momentum continuation signal"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "MICRO_CAP",
+      "news_sentiment": "VERY_POSITIVE"
+    },
+    {
+      "symbol": "NGD",
+      "company_name": "New Gold Inc.",
+      "current_price": 5.54,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 5.61,
+      "session_low": 5.35,
+      "volume": 12932363,
+      "spread_percent": 0.54,
+      "technical_analysis": {
+        "support_levels": [5.35],
+        "resistance_levels": [5.61],
+        "trend": "Consolidating",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "High volume gold stock with tight spread"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "NRG",
+      "company_name": "NRG Energy, Inc.",
+      "current_price": 145.09,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 148.44,
+      "session_low": 144.38,
+      "volume": 1900448,
+      "spread_percent": 0.62,
+      "technical_analysis": {
+        "support_levels": [144.38],
+        "resistance_levels": [148.44],
+        "trend": "Consolidating",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Utility stock with good volume and tight spread"
+      },
+      "risk_assessment": "LOW",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "NVDA",
+      "company_name": "NVIDIA CORP",
+      "current_price": 178.38,
+      "daily_change_percent": 0.22,
+      "daily_change_amount": 0.39,
+      "session_high": 178.59,
+      "session_low": 171.20,
+      "volume": 172790229,
+      "spread_percent": 0.04,
+      "technical_analysis": {
+        "support_levels": [171.20, 168.00],
+        "resistance_levels": [178.59, 183.16],
+        "trend": "Slight Uptrend",
+        "volatility": "High",
+        "peak_trough_signal": "2.82% below recent peak at $183.16"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "Highest volume stock with excellent spread and near peak"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "MEGA_CAP",
+      "news_sentiment": "MIXED"
+    },
+    {
+      "symbol": "PLTR",
+      "company_name": "Palantir Technologies Inc.",
+      "current_price": 159.68,
+      "daily_change_percent": 0.59,
+      "daily_change_amount": 0.94,
+      "session_high": 163.20,
+      "session_low": 151.77,
+      "volume": 102100975,
+      "spread_percent": 0.08,
+      "technical_analysis": {
+        "support_levels": [151.77, 148.58],
+        "resistance_levels": [163.20, 182.68],
+        "trend": "Positive Momentum",
+        "volatility": "High",
+        "peak_trough_signal": "13.10% below recent peak at $182.68"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "Extremely high volume with tight spread and recovering"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "PRCH",
+      "company_name": "Porch Group, Inc.",
+      "current_price": 16.65,
+      "daily_change_percent": 0.12,
+      "daily_change_amount": 0.02,
+      "session_high": 16.70,
+      "session_low": 15.46,
+      "volume": 1900166,
+      "spread_percent": 0.06,
+      "technical_analysis": {
+        "support_levels": [15.46],
+        "resistance_levels": [16.70],
+        "trend": "Slight Uptrend",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Good volume with tight spread but minimal momentum"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "QBTS",
+      "company_name": "D-Wave Quantum Inc.",
+      "current_price": 15.58,
+      "daily_change_percent": 0.26,
+      "daily_change_amount": 0.04,
+      "session_high": 15.62,
+      "session_low": 14.43,
+      "volume": 31682463,
+      "spread_percent": 0.51,
+      "technical_analysis": {
+        "support_levels": [14.43, 16.38],
+        "resistance_levels": [15.62, 18.51],
+        "trend": "Slight Uptrend",
+        "volatility": "High",
+        "peak_trough_signal": "16.05% below recent peak at $18.51"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Very high volume quantum play but below recent peak"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "MIXED"
+    },
+    {
+      "symbol": "RBLX",
+      "company_name": "Roblox Corporation",
+      "current_price": 117.79,
+      "daily_change_percent": 0.23,
+      "daily_change_amount": 0.27,
+      "session_high": 119.41,
+      "session_low": 114.12,
+      "volume": 7644721,
+      "spread_percent": 0.31,
+      "technical_analysis": {
+        "support_levels": [114.12],
+        "resistance_levels": [119.41],
+        "trend": "Slight Uptrend",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Gaming stock with good volume and tight spread"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "RCAT",
+      "company_name": "Red Cat Holdings, Inc.",
+      "current_price": 9.89,
+      "daily_change_percent": 0.71,
+      "daily_change_amount": 0.07,
+      "session_high": 10.06,
+      "session_low": 9.51,
+      "volume": 6018694,
+      "spread_percent": 0.10,
+      "technical_analysis": {
+        "support_levels": [9.51],
+        "resistance_levels": [10.06],
+        "trend": "Positive Momentum",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "High volume drone stock with tight spread and momentum"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "RCL",
+      "company_name": "Royal Caribbean Cruises Ltd.",
+      "current_price": 344.67,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 345.14,
+      "session_low": 325.70,
+      "volume": 2268612,
+      "spread_percent": 0.35,
+      "technical_analysis": {
+        "support_levels": [325.70],
+        "resistance_levels": [345.14],
+        "trend": "Consolidating",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Cruise line with good volume and tight spread"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "RKLB",
+      "company_name": "Rocket Lab USA, Inc.",
+      "current_price": 45.15,
+      "daily_change_percent": 1.74,
+      "daily_change_amount": 0.77,
+      "session_high": 44.68,
+      "session_low": 40.42,
+      "volume": 18818250,
+      "spread_percent": 0.07,
+      "technical_analysis": {
+        "support_levels": [40.42, 40.69],
+        "resistance_levels": [44.68, 47.19],
+        "trend": "Positive Momentum",
+        "volatility": "High",
+        "peak_trough_signal": "9.07% above recent trough at $40.69"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "Strong momentum with extremely high volume and tight spread"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "VERY_POSITIVE"
+    },
+    {
+      "symbol": "RSI",
+      "company_name": "Rush Street Interactive, Inc.",
+      "current_price": 21.00,
+      "daily_change_percent": 0.14,
+      "daily_change_amount": 0.03,
+      "session_high": 21.09,
+      "session_low": 20.08,
+      "volume": 2281696,
+      "spread_percent": 0.48,
+      "technical_analysis": {
+        "support_levels": [20.08],
+        "resistance_levels": [21.09],
+        "trend": "Slight Uptrend",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Gaming stock with good volume and tight spread"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "SE",
+      "company_name": "Sea Limited",
+      "current_price": 185.60,
+      "daily_change_percent": 0.04,
+      "daily_change_amount": 0.07,
+      "session_high": 185.68,
+      "session_low": 178.89,
+      "volume": 4864562,
+      "spread_percent": 0.58,
+      "technical_analysis": {
+        "support_levels": [178.89],
+        "resistance_levels": [185.68],
+        "trend": "Slight Uptrend",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Southeast Asian tech with good volume"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "SFM",
+      "company_name": "Sprouts Farmers Market, Inc.",
+      "current_price": 145.62,
+      "daily_change_percent": -0.45,
+      "daily_change_amount": -0.66,
+      "session_high": 149.66,
+      "session_low": 145.27,
+      "volume": 1731733,
+      "spread_percent": 0.25,
+      "technical_analysis": {
+        "support_levels": [145.27],
+        "resistance_levels": [149.66],
+        "trend": "Slight Downtrend",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "SELL",
+        "confidence": "MEDIUM",
+        "reason": "Negative momentum with good volume"
+      },
+      "risk_assessment": "LOW",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "NEGATIVE"
+    },
+    {
+      "symbol": "SPBC",
+      "company_name": "Simplify US Equity PLUS Convexity ETF",
+      "current_price": 43.46,
+      "daily_change_percent": 0.01,
+      "daily_change_amount": 0.00,
+      "session_high": 43.61,
+      "session_low": 42.85,
+      "volume": 6102,
+      "spread_percent": 17.51,
+      "technical_analysis": {
+        "support_levels": [42.85],
+        "resistance_levels": [43.61],
+        "trend": "Consolidating",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "AVOID",
+        "confidence": "HIGH",
+        "reason": "Extremely low volume and wide spread"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "ETF",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "SPMO",
+      "company_name": "SPX Technologies, Inc.",
+      "current_price": 116.51,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 116.98,
+      "session_low": 114.73,
+      "volume": 2065045,
+      "spread_percent": 0.16,
+      "technical_analysis": {
+        "support_levels": [114.73],
+        "resistance_levels": [116.98],
+        "trend": "Consolidating",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Industrial stock with good volume and tight spread"
+      },
+      "risk_assessment": "LOW",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "SPOT",
+      "company_name": "Spotify Technology S.A.",
+      "current_price": 692.00,
+      "daily_change_percent": -0.14,
+      "daily_change_amount": -0.99,
+      "session_high": 701.09,
+      "session_low": 685.09,
+      "volume": 937183,
+      "spread_percent": 1.04,
+      "technical_analysis": {
+        "support_levels": [685.09],
+        "resistance_levels": [701.09],
+        "trend": "Slight Downtrend",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Music streaming leader with moderate volume"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "TATT",
+      "company_name": "TAT Technologies Ltd.",
+      "current_price": 36.00,
+      "daily_change_percent": -2.65,
+      "daily_change_amount": -0.98,
+      "session_high": 37.46,
+      "session_low": 35.01,
+      "volume": 146277,
+      "spread_percent": 8.55,
+      "technical_analysis": {
+        "support_levels": [35.01],
+        "resistance_levels": [37.46],
+        "trend": "Negative Pressure",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "SELL",
+        "confidence": "HIGH",
+        "reason": "Strong negative momentum with wide spread"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "NEGATIVE"
+    },
+    {
+      "symbol": "TPB",
+      "company_name": "Turning Point Brands, Inc.",
+      "current_price": 99.10,
+      "daily_change_percent": 0.19,
+      "daily_change_amount": 0.19,
+      "session_high": 100.35,
+      "session_low": 98.11,
+      "volume": 372302,
+      "spread_percent": 1.05,
+      "technical_analysis": {
+        "support_levels": [98.11],
+        "resistance_levels": [100.35],
+        "trend": "Slight Uptrend",
+        "volatility": "Low"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Modest positive momentum with reasonable volume"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "TPC",
+      "company_name": "Tutor Perini Corporation",
+      "current_price": 58.43,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 59.30,
+      "session_low": 56.83,
+      "volume": 611980,
+      "spread_percent": 7.53,
+      "technical_analysis": {
+        "support_levels": [56.83],
+        "resistance_levels": [59.30],
+        "trend": "Consolidating",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "AVOID",
+        "confidence": "HIGH",
+        "reason": "Wide spread indicates poor liquidity"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "TQQQ",
+      "company_name": "ProShares UltraPro QQQ",
+      "current_price": 90.76,
+      "daily_change_percent": 0.42,
+      "daily_change_amount": 0.38,
+      "session_high": 91.32,
+      "session_low": 86.37,
+      "volume": 66363368,
+      "spread_percent": 0.02,
+      "technical_analysis": {
+        "support_levels": [86.37],
+        "resistance_levels": [91.32],
+        "trend": "Positive Momentum",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "Leveraged NASDAQ ETF with extreme volume and tight spread"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "ETF",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "UAMY",
+      "company_name": "United States Antimony Corporation",
+      "current_price": 4.72,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 4.83,
+      "session_low": 4.43,
+      "volume": 9232741,
+      "spread_percent": 0.21,
+      "technical_analysis": {
+        "support_levels": [4.43],
+        "resistance_levels": [4.83],
+        "trend": "Consolidating",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "High volume commodity play with tight spread"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "MICRO_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "UVXY",
+      "company_name": "ProShares Ultra VIX Short-Term Futures ETF",
+      "current_price": 11.91,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 13.55,
+      "session_low": 11.91,
+      "volume": 36885470,
+      "spread_percent": 0.08,
+      "technical_analysis": {
+        "support_levels": [11.91],
+        "resistance_levels": [13.55],
+        "trend": "Consolidating",
+        "volatility": "Extreme"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "LOW",
+        "reason": "Volatility ETF with extreme volume but high decay risk"
+      },
+      "risk_assessment": "EXTREME",
+      "market_cap_category": "ETF",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "VRNA",
+      "company_name": "Verona Pharma plc",
+      "current_price": 105.56,
+      "daily_change_percent": 0.00,
+      "daily_change_amount": 0.00,
+      "session_high": 105.67,
+      "session_low": 105.40,
+      "volume": 974707,
+      "spread_percent": 0.57,
+      "technical_analysis": {
+        "support_levels": [105.40],
+        "resistance_levels": [105.67],
+        "trend": "Consolidating",
+        "volatility": "Extremely Low"
+      },
+      "trading_signals": {
+        "recommendation": "HOLD",
+        "confidence": "MEDIUM",
+        "reason": "Biotech with good volume but minimal movement"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "MID_CAP",
+      "news_sentiment": "NEUTRAL"
+    },
+    {
+      "symbol": "VST",
+      "company_name": "Vistra Corp.",
+      "current_price": 191.00,
+      "daily_change_percent": 0.28,
+      "daily_change_amount": 0.54,
+      "session_high": 195.50,
+      "session_low": 187.14,
+      "volume": 3447281,
+      "spread_percent": 0.31,
+      "technical_analysis": {
+        "support_levels": [187.14],
+        "resistance_levels": [195.50],
+        "trend": "Positive Momentum",
+        "volatility": "Medium"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "HIGH",
+        "reason": "Positive momentum with high volume and tight spread"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "LARGE_CAP",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "WGS",
+      "company_name": "GeneDx Holdings Corp.",
+      "current_price": 129.00,
+      "daily_change_percent": 0.26,
+      "daily_change_amount": 0.34,
+      "session_high": 130.33,
+      "session_low": 120.10,
+      "volume": 1676526,
+      "spread_percent": 2.28,
+      "technical_analysis": {
+        "support_levels": [120.10],
+        "resistance_levels": [130.33],
+        "trend": "Positive Momentum",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "MEDIUM",
+        "reason": "High volatility genomics play with momentum"
+      },
+      "risk_assessment": "HIGH",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "POSITIVE"
+    },
+    {
+      "symbol": "WLDN",
+      "company_name": "Willdan Group, Inc.",
+      "current_price": 111.77,
+      "daily_change_percent": 0.59,
+      "daily_change_amount": 0.66,
+      "session_high": 111.24,
+      "session_low": 104.04,
+      "volume": 595018,
+      "spread_percent": 0.75,
+      "technical_analysis": {
+        "support_levels": [104.04],
+        "resistance_levels": [111.24],
+        "trend": "Positive Momentum",
+        "volatility": "High"
+      },
+      "trading_signals": {
+        "recommendation": "BUY",
+        "confidence": "MEDIUM",
+        "reason": "Strong positive momentum with good range"
+      },
+      "risk_assessment": "MEDIUM",
+      "market_cap_category": "SMALL_CAP",
+      "news_sentiment": "POSITIVE"
+    }
+  ],
+  "methodology": {
+    "data_sources": [
+      "Real-time market snapshots via Alpaca API",
+      "15-day 5-minute intraday bars",
+      "Technical peak/trough analysis with Hanning filtering",
+      "SEC EDGAR filings",
+      "Yahoo Finance RSS news feeds"
+    ],
+    "analysis_components": [
+      "Current price and volume analysis",
+      "Support and resistance level identification",
+      "Momentum and volatility assessment",
+      "News sentiment analysis",
+      "Risk categorization",
+      "Trading signal generation"
+    ],
+    "limitations": [
+      "Historical bar data unavailable for 504-day analysis",
+      "Weekend market analysis (markets closed)",
+      "Some stocks have wide spreads indicating poor liquidity"
+    ]
+  },
+  "key_findings": {
+    "top_momentum_stocks": [
+      {"symbol": "NEON", "change": "+5.92%", "reason": "Strongest daily gainer with momentum"},
+      {"symbol": "RKLB", "change": "+1.74%", "reason": "High volume space stock with tight spread"},
+      {"symbol": "ASTS", "change": "+1.74%", "reason": "Space communication with recovery momentum"},
+      {"symbol": "CLS", "change": "+1.10%", "reason": "Manufacturing with strong volume"},
+      {"symbol": "KTOS", "change": "+0.64%", "reason": "Defense contractor with momentum"}
+    ],
+    "highest_volume_stocks": [
+      {"symbol": "NVDA", "volume": 172790229, "note": "AI leader with excellent spread"},
+      {"symbol": "PLTR", "volume": 102100975, "note": "Data analytics recovering from selloff"},
+      {"symbol": "TQQQ", "volume": 66363368, "note": "Leveraged NASDAQ ETF"},
+      {"symbol": "HOOD", "volume": 39922159, "note": "Fintech with tight spread"},
+      {"symbol": "UVXY", "volume": 36885470, "note": "Volatility ETF"}
+    ],
+    "stocks_to_avoid": [
+      {"symbol": "AWI", "reason": "39.87% spread - illiquid"},
+      {"symbol": "CRS", "reason": "29.27% spread - illiquid"},
+      {"symbol": "IESC", "reason": "19.19% spread with low volume"},
+      {"symbol": "SPBC", "reason": "17.51% spread with minimal volume"}
+    ]
+  },
+  "trading_recommendations": {
+    "immediate_buys": ["NEON", "RKLB", "NVDA", "PLTR", "TQQQ", "VST", "KTOS"],
+    "holds": ["ARKF", "ARKW", "HOOD", "MSTR", "APP", "CRDO"],
+    "sells": ["TATT", "DB", "SFM"],
+    "avoid": ["AWI", "CRS", "IESC", "SPBC", "TPC"]
+  }
+}

@@ -2,150 +2,280 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Repository Overview
+## Project Overview
 
-Professional Alpaca trading system with MCP (Model Context Protocol) integration, providing 90+ trading tools for algorithmic trading, real-time market analysis, and automated position management.
+Alpaca MCP Server Enhanced - A professional trading system implementing the Model Context Protocol (MCP) for integration with Alpaca's trading APIs. The system focuses on aggressive day trading strategies with real-time market data streaming, technical analysis, and automated monitoring capabilities.
 
-## Critical Trading Rules
+## Key Development Commands
 
-**NEVER VIOLATE:**
-1. **NEVER use `stream_optimized_order_placement()` for BUYING** - It buys at market, not at support
-2. **ALWAYS buy at TROUGH signals only** - Use `get_stock_peak_trough_analysis` first
-3. **MONITOR IMMEDIATELY after orders** - Start checking within 1-2 seconds
-4. **CAPTURE FIRST PROFIT SPIKE** - Profits appear 0-10 seconds after entry
-5. **USE MANUAL LIMIT ORDERS** for entries at exact signal prices
-
-## Python Execution (IMPORTANT)
-
-**This project uses `uv` for dependency management. ALWAYS use one of these methods to run Python:**
-
-1. **Preferred:** `uv run python script.py`
-2. **Alternative:** `./run.sh script.py` 
-3. **Makefile:** `make run-script SCRIPT=script.py`
-
-**NEVER use bare `python` commands** - they will fail with missing dependencies!
-
-## Essential Commands
-
-### Development & Testing
+### Running the Server
 ```bash
-# Install/sync dependencies
-uv sync
-
-# Run MCP server
+# Start the MCP server (primary entry point)
 uv run python -m alpaca_mcp_server.main
 
-# Run any Python script (ALWAYS use uv run)
-uv run python path/to/script.py
+# Start with monitoring service
+./scripts/start_monitoring.sh
 
-# Code quality pipeline (run in order)
+# Start FastAPI monitoring dashboard (port 8001)
+uv run python -m alpaca_mcp_server.monitoring.fastapi_service
+```
+
+### Code Quality & Testing
+```bash
+# Run full test suite with coverage (80% minimum required)
+uv run pytest --cov=alpaca_mcp_server --cov-report=html
+
+# Quick focused tests
+uv run python alpaca_mcp_server/tests/run_focused_tests.py
+
+# Run specific test categories
+uv run pytest -m unit              # Unit tests only
+uv run pytest -m integration       # Integration tests only
+uv run pytest -m "not slow"        # Skip slow tests
+
+# Linting and type checking
+uv run ruff check alpaca_mcp_server/
+uv run mypy alpaca_mcp_server/ --show-error-codes
+
+# Auto-format code (100 char line length)
 uv run black alpaca_mcp_server/
 uv run isort alpaca_mcp_server/
 uv run ruff check --fix alpaca_mcp_server/
-uv run mypy alpaca_mcp_server/
-
-# Quick tests (30 seconds)
-uv run python alpaca_mcp_server/tests/run_focused_tests.py
-
-# Full test suite
-uv run pytest --cov=alpaca_mcp_server --cov-report=html
 ```
 
-### Service Management
+### Makefile Shortcuts
 ```bash
-# Start services
-./scripts/start_mcp_server.sh           # Main MCP interface
-./scripts/start_monitoring_service.sh   # FastAPI monitoring (port 8000)
-
-# Check status
-curl http://localhost:8000/health
+make server         # Start MCP server
+make test           # Run full test suite
+make test-quick     # Run focused tests
+make lint           # Run linting checks
+make format         # Auto-format all code
+make clean          # Clean cache files
+make install        # Sync dependencies with uv
+make plot ARGS="-s AAPL"  # Generate plots
+make scanner        # Run day trading scanner
+make news SYMBOLS='AAPL MSFT'  # Fetch stock news
 ```
 
-## Architecture & Key Components
+## Architecture Overview
 
-### Dual-Service System
-1. **MCP Server** (`server.py`) - Claude interface with 90+ tools via FastMCP
-2. **FastAPI Service** (`monitoring/fastapi_service.py`) - HTTP/WebSocket monitoring on port 8000
+### Server Initialization Sequence
 
-### Critical Files & Patterns
+1. **Entry Point** (`main.py`) → Handles imports and error handling
+2. **Server Setup** (`server.py`) → Creates FastMCP instance with compatibility patches
+3. **Component Registration** (`server_components/`):
+   - `server_init.py` → Initializes API clients and global state
+   - `tool_registrations.py` → Registers all trading tools
+   - `resource_registrations.py` → Registers read-only resources
+   - `prompt_registrations.py` → Registers workflow prompts
 
-**Core Trading Pipeline:**
-- `utils/alpaca_stream.py:150-500` - WebSocket streaming with intelligent buffering
-- `tools/peak_trough_analysis_tool.py:200-600` - Zero-phase Hanning filter for support/resistance
-- `tools/day_trading_scanner.py:100-400` - High-frequency scanner (1000+ trades/min)
-- `tools/order_tools.py` - Order placement with loss prevention
+### Core Components
 
-**Configuration:**
-- `config/global_config.json` - Trading parameters (DO NOT modify without permission)
-- Default thresholds: trades/min=1000, min_change=10%, hanning_window=11
+1. **MCP Server (`alpaca_mcp_server/server.py`)**
+   - FastMCP-based server implementing Model Context Protocol
+   - Registers tools, resources, and prompts for AI integration
+   - Entry point manages compatibility patches and initialization
 
-**Tool Registration:**
-- `server_components/tool_registrations.py` - Modular tool registration system
-- Each tool category registered separately for maintainability
+2. **Global Configuration System (`config/global_config.json`)**
+   - Centralized trading parameters and thresholds
+   - Key settings:
+     - `trades_per_minute_threshold`: 1000 (for explosive momentum)
+     - `min_percent_change_threshold`: 10.0% (aggressive filtering)
+     - `hanning_window_samples`: 11 (technical analysis smoothing)
+     - `never_sell_for_loss`: true (core trading principle)
 
-### Trading Workflow Pattern
+3. **Tool Categories (`alpaca_mcp_server/tools/`)**
+   - **Market Data**: Real-time quotes, bars, snapshots, streaming
+   - **Trading**: Order placement, position management, extended hours
+   - **Technical Analysis**: Peak/trough detection with Hanning filtering
+   - **Scanning**: Day trading opportunities, explosive momentum stocks
+   - **Monitoring**: FastAPI service, hybrid monitoring, signal detection
 
-```python
-# Standard trading sequence
-1. analysis = get_stock_peak_trough_analysis(symbol)  # Technical signals
-2. if analysis["latest_trough"]:                      # Buy at support only
-3.     place_stock_order(limit_price=trough_price)   # Manual limit order
-4.     while position_open:                          # Monitor immediately
-5.         get_stock_stream_data(recent_seconds=2)   # Real-time data
-6.         if profit > 0: sell()                      # Capture spikes
+4. **Streaming Infrastructure (`alpaca_mcp_server/utils/alpaca_stream.py`)**
+   - Global WebSocket connection management
+   - Circular buffer storage (5000 items per symbol)
+   - Real-time data aggregation for trades, quotes, bars
+
+5. **C-Optimized Analysis (`c_progs/`)**
+   - High-performance peak/trough detection (`filter_bars.c`)
+   - Stock analyzer for rapid market scanning (`stock_analyzer_json.c`)
+   - 10x+ performance improvement over Python implementations
+
+### Monitoring System
+
+The monitoring infrastructure provides real-time visibility:
+- **FastAPI Service** (port 8001): REST API and WebSocket endpoints
+- **Hybrid Monitoring**: Combines streaming data with position tracking
+- **Signal Detection**: Automated alerts for trading opportunities
+- **Desktop Notifications**: System-level alerts for critical events
+
+### Trading Workflow Architecture
+
+1. **Prompts** (`alpaca_mcp_server/prompts/`): Pre-configured workflows for complex trading operations
+   - `startup_prompt.py` - Comprehensive startup checks (/startup command)
+   - `day_trading_workflow.py` - Day trading strategy execution
+   - `market_analysis_prompt.py` - Market condition analysis
+   - `stream_centric_trading_prompt.py` - Real-time streaming workflows
+2. **Resources** (`alpaca_mcp_server/resources/`): Read-only data endpoints for system state
+3. **Tools** (`alpaca_mcp_server/tools/`): Executable functions for trading actions
+
+## Critical Trading Logic
+
+### Position Management
+- Maximum concurrent positions: 5
+- Default position size: $50,000
+- Never sell for loss principle enforced
+- Automatic profit capture at 3% threshold
+- Family protection profit threshold: 10%
+
+### Market Hours & Sessions
+- Regular hours: 9:30 AM - 4:00 PM ET
+- Extended hours: 4:00 AM - 8:00 PM ET
+- All timestamps in America/New_York timezone
+
+### Order Execution
+- Default order type: limit orders
+- Time in force: day orders
+- Price precision: 4 decimal places
+- Order timeout: 10 seconds
+
+## Testing Strategy
+
+### Test Organization
+- Test files in `alpaca_mcp_server/tests/`
+- Test markers: `unit`, `integration`, `performance`, `slow`
+- Coverage requirement: 80% minimum
+- Timeout: 30 seconds per test (configurable)
+
+### Running Specific Test Types
+```bash
+# Run plotting tests
+uv run python alpaca_mcp_server/tests/run_plotting_tests.py
+
+# Run with verbose output
+uv run python alpaca_mcp_server/tests/run_tests.py --verbose
+
+# Skip performance tests
+uv run python alpaca_mcp_server/tests/run_tests.py --skip-performance
+
+# Run single test file
+uv run pytest alpaca_mcp_server/tests/test_specific.py
+
+# Run with specific timeout
+uv run pytest --timeout=60 alpaca_mcp_server/tests/
 ```
 
-## External Dependencies
+## Environment Configuration
 
-**C/Binary Tools (compile separately):**
-- `stock_analyzer_json.c` - Compile: `gcc -o stock_analyzer_json stock_analyzer_json.c -lcurl -ljson-c -lm`
-- `lsq_fft.gsl` - Required for `latest.sh` FFT analysis
-- `daily_bars.sqlite.latest_bars_class.py` - SQLite bar data processor
+Required environment variables (set in `.env`):
+- `ALPACA_API_KEY`: Your Alpaca API key
+- `ALPACA_SECRET_KEY`: Your Alpaca secret key
+- `PAPER`: Set to "true" for paper trading
 
-## MCP Tool Categories
+## Important Implementation Notes
 
-- **Account Management** - get_account_info, get_positions, close_position
-- **Market Data** - get_stock_quote, get_stock_bars, get_stock_snapshots
-- **Technical Analysis** - get_stock_peak_trough_analysis, generate_advanced_technical_plots
-- **Scanners** - scan_day_trading_opportunities, scan_explosive_momentum
-- **Order Management** - place_stock_order, cancel_order_by_id
-- **Streaming** - start_global_stock_stream, get_stock_stream_data
-- **Options** - get_option_contracts, get_option_snapshot
-- **Monitoring** - start_fastapi_monitoring_service, get_profit_spike_alerts
+### Stream Management
+- Global stock stream must be started before using stream-aware tools
+- Buffer size: 5000 items per symbol
+- Use `start_global_stock_stream` tool first, then stream-aware operations
 
-## Testing Philosophy
+### Technical Analysis
+- Peak/trough detection uses zero-phase Hanning filtering
+- Window length and lookahead parameters from global config
+- C implementations available for high-performance scenarios
 
-- **NO MOCK TESTING** - Always use real Alpaca API data
-- Integration tests validate actual market connectivity
-- Performance benchmarks for latency-critical paths
+### Error Recovery
+- All tools implement fallback mechanisms
+- Streaming reconnection handled automatically
+- Position checks after every order execution
 
-## Service Behavior Notes
+### MCP Compatibility
+- Claude Code compatibility patches applied automatically
+- Tool discovery mode supported via CLAUDE_CODE_TOOL_DISCOVERY env var
+- All tools registered with proper MCP schemas
 
-- FastAPI service starts with auto-trading DISABLED
-- User must explicitly enable auto-trading
-- All trades logged to `monitoring_data/alerts/`
-- Browser preference: chromium (not firefox)
+## Development Workflow
 
-## Common Slash Commands
+1. Always use `uv run` for Python execution to ensure correct environment
+2. Check global config before modifying trading parameters
+3. Test with paper trading mode before live trading
+4. Monitor logs in `logs/` directory for debugging
+5. Use monitoring dashboard at http://localhost:8001 for real-time status
 
-- `/list_trading_capabilities` - Show all available tools
-- `/account_analysis` - Portfolio health check
-- `/scan` - Quick market scanner
-- `/day_trading_workflow` - Intraday momentum setup
-- `/master_scanning_workflow` - Comprehensive analysis
+## Code Style & Quality
 
-## Important Patterns to Follow
+### Requirements
+- Python 3.12+ required
+- Black formatting (100 char line length)
+- Type hints required for all functions
+- Ruff for linting (see pyproject.toml for rules)
+- MyPy strict mode for type checking
 
-1. **Always check peak/trough before large trades** (>$50K positions)
-2. **Use 4 decimal places for order prices**
-3. **Never use market orders unless explicitly requested**
-4. **IOC/FOK orders only work in regular market hours**
-5. **Monitor positions every 10 seconds when holding**
-6. **Immediate profit-taking at $5K+ or 3%+ gains**
+### Pre-commit Checks
+```bash
+# Run all quality checks before committing
+make format && make lint && make test-quick
+```
 
-## State & Data Locations
+## Dependency Management
 
-- `monitoring_data/` - Persistent state, alerts, position history
-- `config/global_config.json` - Trading parameters
-- Logs written to project root and monitoring_data/alerts/
-- Anything Jim Cramer says is SHIT - do the opposite.  EAT (Brinker) - Jim Cramer: "winner in this environment"
+Using `uv` for fast, reliable Python environment management:
+- Dependencies defined in `pyproject.toml`
+- Dev dependencies in `[dependency-groups.dev]`
+- Always use `uv run` prefix for Python commands
+- Sync dependencies: `uv sync` or `make install`
+
+## Available Scripts
+
+Utility scripts in `scripts/` directory:
+- `start_monitoring.sh` - Launch monitoring service with position tracking
+- `trades_per_minute.sh` - Analyze trade frequency from symbol lists
+- `monitor_signals.sh` - Monitor trading signals in real-time
+- `cleanup.sh` - Clean temporary files and logs
+- `start_mcp_server_debug.sh` - Debug mode server startup
+
+## C Performance Tools
+
+High-performance C implementations in `c_progs/`:
+- `filter_bars` - Zero-phase Hanning filter for peak/trough detection
+- `stock_analyzer_json` - Ultra-fast market activity analysis
+- Accessed via wrapper tools: `analyze_market_activity_fast`, `scan_explosive_stocks_fast`
+- 10x+ performance improvement for scanning operations
+
+## Tool Registration Pattern
+
+All tools follow a consistent registration pattern in `server_components/tool_registrations.py`:
+1. Tools are decorated with `@mcp.tool()` for MCP discovery
+2. Each tool includes comprehensive docstrings for AI understanding
+3. Fallback mechanisms implemented for all external API calls
+4. Tools return formatted strings for human readability
+
+## Debugging & Troubleshooting
+
+### Common Issues
+```bash
+# Check server health
+uv run python -c "from alpaca_mcp_server.tools.debug_tools import health_check; print(health_check())"
+
+# Verify API connectivity
+uv run python -c "from alpaca_mcp_server.config.settings import get_clients; get_clients()"
+
+# Debug MCP tool registration
+CLAUDE_CODE_TOOL_DISCOVERY=1 uv run python -m alpaca_mcp_server.main
+
+# Check logs for errors
+tail -f logs/alpaca_mcp_server.log
+```
+
+### Performance Monitoring
+- Monitor memory usage via `resource_server_health` tool
+- Check API latency with `resource_data_quality` tool
+- Stream buffer stats: `get_stock_stream_buffer_stats` tool
+
+## Critical Files & Locations
+
+- **Global Config**: `config/global_config.json` - Trading parameters
+- **Environment**: `.env` - API credentials (never commit)
+- **Logs**: `logs/` directory - Debug output
+- **State**: `monitoring_data/` - Persistent monitoring state
+- **Symbol Lists**: `data/combined.lis` - Tradable symbols

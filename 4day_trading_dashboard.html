@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4-Day Trading Performance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0a0f;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(255, 0, 128, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.05));
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+            animation: shine 8s linear infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 50%, #ff0080 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .total-profit {
+            font-size: 4.5rem;
+            font-weight: 900;
+            color: #00ff88;
+            text-shadow: 0 0 40px rgba(0, 255, 136, 0.5), 0 0 80px rgba(0, 255, 136, 0.3);
+            margin: 20px 0;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 40px rgba(0, 255, 136, 0.15);
+        }
+        
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+        
+        .metric-card.highlight {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 255, 136, 0.05));
+            border-color: #00ff88;
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #fff;
+        }
+        
+        .positive {
+            color: #00ff88;
+        }
+        
+        .metric-sub {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 8px;
+        }
+        
+        .win-rate-banner {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .win-rate-banner::before {
+            content: '🏆';
+            position: absolute;
+            font-size: 150px;
+            opacity: 0.1;
+            left: -30px;
+            top: -30px;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .win-rate-banner::after {
+            content: '💰';
+            position: absolute;
+            font-size: 150px;
+            opacity: 0.1;
+            right: -30px;
+            bottom: -30px;
+            animation: float 6s ease-in-out infinite reverse;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+        
+        .perfect-score {
+            font-size: 5rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .perfect-label {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .chart-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        .daily-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .day-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .day-card:hover {
+            transform: scale(1.02);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .day-card.best-day {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.02));
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+        
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .day-date {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #00d4ff;
+        }
+        
+        .day-pnl {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #00ff88;
+        }
+        
+        .day-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .day-stat {
+            font-size: 0.9rem;
+        }
+        
+        .day-stat-label {
+            color: #666;
+        }
+        
+        .day-stat-value {
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        .best-badge {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            animation: shimmer 2s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .top-performers {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+        }
+        
+        .performers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .performer-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .performer-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.07);
+        }
+        
+        .performer-symbol {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+        
+        .performer-profit {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #00ff88;
+        }
+        
+        .performer-date {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            .total-profit {
+                font-size: 3rem;
+            }
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            .daily-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>4-Day Trading Performance</h1>
+            <div class="total-profit">+$93,203.05</div>
+            <div class="subtitle">August 18-21, 2025 | Paper Trading Account</div>
+        </div>
+        
+        <div class="win-rate-banner">
+            <div class="perfect-score">100%</div>
+            <div class="perfect-label">PERFECT WIN RATE • 92 WINS • 0 LOSSES • 276 TOTAL TRADES</div>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card highlight">
+                <div class="metric-label">Total Profit</div>
+                <div class="metric-value positive">+$93,203.05</div>
+                <div class="metric-sub">4 trading days</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Average Daily P&L</div>
+                <div class="metric-value positive">+$23,300.76</div>
+                <div class="metric-sub">Consistent profits</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Total Volume</div>
+                <div class="metric-value">$21.2M</div>
+                <div class="metric-sub">276 trades executed</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Win Rate</div>
+                <div class="metric-value positive">100%</div>
+                <div class="metric-sub">92 winning trades</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Best Day</div>
+                <div class="metric-value positive">+$31,247</div>
+                <div class="metric-sub">Monday, Aug 18</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Best Trade</div>
+                <div class="metric-value positive">BURU +$17,877</div>
+                <div class="metric-sub">Monday winner</div>
+            </div>
+        </div>
+        
+        <div class="daily-cards">
+            <div class="day-card best-day">
+                <div class="day-header">
+                    <div class="day-date">Mon, Aug 18</div>
+                    <div class="best-badge">Best Day</div>
+                </div>
+                <div class="day-pnl">+$31,247.38</div>
+                <div class="day-stats">
+                    <div class="day-stat">
+                        <span class="day-stat-label">Trades: </span>
+                        <span class="day-stat-value">85</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Winners: </span>
+                        <span class="day-stat-value">23</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Volume: </span>
+                        <span class="day-stat-value">$3.58M</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Top: </span>
+                        <span class="day-stat-value">BURU</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="day-card">
+                <div class="day-header">
+                    <div class="day-date">Tue, Aug 19</div>
+                </div>
+                <div class="day-pnl">+$17,768.34</div>
+                <div class="day-stats">
+                    <div class="day-stat">
+                        <span class="day-stat-label">Trades: </span>
+                        <span class="day-stat-value">114</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Winners: </span>
+                        <span class="day-stat-value">39</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Volume: </span>
+                        <span class="day-stat-value">$7.42M</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Top: </span>
+                        <span class="day-stat-value">BINI</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="day-card">
+                <div class="day-header">
+                    <div class="day-date">Wed, Aug 20</div>
+                </div>
+                <div class="day-pnl">+$19,080.45</div>
+                <div class="day-stats">
+                    <div class="day-stat">
+                        <span class="day-stat-label">Trades: </span>
+                        <span class="day-stat-value">53</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Winners: </span>
+                        <span class="day-stat-value">24</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Volume: </span>
+                        <span class="day-stat-value">$3.85M</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Top: </span>
+                        <span class="day-stat-value">OP</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="day-card">
+                <div class="day-header">
+                    <div class="day-date">Thu, Aug 21</div>
+                    <div class="best-badge" style="background: linear-gradient(135deg, #00ff88, #00d4ff); color: white;">Today</div>
+                </div>
+                <div class="day-pnl">+$25,106.88</div>
+                <div class="day-stats">
+                    <div class="day-stat">
+                        <span class="day-stat-label">Trades: </span>
+                        <span class="day-stat-value">24</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Winners: </span>
+                        <span class="day-stat-value">6</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Volume: </span>
+                        <span class="day-stat-value">$6.35M</span>
+                    </div>
+                    <div class="day-stat">
+                        <span class="day-stat-label">Top: </span>
+                        <span class="day-stat-value">THAR</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3 class="chart-title">Daily P&L Progression</h3>
+                <canvas id="dailyChart"></canvas>
+            </div>
+            
+            <div class="chart-card">
+                <h3 class="chart-title">Cumulative Profit Growth</h3>
+                <canvas id="cumulativeChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="top-performers">
+            <h3 class="chart-title">Top Performing Stocks</h3>
+            <div class="performers-grid">
+                <div class="performer-card">
+                    <div class="performer-symbol">BURU</div>
+                    <div class="performer-profit">+$17,877</div>
+                    <div class="performer-date">Monday</div>
+                </div>
+                <div class="performer-card">
+                    <div class="performer-symbol">THAR</div>
+                    <div class="performer-profit">+$13,654</div>
+                    <div class="performer-date">Thursday</div>
+                </div>
+                <div class="performer-card">
+                    <div class="performer-symbol">AEMD</div>
+                    <div class="performer-profit">+$10,036</div>
+                    <div class="performer-date">Thursday</div>
+                </div>
+                <div class="performer-card">
+                    <div class="performer-symbol">OP</div>
+                    <div class="performer-profit">+$9,980</div>
+                    <div class="performer-date">Wednesday</div>
+                </div>
+                <div class="performer-card">
+                    <div class="performer-symbol">BINI</div>
+                    <div class="performer-profit">+$8,347</div>
+                    <div class="performer-date">Tuesday</div>
+                </div>
+                <div class="performer-card">
+                    <div class="performer-symbol">ADD</div>
+                    <div class="performer-profit">+$5,774</div>
+                    <div class="performer-date">Tuesday</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Daily P&L Chart
+        const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+        const dailyGradient = dailyCtx.createLinearGradient(0, 0, 0, 300);
+        dailyGradient.addColorStop(0, 'rgba(0, 255, 136, 0.6)');
+        dailyGradient.addColorStop(1, 'rgba(0, 255, 136, 0.1)');
+        
+        new Chart(dailyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon Aug 18', 'Tue Aug 19', 'Wed Aug 20', 'Thu Aug 21'],
+                datasets: [{
+                    label: 'Daily P&L',
+                    data: [31247.38, 17768.34, 19080.45, 25106.88],
+                    backgroundColor: dailyGradient,
+                    borderColor: 'rgba(0, 255, 136, 1)',
+                    borderWidth: 2,
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return '$' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2});
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + (value/1000).toFixed(0) + 'K';
+                            },
+                            color: '#888'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#888'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Cumulative Chart
+        const cumulativeCtx = document.getElementById('cumulativeChart').getContext('2d');
+        const cumulativeGradient = cumulativeCtx.createLinearGradient(0, 0, 0, 300);
+        cumulativeGradient.addColorStop(0, 'rgba(0, 212, 255, 0.6)');
+        cumulativeGradient.addColorStop(1, 'rgba(0, 212, 255, 0.1)');
+        
+        new Chart(cumulativeCtx, {
+            type: 'line',
+            data: {
+                labels: ['Start', 'Mon Aug 18', 'Tue Aug 19', 'Wed Aug 20', 'Thu Aug 21'],
+                datasets: [{
+                    label: 'Cumulative Profit',
+                    data: [0, 31247.38, 49015.72, 68096.17, 93203.05],
+                    borderColor: 'rgba(0, 212, 255, 1)',
+                    backgroundColor: cumulativeGradient,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return '$' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2});
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + (value/1000).toFixed(0) + 'K';
+                            },
+                            color: '#888'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#888'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Add animation on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.metric-card, .day-card, .performer-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+        });
+    </script>
+</body>
+</html>
