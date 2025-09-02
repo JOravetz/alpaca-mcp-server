@@ -21,7 +21,7 @@ async def stock_news(ticker: str) -> str:
     ticker = ticker.strip().upper()
 
     # Path to the RSS script
-    script_path = Path.cwd() / "yf_rss.py"
+    script_path = Path.cwd() / "external_tools" / "news_scrapers" / "yf_rss.py"
 
     if not script_path.exists():
         return f"❌ Error: RSS news script not found at {script_path}"

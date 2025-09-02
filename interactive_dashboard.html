@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive MCP Trading Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e1e, #2d2d2d);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #333, #444);
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid #555;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            color: #00ff88;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0,255,136,0.3);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid #555;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4444;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #00ff88;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 100px);
+        }
+
+        .sidebar {
+            width: 350px;
+            background: linear-gradient(180deg, #2d2d2d, #1e1e1e);
+            border-right: 2px solid #444;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .search-container {
+            position: sticky;
+            top: 0;
+            background: #2d2d2d;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #444;
+        }
+
+        .search-box {
+            width: 100%;
+            background: #1e1e1e;
+            border: 2px solid #444;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0,255,136,0.2);
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: #444;
+            color: #ccc;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            border: 1px solid #555;
+        }
+
+        .tab:hover {
+            background: #555;
+            color: #fff;
+        }
+
+        .tab.active {
+            background: #00ff88;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .item-card {
+            background: linear-gradient(135deg, #333, #444);
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .item-card:hover {
+            background: linear-gradient(135deg, #444, #555);
+            border-color: #00ff88;
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,255,136,0.1);
+        }
+
+        .item-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #00ff88;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .item-card:hover::before {
+            opacity: 1;
+        }
+
+        .item-card h4 {
+            color: #00ff88;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .item-card p {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .item-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,255,136,0.2);
+            color: #00ff88;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,150,255,0.1));
+            border-radius: 12px;
+            border: 2px dashed #444;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-message h2 {
+            color: #00ff88;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(0,255,136,0.3);
+        }
+
+        .execution-history {
+            background: #2d2d2d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 1px solid #444;
+        }
+
+        .execution-history h3 {
+            color: #00ff88;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .history-item {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .history-item .timestamp {
+            color: #888;
+            font-size: 0.85rem;
+            position: absolute;
+            top: 8px;
+            right: 12px;
+        }
+
+        .history-item .tool-name {
+            color: #00ff88;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .history-item .result {
+            color: #ccc;
+            font-size: 0.9rem;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #111;
+            padding: 8px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #2d2d2d, #1e1e1e);
+            border-radius: 12px;
+            border: 2px solid #555;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            max-width: 800px;
+            width: 90%;
+            max-height: 90%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #333, #444);
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid #555;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            color: #00ff88;
+            font-size: 1.5rem;
+        }
+
+        .close-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #ff6666;
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 2rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: #00ff88;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .form-group .required {
+            color: #ff4444;
+        }
+
+        .form-control {
+            width: 100%;
+            background: #1e1e1e;
+            border: 2px solid #444;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0,255,136,0.2);
+        }
+
+        .form-control.error {
+            border-color: #ff4444;
+            box-shadow: 0 0 10px rgba(255,68,68,0.2);
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #00ff88;
+        }
+
+        .modal-footer {
+            background: #2d2d2d;
+            padding: 1.5rem 2rem;
+            border-top: 1px solid #444;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #00ff88, #00cc70);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #00cc70, #00aa5a);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,255,136,0.3);
+        }
+
+        .btn:disabled {
+            background: #666;
+            color: #aaa;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #666;
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: #777;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .loading.show {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-container {
+            display: none;
+            background: #1e1e1e;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .result-header h4 {
+            color: #00ff88;
+            margin: 0;
+        }
+
+        .copy-btn {
+            background: #444;
+            color: #ccc;
+            border: 1px solid #666;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #555;
+            color: #fff;
+        }
+
+        .result-content {
+            background: #111;
+            color: #ccc;
+            padding: 1rem;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .error-message {
+            background: rgba(255,68,68,0.1);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .success-message {
+            background: rgba(0,255,136,0.1);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .param-hint {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .websocket-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .ws-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff4444;
+        }
+
+        .ws-indicator.connected {
+            background: #00ff88;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 300px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                max-height: 95%;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Interactive MCP Trading Dashboard</h1>
+        <div class="connection-status">
+            <div class="status-indicator" id="connectionStatus"></div>
+            <span id="connectionText">Connecting...</span>
+            <div class="websocket-status">
+                <div class="ws-indicator" id="wsIndicator"></div>
+                <span id="wsStatus">WebSocket: Disconnected</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="search-container">
+                <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search tools, resources, prompts...">
+                
+                <div class="category-tabs">
+                    <div class="tab active" data-category="all">All</div>
+                    <div class="tab" data-category="tools">Tools</div>
+                    <div class="tab" data-category="resources">Resources</div>
+                    <div class="tab" data-category="prompts">Prompts</div>
+                </div>
+            </div>
+
+            <div class="item-list" id="itemList">
+                <!-- Items will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="welcome-message" id="welcomeMessage">
+                <h2>🎯 Ready to Execute</h2>
+                <p>Select a tool, resource, or prompt from the sidebar to get started with real-time trading operations.</p>
+                <p>All 101+ tools are ready for live execution via the MCP Execution Service.</p>
+            </div>
+
+            <div class="execution-history" id="executionHistory" style="display: none;">
+                <h3>📊 Execution History</h3>
+                <div id="historyList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Tool Execution -->
+    <div class="modal" id="executionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Execute Tool</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modalDescription"></div>
+                <form id="executionForm">
+                    <div id="parametersContainer"></div>
+                </form>
+                
+                <div class="result-container" id="resultContainer">
+                    <div class="result-header">
+                        <h4>Execution Result</h4>
+                        <button class="copy-btn" onclick="copyResult()">📋 Copy</button>
+                    </div>
+                    <div class="result-content" id="resultContent"></div>
+                </div>
+                
+                <div class="error-message" id="errorMessage" style="display: none;"></div>
+                <div class="success-message" id="successMessage" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="button" class="btn" id="executeBtn" onclick="executeItem()">
+                    <span class="loading" id="loadingSpinner"></span>
+                    <span id="executeBtnText">Execute</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        let currentItem = null;
+        let executionHistory = [];
+        let connectionStatus = 'disconnected';
+        let wsConnection = null;
+        let mcpApiUrl = 'http://localhost:8002';
+
+        // MCP Data
+        const tools = [
+            {
+                "name": "get_account_info",
+                "description": "Get current account information including balances and status.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                },
+                "category": "Account"
+            },
+            {
+                "name": "get_positions",
+                "description": "Get all current positions in the portfolio.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                },
+                "category": "Portfolio"
+            },
+            {
+                "name": "get_open_position",
+                "description": "Get details for a specific open position.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {
+                            "title": "Symbol",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["symbol"]
+                },
+                "category": "Portfolio"
+            },
+            {
+                "name": "close_position",
+                "description": "Close a specific position.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {
+                            "title": "Symbol",
+                            "type": "string"
+                        },
+                        "qty": {
+                            "default": null,
+                            "title": "Qty",
+                            "type": "string"
+                        },
+                        "percentage": {
+                            "default": null,
+                            "title": "Percentage",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["symbol"]
+                },
+                "category": "Trading"
+            },
+            {
+                "name": "close_all_positions",
+                "description": "Close all open positions.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "cancel_orders": {
+                            "default": false,
+                            "title": "Cancel Orders",
+                            "type": "boolean"
+                        }
+                    },
+                    "required": []
+                },
+                "category": "Trading"
+            },
+            {
+                "name": "get_stock_quote",
+                "description": "Get latest quote for a stock.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {
+                            "title": "Symbol",
+                            "type": "string"
+                        },
+                        "help": {
+                            "default": null,
+                            "title": "Help",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["symbol"]
+                },
+                "category": "Market Data"
+            },
+            {
+                "name": "get_stock_snapshots",
+                "description": "Get comprehensive market snapshots.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbols": {
+                            "title": "Symbols",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["symbols"]
+                },
+                "category": "Market Data"
+            },
+            {
+                "name": "get_stock_bars",
+                "description": "Get historical price bars.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {
+                            "title": "Symbol",
+                            "type": "string"
+                        },
+                        "days": {
+                            "default": 5,
+                            "title": "Days",
+                            "type": "integer"
+                        }
+                    },
+                    "required": ["symbol"]
+                },
+                "category": "Market Data"
+            },
+            {
+                "name": "get_stock_bars_intraday",
+                "description": "Get intraday historical bars with analysis.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {
+                            "title": "Symbol",
+                            "type": "string"
+                        },
+                        "timeframe": {
+                            "default": "1Min",
+                            "title": "Timeframe",
+                            "type": "string"
+                        },
+                        "start_date": {
+                            "default": null,
+                            "title": "Start Date",
+                            "type": "string"
+                        },
+                        "end_date": {
+                            "default": null,
+                            "title": "End Date",
+                            "type": "string"
+                        },
+                        "limit": {
+                            "default": 10000,
+                            "title": "Limit",
+                            "type": "integer"
+                        }
+                    },
+                    "required": ["symbol"]
+                },
+                "category": "Market Data"
+            },
+            {
+                "name": "scan_day_trading_opportunities",
+                "description": "Scan for EXPLOSIVE UP-ONLY day-trading opportunities with extreme volatility.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbols": {
+                            "default": "ALL",
+                            "title": "Symbols",
+                            "type": "string"
+                        },
+                        "min_trades_per_minute": {
+                            "default": null,
+                            "title": "Min Trades Per Minute",
+                            "type": "integer"
+                        },
+                        "min_percent_change": {
+                            "default": null,
+                            "title": "Min Percent Change",
+                            "type": "number"
+                        },
+                        "max_symbols": {
+                            "default": null,
+                            "title": "Max Symbols",
+                            "type": "integer"
+                        },
+                        "sort_by": {
+                            "default": null,
+                            "title": "Sort By",
+                            "type": "string"
+                        }
+                    },
+                    "required": []
+                },
+                "category": "Scanners"
+            },
+            {
+                "name": "scan_explosive_momentum",
+                "description": "Quick scanner for explosive momentum moves like NEHC.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbols": {
+                            "default": "CVAC,CGTL,GNLN,NEHC,SOUN,RIOT,MARA,COIN,HOOD,RBLX",
+                            "title": "Symbols",
+                            "type": "string"
+                        },
+                        "min_percent_change": {
+                            "default": 15.0,
+                            "title": "Min Percent Change",
+                            "type": "number"
+                        }
+                    },
+                    "required": []
+                },
+                "category": "Scanners"
+            },
+            {
+                "name": "place_stock_order",
+                "description": "Place a stock order of any type.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {
+                            "title": "Symbol",
+                            "type": "string"
+                        },
+                        "side": {
+                            "title": "Side",
+                            "type": "string"
+                        },
+                        "quantity": {
+                            "title": "Quantity",
+                            "type": "number"
+                        },
+                        "order_type": {
+                            "default": "market",
+                            "title": "Order Type",
+                            "type": "string"
+                        },
+                        "time_in_force": {
+                            "default": "day",
+                            "title": "Time In Force",
+                            "type": "string"
+                        },
+                        "limit_price": {
+                            "default": null,
+                            "title": "Limit Price",
+                            "type": "number"
+                        },
+                        "stop_price": {
+                            "default": null,
+                            "title": "Stop Price",
+                            "type": "number"
+                        },
+                        "extended_hours": {
+                            "default": false,
+                            "title": "Extended Hours",
+                            "type": "boolean"
+                        }
+                    },
+                    "required": ["symbol", "side", "quantity"]
+                },
+                "category": "Trading"
+            },
+            {
+                "name": "get_stock_peak_trough_analysis",
+                "description": "Get stock peak and trough analysis for day trading signals using zero-phase Hanning filtering.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbols": {
+                            "default": "AUTO",
+                            "title": "Symbols",
+                            "type": "string"
+                        },
+                        "timeframe": {
+                            "default": "1Min",
+                            "title": "Timeframe",
+                            "type": "string"
+                        },
+                        "days": {
+                            "default": 1,
+                            "title": "Days",
+                            "type": "integer"
+                        },
+                        "window_len": {
+                            "default": 11,
+                            "title": "Window Length",
+                            "type": "integer"
+                        },
+                        "lookahead": {
+                            "default": 1,
+                            "title": "Lookahead",
+                            "type": "integer"
+                        }
+                    },
+                    "required": []
+                },
+                "category": "Technical Analysis"
+            },
+            {
+                "name": "analyze_peaks_troughs_fast",
+                "description": "Ultra-fast peak/trough analysis using C implementation (5-10x faster).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbols": {
+                            "title": "Symbols",
+                            "type": "string"
+                        },
+                        "timeframe": {
+                            "default": "1Min",
+                            "title": "Timeframe",
+                            "type": "string"
+                        },
+                        "days": {
+                            "default": 1,
+                            "title": "Days",
+                            "type": "integer"
+                        },
+                        "window_len": {
+                            "default": null,
+                            "title": "Window Length",
+                            "type": "integer"
+                        },
+                        "filter_key": {
+                            "default": "close",
+                            "title": "Filter Key",
+                            "type": "string"
+                        },
+                        "feed": {
+                            "default": "sip",
+                            "title": "Feed",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["symbols"]
+                },
+                "category": "Technical Analysis"
+            },
+            {
+                "name": "start_global_stock_stream",
+                "description": "Start global real-time stock data stream for day trading.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbols": {
+                            "title": "Symbols",
+                            "type": "array",
+                            "items": {"type": "string"}
+                        },
+                        "data_types": {
+                            "default": null,
+                            "title": "Data Types",
+                            "type": "array",
+                            "items": {"type": "string"}
+                        },
+                        "feed": {
+                            "default": "sip",
+                            "title": "Feed",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["symbols"]
+                },
+                "category": "Streaming"
+            },
+            {
+                "name": "get_market_clock",
+                "description": "Get current market status and next open/close times.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                },
+                "category": "Market Info"
+            },
+            {
+                "name": "generate_stock_plot",
+                "description": "Generate stock analysis plots using the plot.py script with ImageMagick display.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbols": {
+                            "title": "Symbols",
+                            "type": "string"
+                        },
+                        "timeframe": {
+                            "default": "1Min",
+                            "title": "Timeframe",
+                            "type": "string"
+                        },
+                        "days": {
+                            "default": 1,
+                            "title": "Days",
+                            "type": "integer"
+                        },
+                        "window": {
+                            "default": null,
+                            "title": "Window",
+                            "type": "integer"
+                        },
+                        "lookahead": {
+                            "default": null,
+                            "title": "Lookahead",
+                            "type": "integer"
+                        }
+                    },
+                    "required": ["symbols"]
+                },
+                "category": "Plotting"
+            }
+        ];
+
+        const resources = [
+            {
+                "name": "account://status",
+                "description": "Real-time account health and trading capacity",
+                "type": "account"
+            },
+            {
+                "name": "positions://current",
+                "description": "Live position data with P&L updates",
+                "type": "portfolio"
+            },
+            {
+                "name": "positions://intraday_pnl",
+                "description": "Track today's intraday P&L with default parameters",
+                "type": "portfolio"
+            },
+            {
+                "name": "market://conditions",
+                "description": "Current market status and conditions",
+                "type": "market"
+            },
+            {
+                "name": "market://momentum",
+                "description": "Real-time market momentum for SPY with default parameters",
+                "type": "market"
+            },
+            {
+                "name": "portfolio://performance",
+                "description": "Real-time portfolio performance metrics and P&L analysis",
+                "type": "portfolio"
+            },
+            {
+                "name": "portfolio://allocation",
+                "description": "Asset allocation breakdown with winners/losers analysis",
+                "type": "portfolio"
+            },
+            {
+                "name": "portfolio://risk",
+                "description": "Portfolio risk metrics and exposure analysis",
+                "type": "portfolio"
+            },
+            {
+                "name": "streams://status",
+                "description": "Real-time streaming status and buffer statistics",
+                "type": "streaming"
+            },
+            {
+                "name": "streams://performance",
+                "description": "Streaming performance metrics and health indicators",
+                "type": "streaming"
+            },
+            {
+                "name": "data://quality",
+                "description": "Monitor data feed quality with default parameters",
+                "type": "system"
+            },
+            {
+                "name": "server://health",
+                "description": "Comprehensive server health monitoring",
+                "type": "system"
+            },
+            {
+                "name": "server://session",
+                "description": "Trading session and market status",
+                "type": "system"
+            },
+            {
+                "name": "server://apis",
+                "description": "Monitor API connections and performance",
+                "type": "system"
+            },
+            {
+                "name": "help://tools",
+                "description": "Comprehensive help for all available tools organized by category",
+                "type": "help"
+            },
+            {
+                "name": "help://prompts",
+                "description": "Comprehensive help for all available workflows/prompts",
+                "type": "help"
+            }
+        ];
+
+        const prompts = [
+            {
+                "name": "startup",
+                "description": "Execute comprehensive day trading startup checks with parallel execution and high-liquidity scanner",
+                "parameters": {}
+            },
+            {
+                "name": "scan",
+                "description": "Scan for day trading opportunities using high-liquidity scanner and technical analysis",
+                "parameters": {}
+            },
+            {
+                "name": "account_analysis",
+                "description": "Complete portfolio health check with actionable insights",
+                "parameters": {}
+            },
+            {
+                "name": "position_management",
+                "description": "Strategic position review and optimization",
+                "parameters": {
+                    "symbol": {
+                        "type": "string",
+                        "description": "Optional symbol to focus analysis on",
+                        "required": false
+                    }
+                }
+            },
+            {
+                "name": "market_analysis",
+                "description": "Real-time market analysis with trading opportunities",
+                "parameters": {
+                    "symbols": {
+                        "type": "array",
+                        "description": "List of symbols to analyze",
+                        "required": false
+                    },
+                    "timeframe": {
+                        "type": "string",
+                        "description": "Analysis timeframe",
+                        "default": "1Day",
+                        "required": false
+                    },
+                    "analysis_type": {
+                        "type": "string",
+                        "description": "Type of analysis to perform",
+                        "default": "comprehensive",
+                        "required": false
+                    }
+                }
+            },
+            {
+                "name": "stock_news",
+                "description": "Get latest news for any stock ticker from Yahoo Finance RSS feed",
+                "parameters": {
+                    "ticker": {
+                        "type": "string",
+                        "description": "Stock ticker symbol (e.g., 'AAPL', 'TSLA')",
+                        "required": true
+                    }
+                }
+            },
+            {
+                "name": "day_trading_workflow",
+                "description": "Complete day trading analysis and setup workflow for any symbol",
+                "parameters": {
+                    "symbol": {
+                        "type": "string",
+                        "description": "Symbol to analyze for day trading",
+                        "required": false
+                    }
+                }
+            },
+            {
+                "name": "master_scanning_workflow",
+                "description": "Master scanner workflow using all available scanner tools simultaneously",
+                "parameters": {
+                    "scan_type": {
+                        "type": "string",
+                        "description": "Type of scan to perform",
+                        "default": "comprehensive",
+                        "required": false
+                    }
+                }
+            },
+            {
+                "name": "pro_technical_workflow",
+                "description": "Professional technical analysis workflow using advanced algorithms and peak/trough detection",
+                "parameters": {
+                    "symbol": {
+                        "type": "string",
+                        "description": "Symbol to analyze",
+                        "required": true
+                    },
+                    "timeframe": {
+                        "type": "string",
+                        "description": "Analysis timeframe",
+                        "default": "comprehensive",
+                        "required": false
+                    }
+                }
+            },
+            {
+                "name": "market_session_workflow",
+                "description": "Complete market session strategy using timing tools and session-specific analysis",
+                "parameters": {
+                    "session_type": {
+                        "type": "string",
+                        "description": "Type of market session",
+                        "default": "full_day",
+                        "required": false
+                    }
+                }
+            },
+            {
+                "name": "stream_centric_trading_cycle",
+                "description": "Universal trading cycle with single-stream concurrent architecture",
+                "parameters": {
+                    "symbols": {
+                        "type": "string",
+                        "description": "Comma-separated symbols or 'AUTO' for scanner results",
+                        "default": "AUTO",
+                        "required": false
+                    }
+                }
+            },
+            {
+                "name": "stream_concurrent_monitoring_cycle",
+                "description": "Continuous monitoring cycle using stream-centric concurrent architecture",
+                "parameters": {
+                    "symbols": {
+                        "type": "string",
+                        "description": "Comma-separated symbols or 'AUTO' for current stream symbols",
+                        "default": "AUTO",
+                        "required": false
+                    }
+                }
+            },
+            {
+                "name": "list_trading_capabilities",
+                "description": "List all Alpaca trading capabilities with guided workflows",
+                "parameters": {}
+            },
+            {
+                "name": "list_all_tools",
+                "description": "List all available MCP tools with descriptions and usage examples",
+                "parameters": {}
+            }
+        ];
+
+        // Initialize the application
+        function init() {
+            checkConnection();
+            setupWebSocket();
+            renderItems('all');
+            setupEventListeners();
+            loadExecutionHistory();
+        }
+
+        // Check connection to MCP Execution Service
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${mcpApiUrl}/health`);
+                if (response.ok) {
+                    setConnectionStatus('connected', 'Connected to MCP Service');
+                } else {
+                    throw new Error('Service unavailable');
+                }
+            } catch (error) {
+                setConnectionStatus('disconnected', 'MCP Service Offline');
+                console.error('Connection check failed:', error);
+            }
+        }
+
+        // Setup WebSocket connection for real-time updates
+        function setupWebSocket() {
+            try {
+                wsConnection = new WebSocket(`ws://localhost:8002/ws`);
+                
+                wsConnection.onopen = () => {
+                    setWebSocketStatus('connected', 'WebSocket: Connected');
+                };
+                
+                wsConnection.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                };
+                
+                wsConnection.onclose = () => {
+                    setWebSocketStatus('disconnected', 'WebSocket: Disconnected');
+                    setTimeout(setupWebSocket, 5000); // Reconnect after 5 seconds
+                };
+                
+                wsConnection.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    setWebSocketStatus('disconnected', 'WebSocket: Error');
+                };
+            } catch (error) {
+                console.error('WebSocket setup failed:', error);
+                setWebSocketStatus('disconnected', 'WebSocket: Failed');
+            }
+        }
+
+        function setConnectionStatus(status, text) {
+            connectionStatus = status;
+            const indicator = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('connectionText');
+            
+            indicator.className = `status-indicator ${status === 'connected' ? 'connected' : ''}`;
+            statusText.textContent = text;
+        }
+
+        function setWebSocketStatus(status, text) {
+            const indicator = document.getElementById('wsIndicator');
+            const statusText = document.getElementById('wsStatus');
+            
+            indicator.className = `ws-indicator ${status === 'connected' ? 'connected' : ''}`;
+            statusText.textContent = text;
+        }
+
+        function handleWebSocketMessage(data) {
+            if (data.type === 'execution_result') {
+                addExecutionHistory(data.tool, data.result, data.timestamp);
+            } else if (data.type === 'execution_error') {
+                showError(`WebSocket Error: ${data.error}`);
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Search functionality
+            const searchBox = document.getElementById('searchBox');
+            searchBox.addEventListener('input', (e) => {
+                filterItems(e.target.value);
+            });
+
+            // Category tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    e.target.classList.add('active');
+                    // Render items for selected category
+                    renderItems(e.target.dataset.category);
+                });
+            });
+
+            // Close modal on outside click
+            document.getElementById('executionModal').addEventListener('click', (e) => {
+                if (e.target.id === 'executionModal') {
+                    closeModal();
+                }
+            });
+
+            // Periodic connection check
+            setInterval(checkConnection, 30000); // Check every 30 seconds
+        }
+
+        // Render items in the sidebar
+        function renderItems(category) {
+            const itemList = document.getElementById('itemList');
+            itemList.innerHTML = '';
+
+            let items = [];
+
+            // Combine all items based on category
+            if (category === 'all' || category === 'tools') {
+                items = items.concat(tools.map(tool => ({...tool, type: 'tool'})));
+            }
+
+            if (category === 'all' || category === 'resources') {
+                items = items.concat(resources.map(resource => ({...resource, type: 'resource'})));
+            }
+
+            if (category === 'all' || category === 'prompts') {
+                items = items.concat(prompts.map(prompt => ({...prompt, type: 'prompt'})));
+            }
+
+            // Sort items alphabetically
+            items.sort((a, b) => a.name.localeCompare(b.name));
+
+            // Render each item
+            items.forEach(item => {
+                const itemCard = createItemCard(item);
+                itemList.appendChild(itemCard);
+            });
+        }
+
+        // Create item card element
+        function createItemCard(item) {
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.onclick = () => openModal(item);
+
+            const badge = document.createElement('div');
+            badge.className = 'item-badge';
+            badge.textContent = item.type.toUpperCase();
+
+            const title = document.createElement('h4');
+            title.textContent = item.name;
+
+            const description = document.createElement('p');
+            description.textContent = item.description;
+
+            card.appendChild(badge);
+            card.appendChild(title);
+            card.appendChild(description);
+
+            return card;
+        }
+
+        // Filter items based on search query
+        function filterItems(query) {
+            const cards = document.querySelectorAll('.item-card');
+            const searchTerm = query.toLowerCase();
+
+            cards.forEach(card => {
+                const title = card.querySelector('h4').textContent.toLowerCase();
+                const description = card.querySelector('p').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Open execution modal
+        function openModal(item) {
+            currentItem = item;
+            const modal = document.getElementById('executionModal');
+            const title = document.getElementById('modalTitle');
+            const description = document.getElementById('modalDescription');
+            const parametersContainer = document.getElementById('parametersContainer');
+
+            title.textContent = `Execute ${item.type}: ${item.name}`;
+            description.innerHTML = `<p style="margin-bottom: 1rem; color: #ccc; font-style: italic;">${item.description}</p>`;
+
+            // Clear previous parameters
+            parametersContainer.innerHTML = '';
+
+            // Generate parameter inputs
+            generateParameterInputs(item, parametersContainer);
+
+            // Reset result containers
+            document.getElementById('resultContainer').classList.remove('show');
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+
+            modal.classList.add('show');
+        }
+
+        // Generate parameter input fields
+        function generateParameterInputs(item, container) {
+            let schema = null;
+            
+            if (item.type === 'tool' && item.inputSchema) {
+                schema = item.inputSchema;
+            } else if (item.type === 'prompt' && item.parameters) {
+                // Convert prompt parameters to schema format
+                schema = {
+                    type: 'object',
+                    properties: item.parameters,
+                    required: Object.keys(item.parameters).filter(key => 
+                        item.parameters[key].required !== false
+                    )
+                };
+            }
+
+            if (!schema || !schema.properties || Object.keys(schema.properties).length === 0) {
+                const noParams = document.createElement('p');
+                noParams.textContent = 'No parameters required for this operation.';
+                noParams.style.color = '#888';
+                noParams.style.fontStyle = 'italic';
+                container.appendChild(noParams);
+                return;
+            }
+
+            Object.entries(schema.properties).forEach(([key, prop]) => {
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
+
+                const label = document.createElement('label');
+                label.textContent = prop.title || key;
+                if (schema.required && schema.required.includes(key)) {
+                    label.innerHTML += ' <span class="required">*</span>';
+                }
+
+                const input = createInputElement(key, prop);
+                
+                if (prop.description) {
+                    const hint = document.createElement('div');
+                    hint.className = 'param-hint';
+                    hint.textContent = prop.description;
+                    formGroup.appendChild(hint);
+                }
+
+                formGroup.appendChild(label);
+                formGroup.appendChild(input);
+                container.appendChild(formGroup);
+            });
+        }
+
+        // Create input element based on parameter type
+        function createInputElement(key, prop) {
+            const input = document.createElement('input');
+            input.className = 'form-control';
+            input.name = key;
+            input.id = `param_${key}`;
+
+            switch (prop.type) {
+                case 'string':
+                    input.type = 'text';
+                    if (prop.default) input.value = prop.default;
+                    break;
+                case 'integer':
+                    input.type = 'number';
+                    input.step = '1';
+                    if (prop.default !== undefined) input.value = prop.default;
+                    break;
+                case 'number':
+                    input.type = 'number';
+                    input.step = 'any';
+                    if (prop.default !== undefined) input.value = prop.default;
+                    break;
+                case 'boolean':
+                    input.type = 'checkbox';
+                    if (prop.default) input.checked = prop.default;
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'checkbox-wrapper';
+                    wrapper.appendChild(input);
+                    const span = document.createElement('span');
+                    span.textContent = prop.title || key;
+                    wrapper.appendChild(span);
+                    return wrapper;
+                case 'array':
+                    input.type = 'text';
+                    input.placeholder = 'Enter comma-separated values';
+                    if (prop.default) input.value = Array.isArray(prop.default) ? prop.default.join(', ') : prop.default;
+                    break;
+                default:
+                    input.type = 'text';
+                    if (prop.default) input.value = prop.default;
+            }
+
+            return input;
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('executionModal').classList.remove('show');
+            currentItem = null;
+        }
+
+        // Execute the selected item
+        async function executeItem() {
+            if (!currentItem) return;
+
+            const executeBtn = document.getElementById('executeBtn');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const executeBtnText = document.getElementById('executeBtnText');
+
+            // Show loading state
+            executeBtn.disabled = true;
+            loadingSpinner.classList.add('show');
+            executeBtnText.textContent = 'Executing...';
+
+            // Clear previous messages
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('resultContainer').classList.remove('show');
+
+            try {
+                // Collect parameters
+                const parameters = collectParameters();
+                
+                // Validate required parameters
+                if (currentItem.type === 'tool' && currentItem.inputSchema) {
+                    const validation = validateParameters(parameters, currentItem.inputSchema);
+                    if (!validation.valid) {
+                        throw new Error(validation.errors.join(', '));
+                    }
+                }
+
+                // Execute the item
+                const result = await executeRequest(currentItem, parameters);
+                
+                // Show result
+                displayResult(result);
+                showSuccess('Execution completed successfully!');
+
+                // Add to history
+                addExecutionHistory(currentItem.name, result, new Date().toISOString());
+
+            } catch (error) {
+                console.error('Execution error:', error);
+                showError(`Execution failed: ${error.message}`);
+            } finally {
+                // Reset loading state
+                executeBtn.disabled = false;
+                loadingSpinner.classList.remove('show');
+                executeBtnText.textContent = 'Execute';
+            }
+        }
+
+        // Collect parameters from form
+        function collectParameters() {
+            const form = document.getElementById('executionForm');
+            const formData = new FormData(form);
+            const parameters = {};
+
+            // Get all form controls
+            const controls = form.querySelectorAll('.form-control');
+            
+            controls.forEach(control => {
+                const name = control.name;
+                if (!name) return;
+
+                if (control.type === 'checkbox') {
+                    parameters[name] = control.checked;
+                } else if (control.type === 'number') {
+                    const value = control.value.trim();
+                    if (value !== '') {
+                        parameters[name] = control.step === '1' ? parseInt(value) : parseFloat(value);
+                    }
+                } else {
+                    const value = control.value.trim();
+                    if (value !== '') {
+                        // Handle array inputs
+                        if (control.placeholder && control.placeholder.includes('comma-separated')) {
+                            parameters[name] = value.split(',').map(v => v.trim()).filter(v => v);
+                        } else {
+                            parameters[name] = value;
+                        }
+                    }
+                }
+            });
+
+            return parameters;
+        }
+
+        // Validate parameters against schema
+        function validateParameters(parameters, schema) {
+            const errors = [];
+
+            if (schema.required) {
+                schema.required.forEach(field => {
+                    if (!(field in parameters) || parameters[field] === '' || parameters[field] === null || parameters[field] === undefined) {
+                        errors.push(`Required parameter '${field}' is missing`);
+                    }
+                });
+            }
+
+            return {
+                valid: errors.length === 0,
+                errors: errors
+            };
+        }
+
+        // Execute request to MCP service
+        async function executeRequest(item, parameters) {
+            const endpoint = item.type === 'tool' ? 'tools' : 
+                           item.type === 'resource' ? 'resources' : 'prompts';
+            
+            const requestBody = {
+                name: item.name,
+                parameters: parameters
+            };
+
+            const response = await fetch(`${mcpApiUrl}/${endpoint}/call`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            return result;
+        }
+
+        // Display execution result
+        function displayResult(result) {
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+
+            let displayText = '';
+            
+            if (typeof result === 'string') {
+                displayText = result;
+            } else {
+                displayText = JSON.stringify(result, null, 2);
+            }
+
+            resultContent.textContent = displayText;
+            resultContainer.classList.add('show');
+        }
+
+        // Copy result to clipboard
+        function copyResult() {
+            const resultContent = document.getElementById('resultContent');
+            navigator.clipboard.writeText(resultContent.textContent).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✓ Copied!';
+                copyBtn.style.background = '#00ff88';
+                copyBtn.style.color = '#000';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '#444';
+                    copyBtn.style.color = '#ccc';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy result:', err);
+            });
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+
+        // Add execution to history
+        function addExecutionHistory(toolName, result, timestamp) {
+            const historyItem = {
+                tool: toolName,
+                result: result,
+                timestamp: timestamp
+            };
+
+            executionHistory.unshift(historyItem);
+            
+            // Keep only last 50 executions
+            if (executionHistory.length > 50) {
+                executionHistory = executionHistory.slice(0, 50);
+            }
+
+            saveExecutionHistory();
+            renderExecutionHistory();
+        }
+
+        // Render execution history
+        function renderExecutionHistory() {
+            const historyContainer = document.getElementById('executionHistory');
+            const historyList = document.getElementById('historyList');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+
+            if (executionHistory.length === 0) {
+                historyContainer.style.display = 'none';
+                welcomeMessage.style.display = 'block';
+                return;
+            }
+
+            welcomeMessage.style.display = 'none';
+            historyContainer.style.display = 'block';
+
+            historyList.innerHTML = '';
+
+            executionHistory.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+
+                const timestamp = document.createElement('div');
+                timestamp.className = 'timestamp';
+                timestamp.textContent = new Date(item.timestamp).toLocaleString();
+
+                const toolName = document.createElement('div');
+                toolName.className = 'tool-name';
+                toolName.textContent = item.tool;
+
+                const result = document.createElement('div');
+                result.className = 'result';
+                result.textContent = typeof item.result === 'string' ? 
+                    item.result : JSON.stringify(item.result, null, 2);
+
+                historyItem.appendChild(timestamp);
+                historyItem.appendChild(toolName);
+                historyItem.appendChild(result);
+
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        // Save execution history to localStorage
+        function saveExecutionHistory() {
+            try {
+                localStorage.setItem('mcpExecutionHistory', JSON.stringify(executionHistory));
+            } catch (error) {
+                console.error('Failed to save execution history:', error);
+            }
+        }
+
+        // Load execution history from localStorage
+        function loadExecutionHistory() {
+            try {
+                const saved = localStorage.getItem('mcpExecutionHistory');
+                if (saved) {
+                    executionHistory = JSON.parse(saved);
+                    renderExecutionHistory();
+                }
+            } catch (error) {
+                console.error('Failed to load execution history:', error);
+                executionHistory = [];
+            }
+        }
+
+        // Initialize the application when the page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

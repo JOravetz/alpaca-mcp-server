@@ -6,6 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Alpaca MCP Server Enhanced - A professional trading system implementing the Model Context Protocol (MCP) for integration with Alpaca's trading APIs. The system focuses on aggressive day trading strategies with real-time market data streaming, technical analysis, and automated monitoring capabilities.
 
+## Quick Start
+
+```bash
+# Set up environment (first time only)
+cp .env.example .env  # Add your Alpaca API credentials
+uv sync               # Install dependencies
+
+# Start the MCP server
+uv run python -m alpaca_mcp_server.main
+
+# Or use Makefile shortcuts
+make server           # Start MCP server
+make test-quick       # Run focused tests
+make format           # Auto-format code
+```
+
 ## Key Development Commands
 
 ### Running the Server
@@ -55,7 +71,26 @@ make install        # Sync dependencies with uv
 make plot ARGS="-s AAPL"  # Generate plots
 make scanner        # Run day trading scanner
 make news SYMBOLS='AAPL MSFT'  # Fetch stock news
+make stock-analyzer ARGS="--help"  # Run stock analyzer
+make run-script SCRIPT=path/to/script.py ARGS="--arg1 value"  # Run any Python script
 ```
+
+### P&L Dashboard with Celebrations
+```bash
+# Update dashboard with animations and TTS
+uv run python update_pnl_dashboard.py
+
+# Options
+uv run python update_pnl_dashboard.py --no-sound     # Disable victory TTS
+uv run python update_pnl_dashboard.py --no-browser   # Don't open browser
+uv run python update_pnl_dashboard.py --date 2025-09-02  # Specific date
+```
+
+Features:
+- **Visual Celebrations**: Confetti, money rain, trophy animations based on profit levels
+- **Kokoro TTS**: Jessica's voice (af_jessica) congratulates you on wins
+- **After-Hours Support**: Properly detects and calculates after-hours trades
+- **Tiered Effects**: Legendary ($10k+), Epic ($5k+), Great ($2.5k+), Good ($1k+)
 
 ## Architecture Overview
 
@@ -161,9 +196,19 @@ uv run python alpaca_mcp_server/tests/run_tests.py --skip-performance
 # Run single test file
 uv run pytest alpaca_mcp_server/tests/test_specific.py
 
+# Run tests from specific category
+uv run pytest alpaca_mcp_server/tests/unit/      # Unit tests only
+uv run pytest alpaca_mcp_server/tests/integration/  # Integration tests
+uv run pytest alpaca_mcp_server/tests/performance/  # Performance tests
+
 # Run with specific timeout
 uv run pytest --timeout=60 alpaca_mcp_server/tests/
-```
+
+# Run tests matching a pattern
+uv run pytest -k "test_stock" alpaca_mcp_server/tests/
+
+# Run tests with debug output
+uv run pytest -vv --tb=long alpaca_mcp_server/tests/
 
 ## Environment Configuration
 
@@ -224,6 +269,7 @@ Using `uv` for fast, reliable Python environment management:
 - Dev dependencies in `[dependency-groups.dev]`
 - Always use `uv run` prefix for Python commands
 - Sync dependencies: `uv sync` or `make install`
+- Python 3.12+ required (specified in `pyproject.toml`)
 
 ## Available Scripts
 
@@ -279,3 +325,56 @@ tail -f logs/alpaca_mcp_server.log
 - **Logs**: `logs/` directory - Debug output
 - **State**: `monitoring_data/` - Persistent monitoring state
 - **Symbol Lists**: `data/combined.lis` - Tradable symbols
+
+## Common Development Patterns
+
+### Adding New Trading Tools
+
+1. Create tool module in `alpaca_mcp_server/tools/`
+2. Register in `server_components/tool_registrations.py`
+3. Follow the decorator pattern:
+```python
+@mcp.tool()
+async def your_tool_name(param1: str, param2: int = None) -> str:
+    """Comprehensive docstring for AI understanding."""
+    try:
+        # Implementation with fallback mechanisms
+        return formatted_string_result
+    except Exception as e:
+        return f"Error: {str(e)}"
+```
+
+### Working with Streaming Data
+
+```bash
+# Start global stream first (required for stream-aware tools)
+# Via MCP tool: start_global_stock_stream
+
+# Then use stream-aware operations
+# Via MCP tools: get_stock_stream_data, stream_aware_price_monitor, etc.
+```
+
+### C Performance Tools Usage
+
+```bash
+# Compile C programs (if needed)
+cd c_progs
+gcc -O3 -o filter_bars filter_bars.c -lm
+gcc -O3 -o stock_analyzer_json stock_analyzer_json.c cJSON.c -lm
+
+# Use via Python wrappers
+uv run python -c "from alpaca_mcp_server.tools import analyze_market_activity_fast"
+```
+
+## Project-Specific Gotchas
+
+1. **Always use `uv run`** - Direct Python execution will fail due to dependency isolation
+2. **Stream initialization** - Many tools require `start_global_stock_stream` to be called first
+3. **Trading hours** - Extended hours orders require explicit `extended_hours=True` parameter
+4. **Global config** - Trading thresholds and parameters are centralized in `config/global_config.json`
+5. **MCP compatibility** - Server includes Claude Code compatibility patches that auto-apply
+6. **Tool registration** - All tools must be registered in `server_components/tool_registrations.py`
+7. **Time zones** - All timestamps use America/New_York (ET) timezone
+8. **Paper trading** - Set `PAPER=true` in `.env` for testing (production uses paper API by default)
+9. **Test organization** - Tests are in `unit/`, `integration/`, and `performance/` subdirectories
+10. **Plot display** - Generated plots use ImageMagick's `display` command for visualization

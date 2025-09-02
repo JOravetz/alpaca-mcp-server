@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpaca Trading Dashboard - Enhanced UI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0ea5e9;
+            --primary-dark: #0284c7;
+            --secondary: #06b6d4;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #0f172a;
+            --dark-lighter: #1e293b;
+            --dark-card: #1a2332;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --success-glow: 0 0 30px rgba(16, 185, 129, 0.5);
+            --danger-glow: 0 0 30px rgba(239, 68, 68, 0.5);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            opacity: 0.05;
+            background-image: 
+                radial-gradient(circle at 20% 80%, var(--primary) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, var(--secondary) 0%, transparent 50%);
+            animation: bgPulse 20s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .market-status {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--dark-card);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .status-dot.offline {
+            background: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: var(--dark-card);
+            padding: 0.5rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+        }
+
+        /* Search and Filter Bar */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            background: var(--dark-card);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .filter-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--dark-card);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary);
+            background: rgba(14, 165, 233, 0.1);
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Tool Grid */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tool-card {
+            background: var(--dark-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(14, 165, 233, 0.2);
+            border-color: var(--primary);
+        }
+
+        .tool-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .tool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .tool-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tool-category {
+            padding: 0.25rem 0.75rem;
+            background: rgba(14, 165, 233, 0.1);
+            color: var(--primary);
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .tool-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .tool-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .tool-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--dark-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: scale(0.9) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            line-height: 1;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .param-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .param-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .param-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--dark-lighter);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .param-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+        }
+
+        .param-description {
+            margin-top: 0.25rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(14, 165, 233, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--dark-lighter);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+        }
+
+        /* Results Display */
+        .results-container {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--dark-lighter);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .results-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .copy-btn {
+            padding: 0.5rem 1rem;
+            background: var(--dark-card);
+            border: 1px solid var(--border);
+            border-radius: 0.25rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .copy-btn.copied {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .results-content {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Live Data Widget */
+        .live-data-widget {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--dark-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1rem;
+            width: 300px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .widget-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .live-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .widget-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .data-label {
+            color: var(--text-secondary);
+        }
+
+        .data-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .data-value.up {
+            color: var(--accent);
+        }
+
+        .data-value.down {
+            color: var(--danger);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .live-data-widget {
+                width: calc(100% - 2rem);
+                right: 1rem;
+                left: 1rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 1rem;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-lighter);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* Error Message */
+        .error-message {
+            padding: 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            border-radius: 0.5rem;
+            color: var(--danger);
+            margin-top: 1rem;
+        }
+
+        /* Success Message */
+        .success-message {
+            padding: 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 0.5rem;
+            color: var(--accent);
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <span>📈</span>
+            <span>Alpaca Trading Dashboard</span>
+        </div>
+        <div class="market-status">
+            <div class="status-indicator">
+                <span class="status-dot online"></span>
+                <span>Market: <span id="market-status">Checking...</span></span>
+            </div>
+            <div class="status-indicator">
+                <span class="status-dot online"></span>
+                <span>Backend: <span id="backend-status">Connected</span></span>
+            </div>
+            <div class="status-indicator">
+                <span id="time-display">--:--:-- ET</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="tools">🔧 Trading Tools</button>
+            <button class="tab-btn" data-tab="market">📊 Market Data</button>
+            <button class="tab-btn" data-tab="scanning">🔍 Scanners</button>
+            <button class="tab-btn" data-tab="positions">💼 Positions</button>
+            <button class="tab-btn" data-tab="streaming">📡 Streaming</button>
+            <button class="tab-btn" data-tab="monitoring">👁️ Monitoring</button>
+            <button class="tab-btn" data-tab="technical">📈 Technical Analysis</button>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="controls">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="search-input" placeholder="Search tools...">
+            </div>
+            <button class="filter-btn" data-filter="all">All Tools</button>
+            <button class="filter-btn" data-filter="frequently-used">⭐ Frequently Used</button>
+            <button class="filter-btn" data-filter="fast">⚡ Fast Tools</button>
+        </div>
+
+        <!-- Tools Grid -->
+        <div class="tools-grid" id="tools-grid">
+            <!-- Tools will be dynamically loaded here -->
+        </div>
+    </div>
+
+    <!-- Tool Execution Modal -->
+    <div class="modal" id="tool-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">Tool Name</h2>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="param-container">
+                    <!-- Parameters will be dynamically added here -->
+                </div>
+                <div id="results-container" style="display: none;">
+                    <div class="results-container">
+                        <div class="results-header">
+                            <span class="results-title">Results</span>
+                            <button class="copy-btn" id="copy-results">Copy</button>
+                        </div>
+                        <div class="results-content" id="results-content">
+                            <!-- Results will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="modal-execute">Execute Tool</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Data Widget -->
+    <div class="live-data-widget">
+        <div class="widget-header">
+            <div class="widget-title">
+                <span class="live-indicator"></span>
+                <span>Live Market Data</span>
+            </div>
+        </div>
+        <div class="widget-content">
+            <div class="data-row">
+                <span class="data-label">SPY</span>
+                <span class="data-value" id="spy-price">---.--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">Active Streams</span>
+                <span class="data-value" id="active-streams">0</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">Open Positions</span>
+                <span class="data-value" id="open-positions">0</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">Today's P&L</span>
+                <span class="data-value" id="daily-pnl">$0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_URL = 'http://localhost:8002';
+        
+        // Tool Categories
+        const TOOL_CATEGORIES = {
+            'market': ['get_stock_quote', 'get_stock_snapshots', 'get_stock_bars', 'get_stock_bars_intraday', 'get_stock_latest_bar', 'get_stock_latest_trade', 'get_stock_trades'],
+            'scanning': ['scan_day_trading_opportunities', 'scan_explosive_momentum', 'scan_after_hours_opportunities', 'scan_explosive_stocks_fast'],
+            'positions': ['get_account_info', 'get_positions', 'get_open_position', 'close_position', 'close_all_positions'],
+            'streaming': ['start_global_stock_stream', 'stop_global_stock_stream', 'get_stock_stream_data', 'list_active_stock_streams', 'get_stock_stream_buffer_stats', 'clear_stock_stream_buffers'],
+            'monitoring': ['start_hybrid_monitoring', 'stop_hybrid_monitoring', 'get_hybrid_monitoring_status', 'verify_monitoring_active', 'add_symbols_to_watchlist', 'remove_symbols_from_watchlist', 'get_current_watchlist', 'get_current_trading_signals', 'get_profit_spike_alerts', 'check_positions_after_order', 'ping_monitoring_service', 'get_monitoring_alerts'],
+            'technical': ['get_stock_peak_trough_analysis', 'generate_stock_plot', 'analyze_peaks_troughs_fast', 'generate_advanced_technical_plots']
+        };
+
+        // Tool Descriptions
+        const TOOL_INFO = {
+            'get_stock_quote': {
+                name: 'Get Stock Quote',
+                description: 'Fetch latest quote data for a stock symbol',
+                icon: '💵',
+                category: 'Market Data'
+            },
+            'scan_day_trading_opportunities': {
+                name: 'Day Trading Scanner',
+                description: 'Find explosive UP-ONLY trading opportunities with extreme volatility',
+                icon: '🚀',
+                category: 'Scanning'
+            },
+            'get_stock_peak_trough_analysis': {
+                name: 'Peak/Trough Analysis',
+                description: 'Technical analysis with zero-phase Hanning filtering',
+                icon: '📊',
+                category: 'Technical Analysis'
+            },
+            'start_global_stock_stream': {
+                name: 'Start Live Stream',
+                description: 'Begin real-time WebSocket data streaming',
+                icon: '📡',
+                category: 'Streaming'
+            },
+            'get_positions': {
+                name: 'Get All Positions',
+                description: 'View all current portfolio positions',
+                icon: '💼',
+                category: 'Portfolio'
+            },
+            'analyze_market_activity_fast': {
+                name: 'Fast Market Analyzer',
+                description: 'C-optimized ultra-fast market activity analysis (10x faster)',
+                icon: '⚡',
+                category: 'Fast Tools'
+            }
+        };
+
+        // Tool Parameters
+        const TOOL_PARAMS = {
+            'get_stock_quote': {
+                symbol: { type: 'text', required: true, default: 'SPY', description: 'Stock symbol to quote' }
+            },
+            'scan_day_trading_opportunities': {
+                symbols: { type: 'text', default: 'ALL', description: 'Symbols to scan (ALL for all tradeable)' },
+                max_symbols: { type: 'number', default: 10, description: 'Maximum results to return' }
+            },
+            'get_stock_peak_trough_analysis': {
+                symbols: { type: 'text', required: true, default: 'SPY', description: 'Stock symbols (comma-separated)' },
+                timeframe: { 
+                    type: 'select', 
+                    default: '1Min',
+                    options: ['1Min', '5Min', '15Min', '30Min', '1Hour'],
+                    description: 'Bar timeframe'
+                },
+                days: { type: 'number', default: 1, description: 'Days of history to analyze' }
+            },
+            'start_global_stock_stream': {
+                symbols: { type: 'text', required: true, description: 'Symbols to stream (comma-separated)' },
+                data_types: { 
+                    type: 'text', 
+                    default: 'trades,quotes,bars',
+                    description: 'Data types to stream'
+                }
+            },
+            'get_positions': {},
+            'analyze_market_activity_fast': {
+                max_results: { type: 'number', default: 10, description: 'Maximum results' },
+                min_percent_change: { type: 'number', default: 5, description: 'Minimum % change' }
+            }
+        };
+
+        // State Management
+        let currentTool = null;
+        let allTools = [];
+        let activeTab = 'tools';
+
+        // Initialize Dashboard
+        async function initDashboard() {
+            await loadTools();
+            setupEventListeners();
+            updateMarketStatus();
+            startLiveUpdates();
+        }
+
+        // Load Tools
+        async function loadTools() {
+            try {
+                const response = await fetch(`${API_URL}/api/status`);
+                const data = await response.json();
+                
+                if (data.tools_loaded) {
+                    allTools = data.tools_loaded;
+                    renderTools();
+                }
+            } catch (error) {
+                console.error('Failed to load tools:', error);
+                // Fallback to default tools
+                allTools = Object.keys(TOOL_INFO);
+                renderTools();
+            }
+        }
+
+        // Render Tools Grid
+        function renderTools(filter = 'all') {
+            const grid = document.getElementById('tools-grid');
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            
+            let toolsToShow = allTools;
+            
+            // Apply category filter based on active tab
+            if (activeTab !== 'tools') {
+                toolsToShow = toolsToShow.filter(tool => 
+                    TOOL_CATEGORIES[activeTab]?.includes(tool)
+                );
+            }
+            
+            // Apply search filter
+            if (searchTerm) {
+                toolsToShow = toolsToShow.filter(tool => 
+                    tool.toLowerCase().includes(searchTerm) ||
+                    TOOL_INFO[tool]?.description?.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Apply additional filters
+            if (filter === 'frequently-used') {
+                toolsToShow = toolsToShow.filter(tool => 
+                    ['get_stock_quote', 'scan_day_trading_opportunities', 'get_positions'].includes(tool)
+                );
+            } else if (filter === 'fast') {
+                toolsToShow = toolsToShow.filter(tool => 
+                    tool.includes('fast') || tool.includes('_c_')
+                );
+            }
+            
+            grid.innerHTML = toolsToShow.map(tool => {
+                const info = TOOL_INFO[tool] || {
+                    name: tool.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                    description: 'Execute this trading tool',
+                    icon: '🔧',
+                    category: 'Tools'
+                };
+                
+                return `
+                    <div class="tool-card" data-tool="${tool}">
+                        <div class="tool-header">
+                            <div class="tool-title">
+                                <span>${info.icon}</span>
+                                <span>${info.name}</span>
+                            </div>
+                            <span class="tool-category">${info.category}</span>
+                        </div>
+                        <div class="tool-description">${info.description}</div>
+                        <div class="tool-stats">
+                            <div class="tool-stat">
+                                <span>⚡</span>
+                                <span>Instant</span>
+                            </div>
+                            <div class="tool-stat">
+                                <span>✅</span>
+                                <span>Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Add click handlers
+            document.querySelectorAll('.tool-card').forEach(card => {
+                card.addEventListener('click', () => openToolModal(card.dataset.tool));
+            });
+        }
+
+        // Open Tool Modal
+        function openToolModal(toolName) {
+            currentTool = toolName;
+            const modal = document.getElementById('tool-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const paramContainer = document.getElementById('param-container');
+            const resultsContainer = document.getElementById('results-container');
+            
+            // Set title
+            const info = TOOL_INFO[toolName] || { name: toolName.replace(/_/g, ' ') };
+            modalTitle.textContent = info.name;
+            
+            // Clear previous results
+            resultsContainer.style.display = 'none';
+            document.getElementById('results-content').textContent = '';
+            
+            // Build parameter form
+            const params = TOOL_PARAMS[toolName] || {};
+            
+            if (Object.keys(params).length === 0) {
+                paramContainer.innerHTML = '<p style="color: var(--text-secondary);">This tool requires no parameters.</p>';
+            } else {
+                paramContainer.innerHTML = Object.entries(params).map(([key, config]) => {
+                    const required = config.required ? '*' : '';
+                    
+                    let inputHtml = '';
+                    if (config.type === 'select') {
+                        inputHtml = `
+                            <select class="param-input" id="param-${key}">
+                                ${config.options.map(opt => 
+                                    `<option value="${opt}" ${opt === config.default ? 'selected' : ''}>${opt}</option>`
+                                ).join('')}
+                            </select>
+                        `;
+                    } else if (config.type === 'number') {
+                        inputHtml = `
+                            <input type="number" class="param-input" id="param-${key}" 
+                                   value="${config.default || ''}" 
+                                   placeholder="${config.description || key}">
+                        `;
+                    } else {
+                        inputHtml = `
+                            <input type="text" class="param-input" id="param-${key}" 
+                                   value="${config.default || ''}" 
+                                   placeholder="${config.description || key}">
+                        `;
+                    }
+                    
+                    return `
+                        <div class="param-group">
+                            <label class="param-label">${key}${required}</label>
+                            ${inputHtml}
+                            ${config.description ? `<div class="param-description">${config.description}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            modal.classList.add('active');
+        }
+
+        // Execute Tool
+        async function executeTool() {
+            if (!currentTool) return;
+            
+            const executeBtn = document.getElementById('modal-execute');
+            const resultsContainer = document.getElementById('results-container');
+            const resultsContent = document.getElementById('results-content');
+            
+            // Gather parameters
+            const params = TOOL_PARAMS[currentTool] || {};
+            const paramValues = {};
+            
+            for (const [key, config] of Object.entries(params)) {
+                const element = document.getElementById(`param-${key}`);
+                if (element) {
+                    let value = element.value;
+                    if (config.type === 'number' && value) {
+                        value = parseFloat(value);
+                    }
+                    if (value !== '' && value !== null) {
+                        paramValues[key] = value;
+                    }
+                }
+            }
+            
+            // Show loading state
+            executeBtn.disabled = true;
+            executeBtn.textContent = 'Executing...';
+            resultsContent.innerHTML = '<div class="spinner"></div>';
+            resultsContainer.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/execute/tool/${currentTool}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ parameters: paramValues })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultsContent.textContent = typeof result.result === 'string' 
+                        ? result.result 
+                        : JSON.stringify(result.result, null, 2);
+                } else {
+                    resultsContent.innerHTML = `<div class="error-message">Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultsContent.innerHTML = `<div class="error-message">Failed to execute tool: ${error.message}</div>`;
+            } finally {
+                executeBtn.disabled = false;
+                executeBtn.textContent = 'Execute Tool';
+            }
+        }
+
+        // Copy Results
+        function copyResults() {
+            const content = document.getElementById('results-content').textContent;
+            navigator.clipboard.writeText(content).then(() => {
+                const copyBtn = document.getElementById('copy-results');
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // Update Market Status
+        async function updateMarketStatus() {
+            try {
+                const response = await fetch(`${API_URL}/api/execute/tool/get_market_clock`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ parameters: {} })
+                });
+                
+                const result = await response.json();
+                if (result.success && result.result.includes('OPEN')) {
+                    document.getElementById('market-status').textContent = 'Open';
+                    document.querySelector('.status-dot').classList.add('online');
+                } else {
+                    document.getElementById('market-status').textContent = 'Closed';
+                    document.querySelector('.status-dot').classList.remove('online');
+                    document.querySelector('.status-dot').classList.add('offline');
+                }
+            } catch (error) {
+                document.getElementById('market-status').textContent = 'Unknown';
+            }
+        }
+
+        // Start Live Updates
+        function startLiveUpdates() {
+            // Update time every second
+            setInterval(() => {
+                const now = new Date();
+                const etTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
+                document.getElementById('time-display').textContent = 
+                    etTime.toLocaleTimeString('en-US', { hour12: false }) + ' ET';
+            }, 1000);
+            
+            // Update market data every 5 seconds
+            setInterval(updateLiveData, 5000);
+        }
+
+        // Update Live Data
+        async function updateLiveData() {
+            try {
+                // Get SPY price
+                const response = await fetch(`${API_URL}/api/execute/tool/get_stock_quote`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ parameters: { symbol: 'SPY' } })
+                });
+                
+                const result = await response.json();
+                if (result.success && result.result) {
+                    const match = result.result.match(/Ask: \$([0-9.]+)/);
+                    if (match) {
+                        const price = parseFloat(match[1]);
+                        const priceElement = document.getElementById('spy-price');
+                        const oldPrice = parseFloat(priceElement.textContent) || price;
+                        
+                        priceElement.textContent = `$${price.toFixed(2)}`;
+                        priceElement.className = price > oldPrice ? 'data-value up' : 
+                                                 price < oldPrice ? 'data-value down' : 'data-value';
+                    }
+                }
+                
+                // Get positions count
+                const posResponse = await fetch(`${API_URL}/api/execute/tool/get_positions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ parameters: {} })
+                });
+                
+                const posResult = await posResponse.json();
+                if (posResult.success && posResult.result) {
+                    const posCount = (posResult.result.match(/Position \d+:/g) || []).length;
+                    document.getElementById('open-positions').textContent = posCount;
+                }
+            } catch (error) {
+                console.error('Failed to update live data:', error);
+            }
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Tab navigation
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    activeTab = e.target.dataset.tab;
+                    renderTools();
+                });
+            });
+            
+            // Search
+            document.getElementById('search-input').addEventListener('input', () => renderTools());
+            
+            // Filters
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    renderTools(e.target.dataset.filter);
+                });
+            });
+            
+            // Modal controls
+            document.getElementById('modal-close').addEventListener('click', () => {
+                document.getElementById('tool-modal').classList.remove('active');
+            });
+            
+            document.getElementById('modal-cancel').addEventListener('click', () => {
+                document.getElementById('tool-modal').classList.remove('active');
+            });
+            
+            document.getElementById('modal-execute').addEventListener('click', executeTool);
+            document.getElementById('copy-results').addEventListener('click', copyResults);
+            
+            // Close modal on background click
+            document.getElementById('tool-modal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) {
+                    e.currentTarget.classList.remove('active');
+                }
+            });
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>

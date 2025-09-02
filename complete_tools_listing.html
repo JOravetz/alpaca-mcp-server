@@ -1,0 +1,542 @@
+<!-- COMPLETE LISTING OF ALL 101 MCP TOOLS -->
+<!-- This section replaces the truncated version in the dashboard -->
+
+<!-- Account & Portfolio Tools (10) -->
+<h4 style="color: var(--accent-yellow); margin-top: 20px;">💰 Account & Portfolio (10 tools)</h4>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">1. check_positions_after_order(order_info=None)</div>
+    <div class="tool-description">Force immediate position check after order execution. Ensures real-time feedback on position changes.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: order_info (dict, optional) - Order details</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">2. check_positions_after_order_fastapi(order_info=None)</div>
+    <div class="tool-description">Check positions immediately after an order using the FastAPI service.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: order_info (dict, optional)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">3. close_all_positions()</div>
+    <div class="tool-description">Close all open positions immediately.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">4. close_position(symbol, qty=None, percentage=None)</div>
+    <div class="tool-description">Close a specific position by symbol.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), qty (optional), percentage (optional)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">5. get_account_info()</div>
+    <div class="tool-description">Get current account information including balances and status.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">6. get_fastapi_positions()</div>
+    <div class="tool-description">Get current positions from the FastAPI monitoring service with live P&L data.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">7. get_open_position(symbol)</div>
+    <div class="tool-description">Get details for a specific open position.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">8. get_positions()</div>
+    <div class="tool-description">Get all current positions in the portfolio.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">9. resource_account_status()</div>
+    <div class="tool-description">Tool mirror of account://status resource.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">10. resource_current_positions()</div>
+    <div class="tool-description">Tool mirror of positions://current resource.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+
+<!-- Assets & Organization Tools (10) -->
+<h4 style="color: var(--accent-yellow); margin-top: 20px;">🗂️ Assets & Organization (10 tools)</h4>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">11. add_symbols_to_fastapi_watchlist(symbols)</div>
+    <div class="tool-description">Add symbols to the FastAPI monitoring service watchlist.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (list, required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">12. add_symbols_to_watchlist(symbols)</div>
+    <div class="tool-description">Add symbols to the monitoring watchlist.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (list, required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">13. create_watchlist(name, symbols)</div>
+    <div class="tool-description">Create a new watchlist with specified symbols.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: name (required), symbols (list, required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">14. get_all_assets(asset_class=None, tradable_only=True, max_symbol_length=4)</div>
+    <div class="tool-description">Get all available assets with optional filtering.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: asset_class (optional), tradable_only (default: True), max_symbol_length (default: 4)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">15. get_asset_info(symbol)</div>
+    <div class="tool-description">Get detailed information about a specific asset.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">16. get_current_watchlist()</div>
+    <div class="tool-description">Get the current monitoring watchlist.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">17. get_watchlists()</div>
+    <div class="tool-description">Get all watchlists for the account.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">18. remove_symbols_from_fastapi_watchlist(symbols)</div>
+    <div class="tool-description">Remove symbols from the FastAPI monitoring service watchlist.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (list, required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">19. remove_symbols_from_watchlist(symbols)</div>
+    <div class="tool-description">Remove symbols from the monitoring watchlist.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (list, required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">20. update_watchlist(watchlist_id, name=None, symbols=None)</div>
+    <div class="tool-description">Update an existing watchlist.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: watchlist_id (required), name (optional), symbols (list, optional)</div>
+</div>
+
+<!-- Market Data Tools (22) -->
+<h4 style="color: var(--accent-yellow); margin-top: 20px;">📊 Market Data (22 tools)</h4>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">21. add_symbols_to_stock_stream(symbols, data_types=None)</div>
+    <div class="tool-description">Add symbols to existing stock stream.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (required), data_types (optional)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">22. clear_stock_stream_buffers()</div>
+    <div class="tool-description">Clear streaming buffers to free memory.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">23. compare_bar_types(symbol, days=1, time_bars_minutes=5, volume_threshold=None)</div>
+    <div class="tool-description">Compare statistical properties of time bars vs volume bars.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), days (default: 1), time_bars_minutes (default: 5), volume_threshold (optional)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">24. generate_stock_plot(symbols, timeframe="1Min", days=1, window=None, lookahead=None)</div>
+    <div class="tool-description">Generate stock analysis plots using the plot.py script with ImageMagick display.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (required), timeframe (default: "1Min"), days (default: 1), window (from config), lookahead (from config)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">25. get_option_latest_quote(symbol)</div>
+    <div class="tool-description">Get latest quote for an option contract.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">26. get_stock_bars(symbol, days=5)</div>
+    <div class="tool-description">Get historical price bars.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), days (default: 5)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">27. get_stock_bars_intraday(symbol, timeframe="1Min", days=1, limit=10000)</div>
+    <div class="tool-description">Get intraday historical bars with analysis.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), timeframe (default: "1Min"), days (default: 1), limit (default: 10000)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">28. get_stock_latest_bar(symbol)</div>
+    <div class="tool-description">Get the latest minute bar for a stock.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">29. get_stock_latest_trade(symbol)</div>
+    <div class="tool-description">Get the latest trade for a stock.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">30. get_stock_peak_trough_analysis(symbols, timeframe="1Min", days=1, window_len=11, lookahead=1)</div>
+    <div class="tool-description">Get stock peak and trough analysis for day trading signals using zero-phase Hanning filtering.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (required or "AUTO"), timeframe (default: "1Min"), days (default: 1), window_len (default: 11 from config), lookahead (default: 1 from config)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">31. get_stock_quote(symbol)</div>
+    <div class="tool-description">Get latest bid/ask quote for a stock.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">32. get_stock_snapshots(symbols)</div>
+    <div class="tool-description">Get comprehensive market snapshots for multiple symbols.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (required, comma-separated)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">33. get_stock_stream_buffer_stats()</div>
+    <div class="tool-description">Get detailed streaming buffer statistics.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">34. get_stock_stream_data(symbol, data_type, limit=None, recent_seconds=None)</div>
+    <div class="tool-description">Get streaming data for analysis.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), data_type (required), limit (optional), recent_seconds (optional)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">35. get_stock_trades(symbol, days=5, limit=None)</div>
+    <div class="tool-description">Get recent trades for a stock.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), days (default: 5), limit (optional)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">36. get_volume_bar_stats(symbol=None)</div>
+    <div class="tool-description">Get current volume bar statistics and recent bars.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (optional, None for all)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">37. get_volume_bars_from_history(symbol, volume_threshold=None, days=1)</div>
+    <div class="tool-description">Generate volume bars from historical data using López de Prado's methodology.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), volume_threshold (auto-calculated if None), days (default: 1)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">38. list_active_stock_streams()</div>
+    <div class="tool-description">List all active streaming subscriptions.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">39. scan_explosive_stocks_fast(max_results=20, min_percent_change=10, max_price=30)</div>
+    <div class="tool-description">Lightning-fast scan for explosive penny stocks using C analyzer.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: max_results (default: 20), min_percent_change (default: 10), max_price (default: 30)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">40. start_global_stock_stream(symbols, data_types=None, feed="sip", duration_seconds=None)</div>
+    <div class="tool-description">Start global real-time stock data stream for day trading.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (required), data_types (optional), feed (default: "sip"), duration_seconds (optional)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">41. start_volume_bar_streaming(symbols, volume_thresholds=None, auto_calculate=True)</div>
+    <div class="tool-description">Start real-time volume bar aggregation using existing stream.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (required), volume_thresholds (optional), auto_calculate (default: True)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">42. stop_global_stock_stream()</div>
+    <div class="tool-description">Stop the global stock streaming session.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+
+<!-- Market Info Tools (6) -->
+<h4 style="color: var(--accent-yellow); margin-top: 20px;">🌍 Market Info (6 tools)</h4>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">43. analyze_market_activity_fast(symbols=None, max_results=10, min_percent_change=5)</div>
+    <div class="tool-description">Ultra-fast market activity analysis using C implementation (10x+ faster).</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (optional), max_results (default: 10), min_percent_change (default: 5)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">44. get_extended_market_clock()</div>
+    <div class="tool-description">Enhanced market clock with pre/post market sessions.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">45. get_market_calendar(start_date, end_date)</div>
+    <div class="tool-description">Get market calendar for specified date range.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: start_date (required), end_date (required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">46. get_market_clock()</div>
+    <div class="tool-description">Get current market status and next open/close times.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">47. resource_market_conditions()</div>
+    <div class="tool-description">Tool mirror of market://conditions resource.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">48. resource_market_momentum(symbol="SPY", timeframe_minutes=1, analysis_hours=2)</div>
+    <div class="tool-description">Tool mirror of market://momentum resource.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (default: "SPY"), timeframe_minutes (default: 1), analysis_hours (default: 2)</div>
+</div>
+
+<!-- Monitoring Services Tools (10) -->
+<h4 style="color: var(--accent-yellow); margin-top: 20px;">📡 Monitoring Services (10 tools)</h4>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">49. get_fastapi_monitoring_status()</div>
+    <div class="tool-description">Get comprehensive status from the FastAPI monitoring service.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">50. get_fastapi_signals()</div>
+    <div class="tool-description">Get current trading signals from the FastAPI monitoring service.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">51. get_hybrid_monitoring_status()</div>
+    <div class="tool-description">Get current status of the hybrid monitoring service.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">52. get_monitoring_alerts(count=10)</div>
+    <div class="tool-description">Get recent monitoring alerts.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: count (default: 10)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">53. ping_monitoring_service()</div>
+    <div class="tool-description">Ping the hybrid monitoring service to verify it's alive and responsive.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">54. start_fastapi_monitoring_service()</div>
+    <div class="tool-description">Start the FastAPI monitoring service on port 8001.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">55. start_hybrid_monitoring(check_interval=2, max_concurrent_positions=5)</div>
+    <div class="tool-description">Start the hybrid trading monitoring service.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: check_interval (default: 2), max_concurrent_positions (default: 5)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">56. stop_fastapi_monitoring_service()</div>
+    <div class="tool-description">Stop the FastAPI monitoring service gracefully.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">57. stop_hybrid_monitoring()</div>
+    <div class="tool-description">Stop the hybrid trading monitoring service.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">58. verify_monitoring_active()</div>
+    <div class="tool-description">Verify that monitoring is actually running and provide proof.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+
+<!-- Options Trading Tools (2) -->
+<h4 style="color: var(--accent-yellow); margin-top: 20px;">📈 Options Trading (2 tools)</h4>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">59. get_option_contracts(underlying_symbol, expiration_date=None, type=None)</div>
+    <div class="tool-description">Get option contracts for underlying symbol.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: underlying_symbol (required), expiration_date (optional), type (optional)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">60. get_option_snapshot(symbol)</div>
+    <div class="tool-description">Get comprehensive option snapshot with Greeks.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required)</div>
+</div>
+
+<!-- Order Management Tools (8) -->
+<h4 style="color: var(--accent-yellow); margin-top: 20px;">📋 Order Management (8 tools)</h4>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">61. cancel_all_orders()</div>
+    <div class="tool-description">Cancel all open orders.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">62. cancel_order_by_id(order_id)</div>
+    <div class="tool-description">Cancel a specific order by ID.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: order_id (required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">63. get_orders(status="all", limit=10)</div>
+    <div class="tool-description">Get orders with specified status.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: status (default: "all"), limit (default: 10)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">64. place_extended_hours_order(symbol, side, quantity, limit_price=None, extended_hours=None)</div>
+    <div class="tool-description">Place order with automatic extended hours detection.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), side (required), quantity (required), limit_price (optional), extended_hours (auto-detect)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">65. place_option_market_order(legs, quantity=1, order_class=None)</div>
+    <div class="tool-description">Place single or multi-leg options market order.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: legs (required), quantity (default: 1), order_class (optional)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">66. place_stock_order(symbol, side, quantity, order_type="market", limit_price=None, stop_price=None)</div>
+    <div class="tool-description">Place a stock order of any type.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), side (required), quantity (required), order_type (default: "market"), limit_price (optional), stop_price (optional)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">67. stream_optimized_order_placement(symbol, side, quantity, order_type="limit")</div>
+    <div class="tool-description">Place order using optimal pricing from active stream.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), side (required), quantity (required), order_type (default: "limit")</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">68. validate_extended_hours_order(symbol, order_type)</div>
+    <div class="tool-description">Validate if order can be placed in current market session.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), order_type (required)</div>
+</div>
+
+<!-- Scanning & Analysis Tools (3) -->
+<h4 style="color: var(--accent-yellow); margin-top: 20px;">🔍 Scanning & Analysis (3 tools)</h4>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">69. scan_after_hours_opportunities(symbols, min_volume=100000, min_percent_change=2.0)</div>
+    <div class="tool-description">Scan for after-hours trading opportunities with enhanced analytics.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (required), min_volume (default: 100000), min_percent_change (default: 2.0)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">70. scan_day_trading_opportunities(symbols="ALL", max_symbols=None, sort_by=None)</div>
+    <div class="tool-description">Scan for explosive up-only day-trading opportunities. Uses global config for thresholds.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (default: "ALL"), max_symbols (from config), sort_by (from config)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">71. scan_explosive_momentum(symbols=default_list, min_percent_change=15.0)</div>
+    <div class="tool-description">Quick scanner for explosive momentum moves.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (default: volatile stocks), min_percent_change (default: 15.0)</div>
+</div>
+
+<!-- Real-time Streaming Tools (2) -->
+<h4 style="color: var(--accent-yellow); margin-top: 20px;">🌊 Real-time Streaming (2 tools)</h4>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">72. get_enhanced_streaming_analytics(symbol, analysis_minutes=15, include_orderbook=True)</div>
+    <div class="tool-description">Enhanced streaming analytics with real-time calculations including VWAP, momentum, and volatility.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), analysis_minutes (default: 15), include_orderbook (default: True)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">73. stream_aware_price_monitor(symbol, analysis_seconds=10)</div>
+    <div class="tool-description">Enhanced real-time price monitoring using shared stream with concurrent analysis.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), analysis_seconds (default: 10)</div>
+</div>
+
+<!-- Help & Debugging Tools (6) -->
+<h4 style="color: var(--accent-yellow); margin-top: 20px;">❓ Help & Debugging (6 tools)</h4>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">74. cc_debug_tools()</div>
+    <div class="tool-description">Claude Code debug: List all registered tools.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">75. debug_mcp_tools()</div>
+    <div class="tool-description">Debug function to verify MCP tool registration for Claude Code compatibility.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">76. get_all_prompts_help()</div>
+    <div class="tool-description">Get help for all available workflows/prompts.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">77. get_all_tools_help()</div>
+    <div class="tool-description">Get help for all available tools organized by category.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">78. get_prompt_help(prompt_name)</div>
+    <div class="tool-description">Get comprehensive help for a specific workflow/prompt.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: prompt_name (required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">79. get_tool_help(tool_name)</div>
+    <div class="tool-description">Get comprehensive help for a specific tool.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: tool_name (required)</div>
+</div>
+
+<!-- System & Other Tools (22) -->
+<h4 style="color: var(--accent-yellow); margin-top: 20px;">⚙️ System & Other Tools (22 tools)</h4>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">80. analyze_peaks_troughs_fast(symbols, timeframe="1Min", days=1, window_len=None)</div>
+    <div class="tool-description">Ultra-fast peak/trough analysis using C implementation (5-10x faster).</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (required or "AUTO"), timeframe (default: "1Min"), days (default: 1), window_len (from config)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">81. cc_force_refresh()</div>
+    <div class="tool-description">Claude Code: Force tool list refresh.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">82. cc_test_simple()</div>
+    <div class="tool-description">Simple test tool for Claude Code.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">83. cleanup(remove_logs=True, remove_caches=True, remove_backups=True, dry_run=False)</div>
+    <div class="tool-description">Clean up unnecessary temporary files from the MCP server.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: remove_logs (default: True), remove_caches (default: True), remove_backups (default: True), dry_run (default: False)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">84. compare_analyzer_performance(test_symbols="AAPL,MSFT,NVDA,SPY,TSLA")</div>
+    <div class="tool-description">Compare performance between C analyzer and Python scanners.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: test_symbols (default: "AAPL,MSFT,NVDA,SPY,TSLA")</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">85. compare_peak_trough_implementations(symbol, timeframe="1Min", days=1)</div>
+    <div class="tool-description">Compare performance between C and Python peak/trough implementations.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbol (required), timeframe (default: "1Min"), days (default: 1)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">86. export_mcp_tools_list()</div>
+    <div class="tool-description">Export all tools in MCP tools/list response format.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">87. generate_advanced_technical_plots(symbols, timeframe="1Min", days=1, plot_mode="single")</div>
+    <div class="tool-description">Generate professional peak/trough analysis plots with zero-phase filtering.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: symbols (required), timeframe (default: "1Min"), days (default: 1), plot_mode (default: "single")</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">88. get_corporate_announcements(ca_types, since, until, symbol=None)</div>
+    <div class="tool-description">Get corporate action announcements for specified criteria.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: ca_types (required), since (required), until (required), symbol (optional)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">89. get_current_trading_signals()</div>
+    <div class="tool-description">Get current trading signals detected by the monitoring service.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">90. get_extended_hours_info()</div>
+    <div class="tool-description">Get comprehensive information about extended hours trading.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">91. get_mcp_tool_schema(tool_name)</div>
+    <div class="tool-description">Get MCP-compliant tool schema for a specific tool.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: tool_name (required)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">92. get_profit_spike_alerts(count=5)</div>
+    <div class="tool-description">Get latest profit spike alerts generated by real-time streaming monitoring.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: count (default: 5)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">93. get_single_day_pnl(date, symbol_filter=None, min_trade_value=0)</div>
+    <div class="tool-description">Calculate P&L for a SINGLE specific trading day only.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: date (required, YYYY-MM-DD), symbol_filter (optional), min_trade_value (default: 0)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">94. health_check()</div>
+    <div class="tool-description">Quick server health and status check.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">95. list_cleanup_candidates()</div>
+    <div class="tool-description">List all files that would be cleaned up without deleting them.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">96. resource_api_status()</div>
+    <div class="tool-description">Tool mirror of server://apis resource.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">97. resource_data_quality(latency_threshold_ms=500, quote_age_threshold_seconds=60)</div>
+    <div class="tool-description">Tool mirror of data://quality resource.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: latency_threshold_ms (default: 500), quote_age_threshold_seconds (default: 60)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">98. resource_intraday_pnl(days_back=0, include_open_positions=True, min_trade_value=0)</div>
+    <div class="tool-description">Tool mirror of positions://intraday_pnl resource.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: days_back (default: 0), include_open_positions (default: True), min_trade_value (default: 0)</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">99. resource_server_health()</div>
+    <div class="tool-description">Tool mirror of server://health resource.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">100. resource_session_status()</div>
+    <div class="tool-description">Tool mirror of server://session resource.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: None</div>
+</div>
+<div class="tool-item" style="margin-bottom: 15px;">
+    <div class="tool-name">101. search_tools(query)</div>
+    <div class="tool-description">Search tools by name, description, or category.</div>
+    <div style="color: var(--text-muted); font-size: 0.85rem;">Parameters: query (required)</div>
+</div>
+
+<!-- END OF ALL 101 TOOLS -->

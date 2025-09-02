@@ -42,6 +42,7 @@ dependencies = [
     "uvicorn>=0.34.3",
     "feedparser>=6.0.11",
     "toml>=0.10.2",
+    "playwright>=1.54.0",
 ]
 
 [project.scripts]

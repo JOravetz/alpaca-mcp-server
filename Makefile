@@ -1,7 +1,7 @@
 # Makefile for alpaca-mcp-server-enhanced
 # Ensures all Python commands use the correct uv environment
 
-.PHONY: help run-script news server test lint format clean install
+.PHONY: help run-script news server web-service monitoring test lint format clean install
 
 # Default target
 help:
@@ -9,6 +9,8 @@ help:
 	@echo "  make run-script SCRIPT=path/to/script.py  - Run any Python script"
 	@echo "  make news SYMBOLS='AAPL MSFT'            - Fetch news for stocks"
 	@echo "  make server                               - Start MCP server"
+	@echo "  make web-service                          - Start MCP Execution Service (REST API port 8002)"
+	@echo "  make monitoring                           - Start monitoring service (FastAPI port 8001)"
 	@echo "  make test                                 - Run test suite"
 	@echo "  make lint                                 - Run code quality checks"
 	@echo "  make format                               - Auto-format code"
@@ -34,6 +36,14 @@ news:
 # Start MCP server
 server:
 	uv run python -m alpaca_mcp_server.main
+
+# Start MCP Execution Service (REST API on port 8002)
+web-service:
+	uv run python -m alpaca_mcp_server.web.mcp_execution_service
+
+# Start monitoring service (FastAPI dashboard on port 8001)  
+monitoring:
+	uv run python -m alpaca_mcp_server.monitoring.fastapi_service
 
 # Run test suite
 test:

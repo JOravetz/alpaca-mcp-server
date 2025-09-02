@@ -1,0 +1,171 @@
+{
+  "timestamp": "2025-08-24T15:07:49.859091",
+  "summary": {
+    "total": 18,
+    "successful": 0,
+    "failed": 18,
+    "success_rate": 0.0
+  },
+  "results": [
+    {
+      "tool": "get_stock_quote",
+      "params": {
+        "symbol": "AAPL"
+      },
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6701250076293945
+    },
+    {
+      "tool": "get_stock_snapshots",
+      "params": {
+        "symbols": "AAPL,MSFT"
+      },
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6834316253662109
+    },
+    {
+      "tool": "get_stock_bars_intraday",
+      "params": {
+        "symbol": "SPY",
+        "days": 1
+      },
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6913247108459473
+    },
+    {
+      "tool": "get_stock_latest_bar",
+      "params": {
+        "symbol": "AAPL"
+      },
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6838562488555908
+    },
+    {
+      "tool": "scan_day_trading_opportunities",
+      "params": {},
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6911225318908691
+    },
+    {
+      "tool": "scan_explosive_momentum",
+      "params": {
+        "min_percent_change": 10
+      },
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.7014615535736084
+    },
+    {
+      "tool": "analyze_market_activity_fast",
+      "params": {},
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6750738620758057
+    },
+    {
+      "tool": "get_stock_peak_trough_analysis",
+      "params": {
+        "symbols": "AAPL"
+      },
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6720461845397949
+    },
+    {
+      "tool": "generate_stock_plot",
+      "params": {
+        "symbols": "SPY",
+        "no_plot": true
+      },
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.7011139392852783
+    },
+    {
+      "tool": "get_account_info",
+      "params": {},
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6746096611022949
+    },
+    {
+      "tool": "get_positions",
+      "params": {},
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6677839756011963
+    },
+    {
+      "tool": "get_orders",
+      "params": {},
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6864242553710938
+    },
+    {
+      "tool": "get_market_clock",
+      "params": {},
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6893928050994873
+    },
+    {
+      "tool": "get_extended_market_clock",
+      "params": {},
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6688721179962158
+    },
+    {
+      "tool": "resource_market_conditions",
+      "params": {},
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.7026181221008301
+    },
+    {
+      "tool": "health_check",
+      "params": {},
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6852014064788818
+    },
+    {
+      "tool": "resource_server_health",
+      "params": {},
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.6717572212219238
+    },
+    {
+      "tool": "resource_api_status",
+      "params": {},
+      "success": false,
+      "response": "",
+      "error": "Traceback (most recent call last):\n  File \"<string>\", line 5, in <module>\nModuleNotFoundError: No module named 'alpaca_mcp_server.tools.scanner_tools'",
+      "execution_time": 0.683117151260376
+    }
+  ]
+}

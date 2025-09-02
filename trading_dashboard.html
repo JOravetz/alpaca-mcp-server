@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading P&L Dashboard - Aug 21, 2025</title>
+    <title>Trading Dashboard - 2025-09-02</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
@@ -13,7 +13,7 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
             color: #ffffff;
             min-height: 100vh;
@@ -41,11 +41,40 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 10px;
+            animation: epic-rainbow 3s linear infinite;
+        }
+        
+        @keyframes epic-rainbow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
         }
         
         .timestamp {
             color: #888;
             font-size: 0.9rem;
+        }
+        
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(34, 197, 94, 0.2);
+            border-radius: 20px;
+            margin-top: 10px;
+        }
+        
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
         .metrics-grid {
@@ -87,8 +116,73 @@
             font-weight: 700;
         }
         
-        .profit-value {
+        .positive {
             color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            animation: great-flash 2s ease-in-out infinite;
+        }
+        
+        @keyframes great-flash {
+            0%, 100% { 
+                color: #00ff88;
+                text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            }
+            50% { 
+                color: #00ffcc;
+                text-shadow: 0 0 20px rgba(0, 255, 204, 0.8);
+            }
+        }
+        
+        .win-rate-100 {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.3);
+        }
+        
+        .win-rate-100::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .perfect-score {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #0a0a0f;
+            text-shadow: 
+                2px 2px 4px rgba(255, 255, 255, 0.8),
+                -1px -1px 2px rgba(255, 255, 255, 0.4),
+                0 0 30px rgba(255, 255, 255, 0.6);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .perfect-label {
+            font-size: 1.2rem;
+            color: #0a0a0f;
+            margin-top: 10px;
+            font-weight: 600;
+            text-shadow: 
+                1px 1px 2px rgba(255, 255, 255, 0.7),
+                -1px -1px 1px rgba(255, 255, 255, 0.3);
+            position: relative;
+            z-index: 1;
+            letter-spacing: 0.5px;
         }
         
         .charts-container {
@@ -134,17 +228,25 @@
             border-bottom: 2px solid rgba(255, 255, 255, 0.1);
         }
         
+        th:nth-child(2),
+        th:nth-child(3),
+        th:nth-child(4) {
+            text-align: right;
+        }
+        
         td {
             padding: 12px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
         
-        tr:hover {
-            background: rgba(255, 255, 255, 0.05);
+        td:nth-child(2),
+        td:nth-child(3),
+        td:nth-child(4) {
+            text-align: right;
         }
         
-        .positive {
-            color: #00ff88;
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
         }
         
         .badge {
@@ -160,99 +262,302 @@
             color: #00ff88;
         }
         
-        .win-rate-100 {
-            background: linear-gradient(135deg, #00ff88, #00d4ff);
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            margin-bottom: 30px;
-            position: relative;
+        /* Victory Animations */
+        .celebration-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
             overflow: hidden;
         }
         
-        .win-rate-100::before {
-            content: '';
+        .confetti {
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            animation: shine 3s infinite;
+            width: 10px;
+            height: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #ffe66d, #a8e6cf, #ff8cc8);
+            animation: confetti-fall linear;
+            opacity: 0.9;
         }
         
-        @keyframes shine {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
         }
         
-        .perfect-score {
-            font-size: 4rem;
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            animation: firework-explode 2s ease-out forwards;
+        }
+        
+        @keyframes firework-explode {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(var(--x), var(--y)) scale(2);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(calc(var(--x) * 2), calc(var(--y) * 2)) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        /* Victory text animations */
+        .victory-banner {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-50px);
+            font-size: 4.5rem;
             font-weight: 900;
-            color: #fff;
-            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700, #FFEB3B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: victory-bounce 2s ease-in-out, gold-shimmer 3s ease-in-out infinite;
+            text-shadow: 
+                3px 3px 6px rgba(0, 0, 0, 0.7),
+                -1px -1px 4px rgba(255, 215, 0, 0.5),
+                0 0 30px rgba(255, 215, 0, 0.8),
+                0 0 60px rgba(255, 165, 0, 0.6),
+                0 0 90px rgba(255, 223, 0, 0.4);
+            filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.8)) 
+                    drop-shadow(0 0 25px rgba(255, 215, 0, 0.9));
+            z-index: 10000;
+            pointer-events: none;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            text-align: center;
         }
         
-        .perfect-label {
-            font-size: 1.2rem;
-            color: #fff;
-            margin-top: 10px;
+        @keyframes gold-shimmer {
+            0%, 100% {
+                background-position: 0% 50%;
+                filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.8)) 
+                        drop-shadow(0 0 25px rgba(255, 215, 0, 0.9))
+                        brightness(1.2);
+            }
+            50% {
+                background-position: 100% 50%;
+                filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.8)) 
+                        drop-shadow(0 0 40px rgba(255, 215, 0, 1))
+                        brightness(1.5);
+            }
         }
         
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8rem;
+        @keyframes victory-bounce {
+            0%, 100% {
+                transform: translateX(-50%) translateY(-50px) scale(1);
             }
-            .metric-value {
-                font-size: 1.5rem;
+            25% {
+                transform: translateX(-50%) translateY(-70px) scale(1.2);
             }
-            .charts-container {
-                grid-template-columns: 1fr;
+            50% {
+                transform: translateX(-50%) translateY(-40px) scale(0.9);
+            }
+            75% {
+                transform: translateX(-50%) translateY(-60px) scale(1.1);
+            }
+        }
+        
+        /* Legendary celebration (>$10k) */
+        body.legendary-win {
+            animation: legendary-glow 3s ease-in-out infinite;
+        }
+        
+        @keyframes legendary-glow {
+            0%, 100% {
+                background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            }
+            50% {
+                background: linear-gradient(135deg, #0f1f1e 0%, #1a2a2e 100%);
+                box-shadow: inset 0 0 100px rgba(0, 255, 136, 0.2);
+            }
+        }
+        
+        .legendary-win .metric-card.profit {
+            animation: legendary-pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes legendary-pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 15px 60px rgba(0, 255, 136, 0.6);
+            }
+        }
+        
+        /* Epic celebration ($5k-$10k) */
+        body.epic-win .header h1 {
+            animation: epic-rainbow 3s linear infinite;
+        }
+        
+        @keyframes epic-rainbow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+        
+        /* Great celebration ($2.5k-$5k) */
+        body.great-win .metric-value.positive {
+            animation: great-flash 2s ease-in-out infinite;
+        }
+        
+        @keyframes great-flash {
+            0%, 100% { 
+                color: #00ff88;
+                text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            }
+            50% { 
+                color: #00ffcc;
+                text-shadow: 0 0 20px rgba(0, 255, 204, 0.8);
+            }
+        }
+        
+        /* Good celebration ($1k-$2.5k) */
+        body.good-win .live-indicator {
+            animation: good-celebrate 1s ease-in-out infinite;
+        }
+        
+        @keyframes good-celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        /* Money rain effect */
+        .money-rain {
+            position: absolute;
+            font-size: 30px;
+            animation: money-fall 3s linear;
+            pointer-events: none;
+        }
+        
+        @keyframes money-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Trophy animation */
+        .trophy {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 150px;
+            z-index: 10001;
+            animation: trophy-appear 3s ease-out forwards;
+            pointer-events: none;
+        }
+        
+        @keyframes trophy-appear {
+            0% {
+                transform: translate(-50%, -50%) scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2) rotate(360deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1) rotate(360deg);
+                opacity: 0.8;
+            }
+        }
+        
+        /* Sparkles */
+        .sparkle {
+            position: absolute;
+            color: #ffeb3b;
+            animation: sparkle-burst 1.5s ease-out forwards;
+            pointer-events: none;
+        }
+        
+        @keyframes sparkle-burst {
+            0% {
+                transform: translate(0, 0) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(1);
+                opacity: 0;
             }
         }
     </style>
 </head>
-<body>
+<body class="legendary-win">
+    <!-- Celebration Container for Animations -->
+    <div class="celebration-container" id="celebrationContainer"></div>
+    
     <div class="dashboard">
         <div class="header">
             <h1>Trading P&L Dashboard</h1>
-            <div class="timestamp">Thursday, August 21, 2025 | Morning Session | 06:31 AM EDT</div>
+            <div class="timestamp">Tuesday, September 02, 2025 | 04:52 PM EDT | After Hours 🌙</div>
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                <span>LIVE DATA</span>
+            </div>
         </div>
         
-        <div class="win-rate-100">
-            <div class="perfect-score">100%</div>
-            <div class="perfect-label">PERFECT WIN RATE - 5 WINS / 0 LOSSES</div>
-        </div>
+        <div class='win-rate-100'><div class='perfect-score'>100%</div><div class='perfect-label'>PERFECT WIN RATE - LEGENDARY TRADING!</div></div>
         
         <div class="metrics-grid">
             <div class="metric-card profit">
                 <div class="metric-label">Total P&L</div>
-                <div class="metric-value profit-value">+$23,690.16</div>
+                <div class="metric-value positive">+$12,000.00</div>
             </div>
             
             <div class="metric-card">
-                <div class="metric-label">Total Volume</div>
-                <div class="metric-value">$5.95M</div>
+                <div class="metric-label">Win Rate</div>
+                <div class="metric-value positive">100%</div>
             </div>
             
             <div class="metric-card">
                 <div class="metric-label">Total Trades</div>
-                <div class="metric-value">21</div>
+                <div class="metric-value">2</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Total Volume</div>
+                <div class="metric-value">$0.46M</div>
             </div>
             
             <div class="metric-card">
                 <div class="metric-label">Winning Trades</div>
-                <div class="metric-value positive">5</div>
+                <div class="metric-value positive">1</div>
             </div>
             
             <div class="metric-card">
                 <div class="metric-label">Average Win</div>
-                <div class="metric-value profit-value">$4,738</div>
+                <div class="metric-value positive">$12,000.00</div>
             </div>
             
             <div class="metric-card">
                 <div class="metric-label">Best Trade</div>
-                <div class="metric-value profit-value">THAR +$13,654</div>
+                <div class="metric-value positive">GEG +$12,000</div>
             </div>
         </div>
         
@@ -281,19 +586,27 @@
                     </tr>
                 </thead>
                 <tbody>
+                    
                     <tr>
-                        <td><strong>THAR</strong></td>
-                        <td class="positive">+$13,654.05</td>
-                        <td>8</td>
-                        <td>$3,235,536</td>
-                        <td><span class="badge badge-success">WINNER</span></td>
+                        <td><strong>GEG</strong></td>
+                        <td class="positive">+$12,000.00</td>
+                        <td>2</td>
+                        <td>$462,000</td>
+                        <td><span class="badge badge-success">LEGENDARY WIN!</span></td>
+                    </tr><tr><td colspan='5' style='padding-top: 20px;'><strong>Trade Details:</strong></td></tr>
+                    <tr style='background: rgba(0, 255, 136, 0.05);'>
+                        <td>GEG</td>
+                        <td>5:12 PM EDT</td>
+                        <td>BUY</td>
+                        <td>60,000 @ $3.75</td>
+                        <td>After Hours</td>
                     </tr>
-                    <tr>
-                        <td><strong>AEMD</strong></td>
-                        <td class="positive">+$10,036.11</td>
-                        <td>13</td>
-                        <td>$2,716,067</td>
-                        <td><span class="badge badge-success">WINNER</span></td>
+                    <tr style='background: rgba(0, 255, 136, 0.05);'>
+                        <td>GEG</td>
+                        <td>5:09 PM EDT</td>
+                        <td>SELL</td>
+                        <td>60,000 @ $3.95</td>
+                        <td>After Hours</td>
                     </tr>
                 </tbody>
             </table>
@@ -301,23 +614,33 @@
     </div>
     
     <script>
+        // Color palette
+        const colors = [
+            'rgba(0, 255, 136, 0.6)',
+            'rgba(0, 212, 255, 0.6)',
+            'rgba(255, 87, 51, 0.6)',
+            'rgba(255, 206, 86, 0.6)',
+            'rgba(153, 102, 255, 0.6)',
+            'rgba(255, 159, 64, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 144, 0, 0.6)'
+        ];
+        
+        const borderColors = colors.map(c => c.replace('0.6', '1'));
+        
         // P&L Chart
         const pnlCtx = document.getElementById('pnlChart').getContext('2d');
         new Chart(pnlCtx, {
             type: 'bar',
             data: {
-                labels: ['THAR', 'AEMD'],
+                labels: ["GEG"],
                 datasets: [{
                     label: 'Profit & Loss',
-                    data: [13654.05, 10036.11],
-                    backgroundColor: [
-                        'rgba(0, 255, 136, 0.6)',
-                        'rgba(0, 212, 255, 0.6)'
-                    ],
-                    borderColor: [
-                        'rgba(0, 255, 136, 1)',
-                        'rgba(0, 212, 255, 1)'
-                    ],
+                    data: [12000.0],
+                    backgroundColor: colors.slice(0, 1),
+                    borderColor: borderColors.slice(0, 1),
                     borderWidth: 2
                 }]
             },
@@ -366,17 +689,11 @@
         new Chart(volumeCtx, {
             type: 'doughnut',
             data: {
-                labels: ['THAR', 'AEMD'],
+                labels: ["GEG"],
                 datasets: [{
-                    data: [3235536, 2716067],
-                    backgroundColor: [
-                        'rgba(0, 255, 136, 0.6)',
-                        'rgba(0, 212, 255, 0.6)'
-                    ],
-                    borderColor: [
-                        'rgba(0, 255, 136, 1)',
-                        'rgba(0, 212, 255, 1)'
-                    ],
+                    data: [462000.0],
+                    backgroundColor: colors.slice(0, 1),
+                    borderColor: borderColors.slice(0, 1),
                     borderWidth: 2
                 }]
             },
@@ -414,9 +731,191 @@
                     card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
-                }, index * 100);
+                }, index * 50);
             });
+            
+            // Trigger celebrations based on profit level
+            const totalPnl = 12000.0;
+            const celebrationLevel = 'legendary';
+            
+            if (celebrationLevel !== 'none') {
+                triggerCelebration(celebrationLevel, totalPnl);
+            }
         });
+        
+        function triggerCelebration(level, profit) {
+            const container = document.getElementById('celebrationContainer');
+            
+            // Victory Banner
+            if (level === 'legendary' || level === 'epic') {
+                showVictoryBanner(profit, level);
+            }
+            
+            // Confetti for all wins
+            if (level !== 'none') {
+                createConfetti(level === 'legendary' ? 150 : level === 'epic' ? 100 : 50);
+            }
+            
+            // Money rain for significant wins
+            if (level === 'legendary' || level === 'epic' || level === 'great') {
+                createMoneyRain(level === 'legendary' ? 30 : 15);
+            }
+            
+            // Trophy for legendary wins
+            if (level === 'legendary') {
+                showTrophy();
+            }
+            
+            // Fireworks for epic+ wins
+            if (level === 'legendary' || level === 'epic') {
+                createFireworks(level === 'legendary' ? 5 : 3);
+            }
+            
+            // Sparkles for all wins
+            if (level !== 'none') {
+                createSparkles();
+            }
+            
+            // Play sound effect (optional - uncomment if you add sound files)
+            // playVictorySound(level);
+        }
+        
+        function showVictoryBanner(profit, level) {
+            const banner = document.createElement('div');
+            banner.className = 'victory-banner';
+            banner.innerHTML = level === 'legendary' ? 
+                `⚡ LEGENDARY WIN! 💰 ${profit.toLocaleString()} 🏆` : 
+                `🌟 EPIC VICTORY! 💵 ${profit.toLocaleString()} 🎉`;
+            document.body.appendChild(banner);
+            
+            setTimeout(() => {
+                banner.style.animation = 'victory-bounce 2s ease-in-out, fadeOut 0.5s ease-out 3s forwards';
+            }, 100);
+            
+            setTimeout(() => {
+                banner.remove();
+            }, 4000);
+        }
+        
+        function createConfetti(count) {
+            const container = document.getElementById('celebrationContainer');
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#a8e6cf', '#ff8cc8', '#00ff88', '#00d4ff'];
+            
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    container.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }, i * 30);
+            }
+        }
+        
+        function createMoneyRain(count) {
+            const container = document.getElementById('celebrationContainer');
+            const emojis = ['💰', '💵', '💸', '🤑', '💲'];
+            
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const money = document.createElement('div');
+                    money.className = 'money-rain';
+                    money.style.left = Math.random() * 100 + '%';
+                    money.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    money.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    money.style.animationDelay = Math.random() + 's';
+                    container.appendChild(money);
+                    
+                    setTimeout(() => {
+                        money.remove();
+                    }, 4000);
+                }, i * 200);
+            }
+        }
+        
+        function showTrophy() {
+            const trophy = document.createElement('div');
+            trophy.className = 'trophy';
+            trophy.textContent = '🏆';
+            document.body.appendChild(trophy);
+            
+            setTimeout(() => {
+                trophy.style.animation = 'trophy-appear 3s ease-out forwards, fadeOut 1s ease-out 4s forwards';
+            }, 500);
+            
+            setTimeout(() => {
+                trophy.remove();
+            }, 5000);
+        }
+        
+        function createFireworks(bursts) {
+            const container = document.getElementById('celebrationContainer');
+            
+            for (let b = 0; b < bursts; b++) {
+                setTimeout(() => {
+                    const centerX = Math.random() * window.innerWidth;
+                    const centerY = Math.random() * window.innerHeight * 0.5;
+                    const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#00ff88', '#ff8cc8'];
+                    
+                    for (let i = 0; i < 20; i++) {
+                        const firework = document.createElement('div');
+                        firework.className = 'firework';
+                        firework.style.left = centerX + 'px';
+                        firework.style.top = centerY + 'px';
+                        firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+                        
+                        const angle = (Math.PI * 2 * i) / 20;
+                        const velocity = 100 + Math.random() * 100;
+                        firework.style.setProperty('--x', Math.cos(angle) * velocity + 'px');
+                        firework.style.setProperty('--y', Math.sin(angle) * velocity + 'px');
+                        
+                        container.appendChild(firework);
+                        
+                        setTimeout(() => {
+                            firework.remove();
+                        }, 2000);
+                    }
+                }, b * 800);
+            }
+        }
+        
+        function createSparkles() {
+            const container = document.getElementById('celebrationContainer');
+            const sparkleCount = 20;
+            
+            for (let i = 0; i < sparkleCount; i++) {
+                setTimeout(() => {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle';
+                    sparkle.textContent = '✨';
+                    sparkle.style.left = Math.random() * 100 + '%';
+                    sparkle.style.top = Math.random() * 100 + '%';
+                    sparkle.style.setProperty('--tx', (Math.random() - 0.5) * 200 + 'px');
+                    sparkle.style.setProperty('--ty', (Math.random() - 0.5) * 200 + 'px');
+                    container.appendChild(sparkle);
+                    
+                    setTimeout(() => {
+                        sparkle.remove();
+                    }, 1500);
+                }, i * 100);
+            }
+        }
+        
+        // Add CSS for fadeOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>

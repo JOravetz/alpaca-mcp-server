@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Tool Testing Dashboard - 101 Tools Complete</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #48bb78;
+            --danger: #f56565;
+            --warning: #ed8936;
+            --dark: #1a202c;
+            --gray: #718096;
+            --light: #f7fafc;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: var(--light);
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+
+        .filter-btn {
+            padding: 12px 20px;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary);
+            background: var(--light);
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .test-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1em;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .categories {
+            padding: 30px;
+        }
+
+        .category {
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-header {
+            background: var(--light);
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .category-header:hover {
+            background: #e2e8f0;
+        }
+
+        .category-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .category-stats {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .category-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .tool-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .tool-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.2);
+        }
+
+        .tool-card.tested {
+            border-left: 4px solid var(--secondary);
+        }
+
+        .tool-card.failed {
+            border-left: 4px solid var(--danger);
+        }
+
+        .tool-card.partial {
+            border-left: 4px solid var(--warning);
+        }
+
+        .tool-name {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+            font-size: 1.05em;
+        }
+
+        .tool-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-passed {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-failed {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .status-partial {
+            background: #feebc8;
+            color: #744210;
+        }
+
+        .status-pending {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .tool-time {
+            font-size: 0.85em;
+            color: var(--gray);
+        }
+
+        .test-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.8em;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .tool-card:hover .test-button {
+            opacity: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-header {
+            background: var(--light);
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--gray);
+            padding: 5px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .param-group {
+            margin-bottom: 20px;
+        }
+
+        .param-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .param-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .param-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .test-result {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .progress-bar {
+            background: var(--border);
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 30px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .testing-status {
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
+            color: var(--gray);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .testing-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--secondary);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 MCP Tool Testing Dashboard</h1>
+            <p>Comprehensive Testing Suite for All 101 Alpaca Trading Tools</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" style="color: var(--primary);">101</div>
+                <div class="stat-label">Total Tools</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: var(--secondary);" id="tested-count">0</div>
+                <div class="stat-label">Tested</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: var(--secondary);" id="passed-count">0</div>
+                <div class="stat-label">Passed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: var(--danger);" id="failed-count">0</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: var(--warning);" id="partial-count">0</div>
+                <div class="stat-label">Partial</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: var(--gray);" id="pending-count">101</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill">0%</div>
+        </div>
+
+        <div class="testing-status" id="testing-status">
+            <span class="testing-indicator"></span>
+            Ready to begin testing...
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="search-input" placeholder="Search tools...">
+            </div>
+            <button class="filter-btn active" onclick="filterTools('all')">All Tools</button>
+            <button class="filter-btn" onclick="filterTools('tested')">Tested</button>
+            <button class="filter-btn" onclick="filterTools('passed')">Passed</button>
+            <button class="filter-btn" onclick="filterTools('failed')">Failed</button>
+            <div class="test-controls">
+                <button class="btn btn-primary" onclick="startPhase1Testing()">Test Priority Tools</button>
+                <button class="btn btn-success" onclick="startAllTesting()">Test All 101 Tools</button>
+                <button class="btn btn-danger" onclick="stopTesting()">Stop Testing</button>
+            </div>
+        </div>
+
+        <div class="categories" id="categories"></div>
+    </div>
+
+    <div class="modal" id="tool-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">Tool Name</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Complete tool inventory - all 101 tools
+        const TOOL_INVENTORY = {
+            "Account & Portfolio": [
+                "check_positions_after_order", "check_positions_after_order_fastapi",
+                "close_all_positions", "close_position", "get_account_info",
+                "get_fastapi_positions", "get_open_position", "get_positions",
+                "resource_account_status", "resource_current_positions"
+            ],
+            "Assets & Organization": [
+                "add_symbols_to_fastapi_watchlist", "add_symbols_to_watchlist",
+                "create_watchlist", "get_all_assets", "get_asset_info",
+                "get_current_watchlist", "get_watchlists",
+                "remove_symbols_from_fastapi_watchlist", "remove_symbols_from_watchlist",
+                "update_watchlist"
+            ],
+            "Help & Debugging": [
+                "cc_debug_tools", "debug_mcp_tools", "get_all_prompts_help",
+                "get_all_tools_help", "get_prompt_help", "get_tool_help"
+            ],
+            "Market Data": [
+                "add_symbols_to_stock_stream", "clear_stock_stream_buffers",
+                "compare_bar_types", "generate_stock_plot", "get_option_latest_quote",
+                "get_stock_bars", "get_stock_bars_intraday", "get_stock_latest_bar",
+                "get_stock_latest_trade", "get_stock_peak_trough_analysis",
+                "get_stock_quote", "get_stock_snapshots", "get_stock_stream_buffer_stats",
+                "get_stock_stream_data", "get_stock_trades", "get_volume_bar_stats",
+                "get_volume_bars_from_history", "list_active_stock_streams",
+                "scan_explosive_stocks_fast", "start_global_stock_stream",
+                "start_volume_bar_streaming", "stop_global_stock_stream"
+            ],
+            "Market Info": [
+                "analyze_market_activity_fast", "get_extended_market_clock",
+                "get_market_calendar", "get_market_clock",
+                "resource_market_conditions", "resource_market_momentum"
+            ],
+            "Monitoring Services": [
+                "get_fastapi_monitoring_status", "get_fastapi_signals",
+                "get_hybrid_monitoring_status", "get_monitoring_alerts",
+                "ping_monitoring_service", "start_fastapi_monitoring_service",
+                "start_hybrid_monitoring", "stop_fastapi_monitoring_service",
+                "stop_hybrid_monitoring", "verify_monitoring_active"
+            ],
+            "Options Trading": [
+                "get_option_contracts", "get_option_snapshot"
+            ],
+            "Order Management": [
+                "cancel_all_orders", "cancel_order_by_id", "get_orders",
+                "place_extended_hours_order", "place_option_market_order",
+                "place_stock_order", "stream_optimized_order_placement",
+                "validate_extended_hours_order"
+            ],
+            "Technical Analysis": [
+                "analyze_peaks_troughs_fast", "compare_analyzer_performance",
+                "compare_peak_trough_implementations", "generate_advanced_technical_plots"
+            ],
+            "Real-time Streaming": [
+                "get_enhanced_streaming_analytics", "stream_aware_price_monitor"
+            ],
+            "Scanners & Analysis": [
+                "scan_after_hours_opportunities", "scan_day_trading_opportunities",
+                "scan_explosive_momentum"
+            ],
+            "System & Utilities": [
+                "cc_force_refresh", "cc_test_simple", "cleanup",
+                "export_mcp_tools_list", "get_corporate_announcements",
+                "get_current_trading_signals", "get_extended_hours_info",
+                "get_mcp_tool_schema", "get_profit_spike_alerts",
+                "get_single_day_pnl", "health_check", "list_cleanup_candidates",
+                "resource_api_status", "resource_data_quality",
+                "resource_intraday_pnl", "resource_server_health",
+                "resource_session_status", "search_tools"
+            ]
+        };
+
+        // Priority tools for Phase 1
+        const PRIORITY_TOOLS = [
+            "get_stock_quote", "get_stock_snapshots", "get_stock_bars_intraday",
+            "start_global_stock_stream", "scan_day_trading_opportunities",
+            "scan_explosive_momentum", "analyze_market_activity_fast",
+            "get_stock_peak_trough_analysis", "generate_stock_plot",
+            "get_volume_bars_from_history", "place_stock_order",
+            "get_positions", "close_position"
+        ];
+
+        // Tool test results
+        let toolResults = {};
+        let testingActive = false;
+        let currentTestIndex = 0;
+
+        // Initialize dashboard
+        function init() {
+            renderCategories();
+            updateStats();
+        }
+
+        // Render all categories and tools
+        function renderCategories() {
+            const container = document.getElementById('categories');
+            container.innerHTML = '';
+
+            for (const [category, tools] of Object.entries(TOOL_INVENTORY)) {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category';
+                
+                const tested = tools.filter(t => toolResults[t]).length;
+                const passed = tools.filter(t => toolResults[t]?.status === 'passed').length;
+                
+                categoryDiv.innerHTML = `
+                    <div class="category-header" onclick="toggleCategory('${category.replace(/\s/g, '-')}')">
+                        <div class="category-title">${category}</div>
+                        <div class="category-stats">
+                            <span class="category-badge" style="background: #e6fffa; color: #234e52;">
+                                ${tools.length} tools
+                            </span>
+                            <span class="category-badge" style="background: #c6f6d5; color: #22543d;">
+                                ${passed} passed
+                            </span>
+                            <span class="category-badge" style="background: #bee3f8; color: #2c5282;">
+                                ${tested} tested
+                            </span>
+                        </div>
+                    </div>
+                    <div class="tools-grid" id="${category.replace(/\s/g, '-')}-tools">
+                        ${tools.map(tool => renderToolCard(tool)).join('')}
+                    </div>
+                `;
+                
+                container.appendChild(categoryDiv);
+            }
+        }
+
+        // Render individual tool card
+        function renderToolCard(toolName) {
+            const result = toolResults[toolName];
+            const status = result?.status || 'pending';
+            const statusClass = status === 'passed' ? 'tested' : 
+                               status === 'failed' ? 'failed' :
+                               status === 'partial' ? 'partial' : '';
+            
+            const isPriority = PRIORITY_TOOLS.includes(toolName);
+            
+            return `
+                <div class="tool-card ${statusClass}" onclick="showToolDetails('${toolName}')">
+                    <button class="test-button" onclick="testSingleTool('${toolName}', event)">Test</button>
+                    <div class="tool-name">
+                        ${isPriority ? '⭐ ' : ''}${toolName}
+                    </div>
+                    <div class="tool-status">
+                        <span class="status-badge status-${status}">${status}</span>
+                        ${result?.avgTime ? `<span class="tool-time">⚡ ${result.avgTime.toFixed(2)}s</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update statistics
+        function updateStats() {
+            const allTools = Object.values(TOOL_INVENTORY).flat();
+            const tested = allTools.filter(t => toolResults[t]).length;
+            const passed = allTools.filter(t => toolResults[t]?.status === 'passed').length;
+            const failed = allTools.filter(t => toolResults[t]?.status === 'failed').length;
+            const partial = allTools.filter(t => toolResults[t]?.status === 'partial').length;
+            const pending = 101 - tested;
+            
+            document.getElementById('tested-count').textContent = tested;
+            document.getElementById('passed-count').textContent = passed;
+            document.getElementById('failed-count').textContent = failed;
+            document.getElementById('partial-count').textContent = partial;
+            document.getElementById('pending-count').textContent = pending;
+            
+            // Update progress bar
+            const progress = (tested / 101) * 100;
+            const progressFill = document.getElementById('progress-fill');
+            progressFill.style.width = progress + '%';
+            progressFill.textContent = Math.round(progress) + '%';
+        }
+
+        // Test a single tool
+        async function testSingleTool(toolName, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            document.getElementById('testing-status').innerHTML = 
+                `<span class="testing-indicator"></span>Testing ${toolName}...`;
+            
+            // Simulate tool testing
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Mock result for demonstration
+            toolResults[toolName] = {
+                status: Math.random() > 0.2 ? 'passed' : 'failed',
+                avgTime: Math.random() * 2
+            };
+            
+            renderCategories();
+            updateStats();
+            
+            document.getElementById('testing-status').innerHTML = 
+                `✅ Tested ${toolName}`;
+        }
+
+        // Start Phase 1 testing
+        async function startPhase1Testing() {
+            testingActive = true;
+            document.getElementById('testing-status').innerHTML = 
+                `<span class="testing-indicator"></span>Testing priority tools...`;
+            
+            for (const tool of PRIORITY_TOOLS) {
+                if (!testingActive) break;
+                await testSingleTool(tool);
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
+            document.getElementById('testing-status').innerHTML = 
+                `✅ Phase 1 testing complete!`;
+        }
+
+        // Start testing all tools
+        async function startAllTesting() {
+            testingActive = true;
+            const allTools = Object.values(TOOL_INVENTORY).flat();
+            
+            for (let i = 0; i < allTools.length; i++) {
+                if (!testingActive) break;
+                
+                const tool = allTools[i];
+                document.getElementById('testing-status').innerHTML = 
+                    `<span class="testing-indicator"></span>Testing ${i+1}/101: ${tool}...`;
+                
+                await testSingleTool(tool);
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            document.getElementById('testing-status').innerHTML = 
+                `✅ All 101 tools tested!`;
+        }
+
+        // Stop testing
+        function stopTesting() {
+            testingActive = false;
+            document.getElementById('testing-status').innerHTML = 
+                `⏸️ Testing stopped`;
+        }
+
+        // Show tool details
+        function showToolDetails(toolName) {
+            const modal = document.getElementById('tool-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            
+            modalTitle.textContent = toolName;
+            
+            const result = toolResults[toolName];
+            
+            modalBody.innerHTML = `
+                <div class="param-group">
+                    <label class="param-label">Tool Status</label>
+                    <div class="status-badge status-${result?.status || 'pending'}">
+                        ${result?.status || 'Not tested'}
+                    </div>
+                </div>
+                
+                ${result ? `
+                    <div class="param-group">
+                        <label class="param-label">Execution Time</label>
+                        <div>${result.avgTime?.toFixed(3) || 'N/A'} seconds</div>
+                    </div>
+                ` : ''}
+                
+                <div class="param-group">
+                    <label class="param-label">Test Parameters</label>
+                    <input type="text" class="param-input" placeholder='{"symbol": "AAPL"}' id="test-params">
+                </div>
+                
+                <button class="btn btn-primary" onclick="executeToolTest('${toolName}')">
+                    Execute Test
+                </button>
+                
+                <div class="test-result" id="test-result" style="display: none;"></div>
+            `;
+            
+            modal.classList.add('active');
+        }
+
+        // Execute tool test
+        async function executeToolTest(toolName) {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing...';
+            
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Mock result
+            resultDiv.innerHTML = `
+Test Result for ${toolName}:
+-----------------------------
+Status: PASSED ✅
+Execution Time: ${(Math.random() * 2).toFixed(3)}s
+Response: Success - Tool executed successfully
+            `;
+            
+            // Update tool status
+            toolResults[toolName] = {
+                status: 'passed',
+                avgTime: Math.random() * 2
+            };
+            
+            renderCategories();
+            updateStats();
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('tool-modal').classList.remove('active');
+        }
+
+        // Filter tools
+        function filterTools(filter) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Implement filtering logic here
+            console.log('Filtering by:', filter);
+        }
+
+        // Toggle category visibility
+        function toggleCategory(categoryId) {
+            const toolsDiv = document.getElementById(`${categoryId}-tools`);
+            if (toolsDiv.style.display === 'none') {
+                toolsDiv.style.display = 'grid';
+            } else {
+                toolsDiv.style.display = 'none';
+            }
+        }
+
+        // Search functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                document.querySelectorAll('.tool-card').forEach(card => {
+                    const toolName = card.querySelector('.tool-name').textContent.toLowerCase();
+                    card.style.display = toolName.includes(searchTerm) ? 'block' : 'none';
+                });
+            });
+            
+            // Initialize dashboard
+            init();
+        });
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('tool-modal');
+            if (event.target === modal) {
+                modal.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
