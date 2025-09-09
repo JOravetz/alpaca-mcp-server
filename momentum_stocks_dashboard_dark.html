@@ -969,9 +969,34 @@
         <div class="header">
             <h1>Momentum Stocks Analysis Dashboard</h1>
             <div class="subtitle">Professional Trading Intelligence | 52 Stocks | Real-Time Analysis</div>
-            <div class="market-status closed">
+            <div class="market-status closed" id="marketStatus">
                 <span class="indicator"></span>
-                <span>Weekend - Markets Closed | Next: Monday 9:30 AM ET</span>
+                <span id="marketStatusText">Loading market status...</span>
+            </div>
+        </div>
+
+        <!-- Stock List File Input Section -->
+        <div style="background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary)); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin: 20px 0; display: flex; align-items: center; gap: 20px;">
+            <div style="flex: 1;">
+                <label style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">Stock List File</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="stockFileInput" placeholder="~/autotrade/momentum.lis" 
+                           style="flex: 1; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text-primary); font-family: monospace;"
+                           value="~/autotrade/momentum.lis">
+                    <button onclick="loadStockFile()" 
+                            style="background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: white; border: none; border-radius: 8px; padding: 10px 20px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                        Load File
+                    </button>
+                    <button onclick="refreshDashboard()" 
+                            style="background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 10px 20px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            <div id="fileStatus" style="padding: 10px 20px; background: var(--bg-secondary); border-radius: 8px; font-size: 0.9rem;">
+                <span style="color: var(--success);">✓</span> 
+                <span id="stockCount" style="color: var(--text-primary); font-weight: 600;">52</span> stocks loaded
+                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 4px;" id="currentFile">~/autotrade/momentum.lis</div>
             </div>
         </div>
 
@@ -1143,8 +1168,109 @@
     </div>
 
     <script>
-        // Stock data from analysis
-        const stockData = [
+        // API Configuration
+        const API_BASE = 'http://localhost:8003';  // Change this to match your server port
+        
+        // Load stock file function
+        async function loadStockFile() {
+            const filePath = document.getElementById('stockFileInput').value;
+            const statusDiv = document.getElementById('fileStatus');
+            
+            if (!filePath) {
+                alert('Please enter a file path');
+                return;
+            }
+            
+            try {
+                statusDiv.innerHTML = '<span style="color: var(--accent-yellow);">⌛</span> Loading...';
+                
+                const response = await fetch(`${API_BASE}/api/load-stocks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ file_path: filePath })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    statusDiv.innerHTML = `
+                        <span style="color: var(--success);">✓</span> 
+                        <span id="stockCount" style="color: var(--text-primary); font-weight: 600;">${data.stocks_loaded}</span> stocks loaded
+                        <div style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 4px;">${data.file}</div>
+                    `;
+                    
+                    // Update the portfolio size in stats
+                    document.querySelector('.stat-card .value').textContent = data.stocks_loaded;
+                    
+                    // Reload the page to refresh with new data
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error(data.error || 'Failed to load stocks');
+                }
+            } catch (error) {
+                console.error('Error loading stock file:', error);
+                statusDiv.innerHTML = `<span style="color: var(--danger);">✗</span> Error: ${error.message}`;
+            }
+        }
+        
+        // Refresh dashboard function
+        function refreshDashboard() {
+            location.reload();
+        }
+        
+        // Check current stock list on page load
+        async function checkCurrentStocks() {
+            try {
+                const response = await fetch(`${API_BASE}/api/stocks`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('stockCount').textContent = data.count;
+                    if (data.source) {
+                        document.getElementById('currentFile').textContent = data.source;
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking stocks:', error);
+            }
+        }
+        
+        // Fetch and update market status from Alpaca
+        async function updateMarketStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/market-clock`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success' && data.market_status) {
+                        const marketDiv = document.getElementById('marketStatus');
+                        const statusText = document.getElementById('marketStatusText');
+                        
+                        // Update the status text
+                        if (data.market_status.is_open) {
+                            statusText.textContent = `${data.market_status.status_text} | ${data.market_status.next_event}`;
+                            marketDiv.className = 'market-status open';
+                        } else {
+                            statusText.textContent = `${data.market_status.status_text} | ${data.market_status.next_event}`;
+                            marketDiv.className = 'market-status closed';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching market status:', error);
+                // Fallback to a sensible default
+                document.getElementById('marketStatusText').textContent = 'Market Status Unavailable';
+            }
+        }
+        
+        // Stock data from analysis - will be loaded dynamically
+        let stockData = [
             {symbol: 'NEON', company: 'Neonode Inc.', price: 26.48, change: 5.92, volume: '303.9K', volumeRaw: 303943, spread: 13.33, support: 21.56, resistance: 28.67, signal: 'buy', risk: 'high', news: 'very-positive'},
             {symbol: 'RKLB', company: 'Rocket Lab USA', price: 45.15, change: 1.74, volume: '18.8M', volumeRaw: 18818250, spread: 0.07, support: 40.42, resistance: 47.19, signal: 'buy', risk: 'high', news: 'very-positive'},
             {symbol: 'ASTS', company: 'AST SpaceMobile', price: 47.89, change: 1.74, volume: '6.6M', volumeRaw: 6555688, spread: 0.29, support: 44.19, resistance: 57.09, signal: 'buy', risk: 'high', news: 'positive'},
@@ -1199,8 +1325,119 @@
             {symbol: 'APH', company: 'Amphenol Corp', price: 109.36, change: 0.00, volume: '7.6M', volumeRaw: 7552684, spread: 3.11, support: 108.43, resistance: 111.17, signal: 'hold', risk: 'low', news: 'neutral'}
         ];
 
+        // Function to load stock data from API
+        async function loadStockDataFromAPI() {
+            try {
+                const response = await fetch(`${API_BASE}/api/stocks`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.stocks && Array.isArray(data.stocks)) {
+                        // Transform API data to dashboard format
+                        stockData = data.stocks.map(stock => ({
+                            symbol: stock.symbol,
+                            company: stock.symbol, // Use symbol as company name for now
+                            price: stock.metrics?.price || 0,
+                            change: stock.metrics?.percent_change || 0,
+                            volume: formatVolume(stock.metrics?.volume || 0),
+                            volumeRaw: stock.metrics?.volume || 0,
+                            spread: stock.metrics?.spread || 0,
+                            support: stock.metrics?.support || 0,
+                            resistance: stock.metrics?.resistance || 0,
+                            signal: stock.signals?.momentum === 'bullish' ? 'buy' : 
+                                   stock.signals?.momentum === 'bearish' ? 'sell' : 'hold',
+                            risk: stock.signals?.risk || 'medium',
+                            news: 'neutral'
+                        }));
+                        
+                        // Update UI with new data
+                        updateDashboardWithData();
+                        renderTable();
+                        console.log(`Loaded ${stockData.length} stocks from API`);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading stock data:', error);
+            }
+        }
+        
+        // Helper function to format volume
+        function formatVolume(volume) {
+            if (volume >= 1000000) {
+                return (volume / 1000000).toFixed(1) + 'M';
+            } else if (volume >= 1000) {
+                return (volume / 1000).toFixed(1) + 'K';
+            }
+            return volume.toString();
+        }
+        
+        // Update dashboard UI with loaded data
+        function updateDashboardWithData() {
+            if (stockData.length > 0) {
+                // Update top movers cards
+                const topGainers = stockData.filter(s => s.change > 0).slice(0, 3);
+                const topLosers = stockData.filter(s => s.change < 0).slice(-3);
+                
+                // Update portfolio size
+                document.querySelector('.stat-card .value').textContent = stockData.length;
+                
+                // Update top performer
+                if (topGainers.length > 0) {
+                    const topPerformer = topGainers[0];
+                    document.querySelectorAll('.stat-card')[1].querySelector('.value').textContent = topPerformer.symbol;
+                    document.querySelectorAll('.stat-card')[1].querySelector('.change').textContent = 
+                        `↑ +${topPerformer.change.toFixed(2)}% Daily Gain`;
+                }
+                
+                // Update volume leader
+                const volumeLeader = [...stockData].sort((a, b) => b.volumeRaw - a.volumeRaw)[0];
+                if (volumeLeader) {
+                    document.querySelectorAll('.stat-card')[2].querySelector('.value').textContent = volumeLeader.symbol;
+                    document.querySelectorAll('.stat-card')[2].querySelector('.change').textContent = 
+                        `${volumeLeader.volume} Shares Traded`;
+                }
+                
+                // Update movers grid
+                const moversGrid = document.querySelector('.movers-grid');
+                if (moversGrid && topGainers.length > 0) {
+                    moversGrid.innerHTML = '';
+                    [...topGainers, ...topLosers].slice(0, 3).forEach(stock => {
+                        const card = document.createElement('div');
+                        card.className = 'mover-card';
+                        card.innerHTML = `
+                            <div class="mover-header">
+                                <span class="mover-symbol">${stock.symbol}</span>
+                                <span class="mover-change ${stock.change > 0 ? 'positive' : 'negative'}">
+                                    ${stock.change > 0 ? '+' : ''}${stock.change.toFixed(2)}%
+                                </span>
+                            </div>
+                            <div>${stock.company}</div>
+                            <div class="mover-details">
+                                <div class="detail-row">
+                                    <span class="label">PRICE</span>
+                                    <span class="value">$${stock.price.toFixed(2)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">VOLUME</span>
+                                    <span class="value">${stock.volume}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">SUPPORT</span>
+                                    <span class="value">$${stock.support.toFixed(2)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">RESISTANCE</span>
+                                    <span class="value">$${stock.resistance.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        `;
+                        moversGrid.appendChild(card);
+                    });
+                }
+            }
+        }
+
         // Find max volume for scaling
-        const maxVolume = Math.max(...stockData.map(s => s.volumeRaw));
+        let maxVolume = Math.max(...stockData.map(s => s.volumeRaw));
 
         // Render table
         function renderTable(data = stockData, filter = 'all') {
@@ -1358,17 +1595,7 @@
             modal.classList.add('active');
         }
 
-        // Generate chart (placeholder)
-        function generateChart(symbol) {
-            const loading = document.getElementById('loadingOverlay');
-            loading.classList.add('active');
-            
-            // Simulate API call
-            setTimeout(() => {
-                loading.classList.remove('active');
-                alert(`Chart generation initiated for ${symbol}\nCommand: uv run analyze_peaks.py -s ${symbol} -t 1Day -n 504 -w 11 --plot`);
-            }, 2000);
-        }
+        // Placeholder function removed - actual generateChart is defined below
 
         // Fetch live news (placeholder)
         function fetchLiveNews(symbol) {
@@ -1404,6 +1631,18 @@
 
         // Search functionality
         document.addEventListener('DOMContentLoaded', function() {
+            // Load stock data from API on page load
+            loadStockDataFromAPI();
+            
+            // Check current stocks on page load
+            checkCurrentStocks();
+            
+            // Update market status from Alpaca
+            updateMarketStatus();
+            
+            // Refresh market status every 60 seconds
+            setInterval(updateMarketStatus, 60000);
+            
             const searchInput = document.getElementById('searchInput');
             searchInput.addEventListener('input', function(e) {
                 const searchTerm = e.target.value.toLowerCase();
@@ -1473,9 +1712,6 @@
                 closeModal();
             }
         });
-
-        // API Configuration for real chart generation
-        const API_BASE = 'http://localhost:8003';
         
         // Store current chart parameters
         let currentChartParams = {
@@ -1583,7 +1819,7 @@
                 const response = await fetch(`${API_BASE}/api/chart/${symbol}?timeframe=${currentChartParams.timeframe}&days=${currentChartParams.days}&window=${currentChartParams.window}`);
                 const data = await response.json();
                 
-                if (data.status === 'success' && data.chart_data) {
+                if (data.status === 'success' && data.chart_base64) {
                     // Display chart with interactive controls
                     modalBody.innerHTML = `
                         <div style="padding: 20px;">
@@ -1656,7 +1892,7 @@
                             
                             <!-- Chart Display -->
                             <div class="chart-container" style="text-align: center; padding: 10px;">
-                                <img src="${data.chart_data}" alt="${symbol} chart" style="
+                                <img src="data:image/png;base64,${data.chart_base64}" alt="${symbol} chart" style="
                                     width: 100%;
                                     height: auto;
                                     max-height: calc(70vh - 20px);

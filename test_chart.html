@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Chart Display</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial;
+            padding: 20px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #chartContainer {
+            margin-top: 20px;
+            text-align: center;
+        }
+        img {
+            max-width: 100%;
+            border: 2px solid #444;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Direct Chart Test for HOOD</h1>
+    <button onclick="loadChart()">Load HOOD Chart</button>
+    <div id="chartContainer"></div>
+
+    <script>
+        async function loadChart() {
+            const container = document.getElementById('chartContainer');
+            container.innerHTML = '<p>Loading chart...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:8003/api/chart/HOOD?timeframe=1Day&days=30&window=11');
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.chart_base64) {
+                    container.innerHTML = `
+                        <h2>Chart loaded successfully!</h2>
+                        <img src="data:image/png;base64,${data.chart_base64}" alt="HOOD Chart">
+                        <p>If you see the chart above, the system is working perfectly.</p>
+                    `;
+                } else {
+                    container.innerHTML = `<p style="color: red;">Error: ${data.error || 'Failed to load chart'}</p>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<p style="color: red;">Network Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
