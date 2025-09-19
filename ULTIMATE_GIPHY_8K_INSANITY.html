@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤑 $8,040.15 ULTIMATE GIPHY INSANITY 🤑</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Arial Black', sans-serif;
+            background: linear-gradient(45deg, #000, #FFD700, #000, #00FF00, #FF00FF);
+            background-size: 400% 400%;
+            animation: psychedelicBg 2s ease infinite;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        @keyframes psychedelicBg {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .profit-title {
+            font-size: 180px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #FFD700, #FF0000, #00FF00, #0000FF, #FF00FF, #FFD700);
+            background-size: 600% 600%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: ultraRainbow 0.5s linear infinite;
+            text-shadow: 0 0 100px rgba(255, 215, 0, 1);
+            margin: 20px 0;
+        }
+
+        @keyframes ultraRainbow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        .giphy-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .gif-box {
+            position: relative;
+            border: 3px solid #FFD700;
+            border-radius: 15px;
+            overflow: hidden;
+            animation: gifPulse 2s infinite;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+
+        @keyframes gifPulse {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            }
+            50% {
+                transform: scale(1.05) rotate(2deg);
+                box-shadow: 0 0 50px rgba(255, 215, 0, 1);
+            }
+        }
+
+        .gif-box img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .win-stats {
+            font-size: 60px;
+            color: #00FF00;
+            text-shadow: 0 0 50px #00FF00;
+            animation: electricFlash 0.3s infinite;
+            margin: 20px 0;
+        }
+
+        @keyframes electricFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .floating-gif {
+            position: fixed;
+            animation: floatAround 10s infinite linear;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        @keyframes floatAround {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+                left: -200px;
+                top: 50%;
+            }
+            25% {
+                left: 50%;
+                top: -200px;
+            }
+            50% {
+                left: calc(100% + 200px);
+                top: 50%;
+            }
+            75% {
+                left: 50%;
+                top: calc(100% + 200px);
+            }
+            100% {
+                transform: translate(0, 0) rotate(360deg);
+                left: -200px;
+                top: 50%;
+            }
+        }
+
+        .mega-button {
+            font-size: 40px;
+            padding: 30px 60px;
+            background: linear-gradient(45deg, #FFD700, #FF0000, #00FF00, #0000FF, #FF00FF);
+            background-size: 400% 400%;
+            animation: buttonCrazy 0.5s linear infinite;
+            border: none;
+            border-radius: 50px;
+            color: #FFF;
+            font-weight: bold;
+            cursor: pointer;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: 0 0 50px rgba(255, 215, 0, 1);
+            margin: 30px;
+            transform: scale(1);
+            transition: all 0.3s;
+        }
+
+        @keyframes buttonCrazy {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        .mega-button:hover {
+            transform: scale(1.3) rotate(5deg);
+            box-shadow: 0 0 100px rgba(255, 215, 0, 1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 800px;
+            margin: 30px auto;
+        }
+
+        .stat-card {
+            background: rgba(255, 215, 0, 0.3);
+            border: 4px solid #FFD700;
+            padding: 20px;
+            border-radius: 20px;
+            animation: cardBounce 1s ease-in-out infinite;
+        }
+
+        @keyframes cardBounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.1); }
+        }
+
+        .gif-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 200;
+            display: none;
+        }
+
+        .gif-overlay img {
+            width: 600px;
+            height: auto;
+            border: 5px solid #FFD700;
+            border-radius: 20px;
+            box-shadow: 0 0 100px rgba(255, 215, 0, 1);
+        }
+
+        .confetti-gif {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            animation: confettiFloat 5s linear infinite;
+        }
+
+        @keyframes confettiFloat {
+            from {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1 class="profit-title">$8,040.15</h1>
+        <div class="win-stats">💯 100% WIN RATE - 26 WINS - ZERO LOSSES 💯</div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3 style="font-size: 30px; color: #FFD700;">TOTAL TRADES</h3>
+                <p style="font-size: 50px;">56</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="font-size: 30px; color: #FFD700;">VOLUME</h3>
+                <p style="font-size: 50px;">$1.2M</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="font-size: 30px; color: #FFD700;">BIGGEST WIN</h3>
+                <p style="font-size: 50px;">$2,600</p>
+            </div>
+            <div class="stat-card">
+                <h3 style="font-size: 30px; color: #FFD700;">TOP STOCK</h3>
+                <p style="font-size: 40px;">AGMH +$3,557</p>
+            </div>
+        </div>
+
+        <button class="mega-button" onclick="unleashGiphyInsanity()">
+            🎆 UNLEASH GIPHY INSANITY 🎆
+        </button>
+
+        <div class="giphy-container" id="giphyContainer">
+            <!-- GIFs will be loaded here -->
+        </div>
+
+        <div style="margin-top: 30px; font-size: 35px; color: #FFD700;">
+            🏆 SEPTEMBER 19, 2025 - THE DAY OF LEGENDS 🏆
+        </div>
+    </div>
+
+    <!-- Floating GIFs -->
+    <img class="floating-gif" id="floater1" style="width: 150px;">
+    <img class="floating-gif" id="floater2" style="width: 150px; animation-delay: 5s;">
+
+    <!-- Overlay for mega celebration -->
+    <div class="gif-overlay" id="megaOverlay">
+        <img id="megaGif" src="">
+    </div>
+
+    <script>
+        // Array of epic Giphy URLs for different themes
+        const giphyUrls = {
+            money: [
+                'https://media.giphy.com/media/3o6gDWzmAzrpi5DQU8/giphy.gif', // Money rain
+                'https://media.giphy.com/media/xTiTnqUxyWbsAXq7Ju/giphy.gif', // Money counting
+                'https://media.giphy.com/media/l0HFkA6omUyjVYqw8/giphy.gif', // Money shower
+                'https://media.giphy.com/media/67ThRZlYBvibtdF9JH/giphy.gif', // Money throwing
+                'https://media.giphy.com/media/l0Ex6kAKAoFRsFh6M/giphy.gif', // Cash explosion
+                'https://media.giphy.com/media/3oKIPa2TdahY8LAAxy/giphy.gif', // Making it rain
+                'https://media.giphy.com/media/LdOyjZ7io5Msw/giphy.gif' // Scrooge McDuck
+            ],
+            celebration: [
+                'https://media.giphy.com/media/g9582DNuQppxC/giphy.gif', // DiCaprio celebration
+                'https://media.giphy.com/media/26tOZ42Mg6pbTUPHW/giphy.gif', // Confetti
+                'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif', // Party time
+                'https://media.giphy.com/media/kyLYXonQYYfwYDIeZl/giphy.gif', // Victory dance
+                'https://media.giphy.com/media/3ohzdIuqJoo8QdKlnW/giphy.gif', // Champagne pop
+                'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif', // Fireworks
+                'https://media.giphy.com/media/cXblnKXr2BQOaYnTni/giphy.gif' // Dance party
+            ],
+            winning: [
+                'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif', // Winner
+                'https://media.giphy.com/media/xT77XWum9yH7zNkFW0/giphy.gif', // Success kid
+                'https://media.giphy.com/media/nXxOjZrbnbRxS/giphy.gif', // Victory
+                'https://media.giphy.com/media/3oz8xAFtqoOUUrsh7W/giphy.gif', // Champion
+                'https://media.giphy.com/media/l3q2Z6S6n38zjPswo/giphy.gif', // Gold medal
+                'https://media.giphy.com/media/xT0xeJpnrWC4XWblEk/giphy.gif', // Winning
+                'https://media.giphy.com/media/5mBE2MiMVFITS/giphy.gif' // Wolf of Wall Street
+            ],
+            crazy: [
+                'https://media.giphy.com/media/l0HlMZkB2vkbjEU92/giphy.gif', // Mind blown
+                'https://media.giphy.com/media/5VKbvrjxpVJCM/giphy.gif', // Crazy dance
+                'https://media.giphy.com/media/HvYdoLbPqSdNu/giphy.gif', // Going crazy
+                'https://media.giphy.com/media/90F8aUepslB84/giphy.gif', // Insane
+                'https://media.giphy.com/media/l3q2K5jinAlChoCLS/giphy.gif', // Surprised
+                'https://media.giphy.com/media/xT0xeOesyqmKqzYCk0/giphy.gif', // Explosion
+                'https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif' // Mind blown
+            ]
+        };
+
+        // Load initial GIFs
+        function loadGifs() {
+            const container = document.getElementById('giphyContainer');
+            container.innerHTML = '';
+
+            // Mix all categories
+            const allGifs = [
+                ...giphyUrls.money,
+                ...giphyUrls.celebration,
+                ...giphyUrls.winning,
+                ...giphyUrls.crazy
+            ];
+
+            // Shuffle and select 12 GIFs
+            const shuffled = allGifs.sort(() => 0.5 - Math.random());
+            const selectedGifs = shuffled.slice(0, 12);
+
+            selectedGifs.forEach((url, index) => {
+                const gifBox = document.createElement('div');
+                gifBox.className = 'gif-box';
+                gifBox.style.animationDelay = `${index * 0.1}s`;
+
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = 'Epic celebration GIF';
+
+                gifBox.appendChild(img);
+                container.appendChild(gifBox);
+            });
+
+            // Set floating GIFs
+            document.getElementById('floater1').src = giphyUrls.money[Math.floor(Math.random() * giphyUrls.money.length)];
+            document.getElementById('floater2').src = giphyUrls.celebration[Math.floor(Math.random() * giphyUrls.celebration.length)];
+        }
+
+        // Unleash maximum insanity
+        function unleashGiphyInsanity() {
+            // Reload GIFs with new random selection
+            loadGifs();
+
+            // Create confetti GIFs
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('img');
+                    confetti.className = 'confetti-gif';
+                    confetti.src = giphyUrls.celebration[Math.floor(Math.random() * giphyUrls.celebration.length)];
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.animationDuration = (3 + Math.random() * 3) + 's';
+                    confetti.style.animationDelay = Math.random() * 2 + 's';
+                    document.body.appendChild(confetti);
+
+                    setTimeout(() => confetti.remove(), 6000);
+                }, i * 200);
+            }
+
+            // Show mega overlay
+            const overlay = document.getElementById('megaOverlay');
+            const megaGif = document.getElementById('megaGif');
+            megaGif.src = 'https://media.giphy.com/media/LdOyjZ7io5Msw/giphy.gif'; // Scrooge McDuck swimming in money
+            overlay.style.display = 'block';
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 3000);
+
+            // Flash background colors
+            const colors = ['#FFD700', '#00FF00', '#FF00FF', '#00FFFF', '#FF0000'];
+            colors.forEach((color, index) => {
+                setTimeout(() => {
+                    document.body.style.background = color;
+                    setTimeout(() => {
+                        document.body.style.background = '';
+                    }, 100);
+                }, index * 200);
+            });
+
+            // Play victory sound
+            try {
+                const audio = new Audio('jessica_todays_epic_victory.wav');
+                audio.play();
+            } catch (e) {
+                console.log('Audio attempted');
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            loadGifs();
+
+            // Auto-refresh GIFs every 60 seconds (aligned with Jessica's voice timing)
+            setInterval(() => {
+                loadGifs();
+            }, 60000);
+
+            // Auto-trigger insanity every 60 seconds (to let Jessica finish speaking)
+            setInterval(() => {
+                unleashGiphyInsanity();
+            }, 60000);
+        });
+
+        // Click anywhere to change GIFs
+        document.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON') {
+                loadGifs();
+            }
+        });
+    </script>
+</body>
+</html>

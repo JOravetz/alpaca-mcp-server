@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 $8,040.15 ULTIMATE 3D GIPHY INSANITY 🚀</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Arial Black', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #canvas3d {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .overlay-content {
+            position: relative;
+            z-index: 100;
+            text-align: center;
+            padding: 20px;
+            pointer-events: none;
+        }
+
+        .overlay-content button, .overlay-content .gif-box {
+            pointer-events: auto;
+        }
+
+        .profit-3d {
+            font-size: 150px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #FFD700, #FF0000, #00FF00, #0000FF, #FF00FF, #FFD700);
+            background-size: 600% 600%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: ultra3D 0.5s linear infinite;
+            text-shadow: 0 0 100px rgba(255, 215, 0, 1),
+                        0 0 200px rgba(255, 215, 0, 0.8);
+            transform: perspective(500px) rotateX(15deg);
+            margin: 20px 0;
+        }
+
+        @keyframes ultra3D {
+            0% {
+                background-position: 0% 50%;
+                transform: perspective(500px) rotateX(15deg) rotateY(-5deg);
+            }
+            50% {
+                transform: perspective(500px) rotateX(15deg) rotateY(5deg);
+            }
+            100% {
+                background-position: 100% 50%;
+                transform: perspective(500px) rotateX(15deg) rotateY(-5deg);
+            }
+        }
+
+        .win-rate-3d {
+            font-size: 60px;
+            color: #00FF00;
+            text-shadow: 0 0 50px #00FF00, 0 0 100px #00FF00;
+            animation: pulse3D 0.5s infinite;
+            transform: perspective(300px) rotateX(10deg);
+        }
+
+        @keyframes pulse3D {
+            0%, 100% {
+                transform: perspective(300px) rotateX(10deg) scale(1);
+            }
+            50% {
+                transform: perspective(300px) rotateX(10deg) scale(1.1);
+            }
+        }
+
+        .giphy-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .gif-box {
+            position: relative;
+            border: 3px solid #FFD700;
+            border-radius: 15px;
+            overflow: hidden;
+            height: 150px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8),
+                       inset 0 0 30px rgba(255, 215, 0, 0.3);
+            transform: perspective(500px) rotateY(0deg);
+            transition: all 0.3s;
+        }
+
+        .gif-box:hover {
+            transform: perspective(500px) rotateY(15deg) scale(1.1);
+            box-shadow: 0 0 50px rgba(255, 215, 0, 1),
+                       inset 0 0 50px rgba(255, 215, 0, 0.5);
+        }
+
+        .gif-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mega-3d-button {
+            font-size: 40px;
+            padding: 30px 60px;
+            background: linear-gradient(45deg, #FFD700, #FF0000, #00FF00, #0000FF, #FF00FF);
+            background-size: 400% 400%;
+            animation: button3D 1s linear infinite;
+            border: none;
+            border-radius: 50px;
+            color: #FFF;
+            font-weight: bold;
+            cursor: pointer;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 50px rgba(255, 215, 0, 0.8),
+                       0 0 100px rgba(255, 215, 0, 0.5);
+            margin: 30px;
+            transform: perspective(300px) rotateX(-10deg);
+            transition: all 0.3s;
+        }
+
+        @keyframes button3D {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        .mega-3d-button:hover {
+            transform: perspective(300px) rotateX(-10deg) translateZ(50px) scale(1.2);
+            box-shadow: 0 20px 100px rgba(255, 215, 0, 1),
+                       0 0 200px rgba(255, 215, 0, 0.8);
+        }
+
+        .stats-3d {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-cube {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotateCube 10s infinite linear;
+        }
+
+        @keyframes rotateCube {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        .cube-face {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #FFD700;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .cube-face.front { transform: translateZ(75px); }
+        .cube-face.back { transform: translateZ(-75px) rotateY(180deg); }
+        .cube-face.right { transform: rotateY(90deg) translateZ(75px); }
+        .cube-face.left { transform: rotateY(-90deg) translateZ(75px); }
+        .cube-face.top { transform: rotateX(90deg) translateZ(75px); }
+        .cube-face.bottom { transform: rotateX(-90deg) translateZ(75px); }
+
+        .floating-3d-gif {
+            position: fixed;
+            width: 150px;
+            height: 150px;
+            animation: float3D 15s infinite linear;
+            transform-style: preserve-3d;
+            z-index: 150;
+        }
+
+        @keyframes float3D {
+            0% {
+                transform: translate3d(-200px, 50vh, 0) rotateX(0deg) rotateY(0deg);
+            }
+            25% {
+                transform: translate3d(50vw, -200px, 100px) rotateX(90deg) rotateY(90deg);
+            }
+            50% {
+                transform: translate3d(calc(100vw + 200px), 50vh, -100px) rotateX(180deg) rotateY(180deg);
+            }
+            75% {
+                transform: translate3d(50vw, calc(100vh + 200px), 50px) rotateX(270deg) rotateY(270deg);
+            }
+            100% {
+                transform: translate3d(-200px, 50vh, 0) rotateX(360deg) rotateY(360deg);
+            }
+        }
+
+        .particle-explosion {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas3d"></canvas>
+
+    <div class="overlay-content">
+        <h1 class="profit-3d">$8,040.15</h1>
+        <div class="win-rate-3d">💯 100% WIN RATE - 26 WINS - ZERO LOSSES 💯</div>
+
+        <div class="stats-3d">
+            <div class="stat-cube">
+                <div class="cube-face front">56<br>TRADES</div>
+                <div class="cube-face back">56<br>TRADES</div>
+                <div class="cube-face right">56<br>TRADES</div>
+                <div class="cube-face left">56<br>TRADES</div>
+                <div class="cube-face top">56<br>TRADES</div>
+                <div class="cube-face bottom">56<br>TRADES</div>
+            </div>
+            <div class="stat-cube">
+                <div class="cube-face front">$1.2M<br>VOLUME</div>
+                <div class="cube-face back">$1.2M<br>VOLUME</div>
+                <div class="cube-face right">$1.2M<br>VOLUME</div>
+                <div class="cube-face left">$1.2M<br>VOLUME</div>
+                <div class="cube-face top">$1.2M<br>VOLUME</div>
+                <div class="cube-face bottom">$1.2M<br>VOLUME</div>
+            </div>
+            <div class="stat-cube">
+                <div class="cube-face front">$2,600<br>TOP WIN</div>
+                <div class="cube-face back">$2,600<br>TOP WIN</div>
+                <div class="cube-face right">$2,600<br>TOP WIN</div>
+                <div class="cube-face left">$2,600<br>TOP WIN</div>
+                <div class="cube-face top">$2,600<br>TOP WIN</div>
+                <div class="cube-face bottom">$2,600<br>TOP WIN</div>
+            </div>
+        </div>
+
+        <button class="mega-3d-button" onclick="trigger3DInsanity()">
+            🎆 TRIGGER 3D INSANITY 🎆
+        </button>
+
+        <div class="giphy-grid" id="giphyGrid">
+            <!-- GIFs will be loaded here -->
+        </div>
+
+        <div style="margin-top: 30px; font-size: 40px; color: #FFD700; text-shadow: 0 0 30px #FFD700;">
+            🏆 SEPTEMBER 19, 2025 - LEGENDARY 3D VICTORY 🏆
+        </div>
+    </div>
+
+    <!-- Floating 3D GIFs -->
+    <img class="floating-3d-gif" id="floater3D1" style="animation-delay: 0s;">
+    <img class="floating-3d-gif" id="floater3D2" style="animation-delay: 7.5s;">
+
+    <script>
+        // Three.js setup
+        let scene, camera, renderer;
+        let particles = [];
+        let moneyMeshes = [];
+        let trophyMesh;
+
+        // Giphy URLs
+        const giphyUrls = {
+            money: [
+                'https://media.giphy.com/media/3o6gDWzmAzrpi5DQU8/giphy.gif',
+                'https://media.giphy.com/media/xTiTnqUxyWbsAXq7Ju/giphy.gif',
+                'https://media.giphy.com/media/l0HFkA6omUyjVYqw8/giphy.gif',
+                'https://media.giphy.com/media/67ThRZlYBvibtdF9JH/giphy.gif',
+                'https://media.giphy.com/media/l0Ex6kAKAoFRsFh6M/giphy.gif',
+                'https://media.giphy.com/media/LdOyjZ7io5Msw/giphy.gif'
+            ],
+            celebration: [
+                'https://media.giphy.com/media/g9582DNuQppxC/giphy.gif',
+                'https://media.giphy.com/media/26tOZ42Mg6pbTUPHW/giphy.gif',
+                'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
+                'https://media.giphy.com/media/3ohzdIuqJoo8QdKlnW/giphy.gif',
+                'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif'
+            ],
+            winning: [
+                'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif',
+                'https://media.giphy.com/media/xT77XWum9yH7zNkFW0/giphy.gif',
+                'https://media.giphy.com/media/5mBE2MiMVFITS/giphy.gif'
+            ]
+        };
+
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x000000, 1, 1000);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            renderer = new THREE.WebGLRenderer({
+                canvas: document.getElementById('canvas3d'),
+                alpha: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xffd700, 2, 100);
+            pointLight.position.set(0, 0, 10);
+            scene.add(pointLight);
+
+            // Create particle system
+            createParticleSystem();
+
+            // Create 3D money symbols
+            create3DMoneySymbols();
+
+            // Create rotating trophy
+            createTrophy();
+
+            // Start animation
+            animate3D();
+        }
+
+        function createParticleSystem() {
+            const particleCount = 500;
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+            const colors = [];
+
+            for (let i = 0; i < particleCount; i++) {
+                positions.push(
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 20
+                );
+
+                const color = new THREE.Color();
+                color.setHSL(Math.random(), 1.0, 0.5);
+                colors.push(color.r, color.g, color.b);
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.1,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const particleSystem = new THREE.Points(geometry, material);
+            scene.add(particleSystem);
+            particles.push(particleSystem);
+        }
+
+        function create3DMoneySymbols() {
+            const loader = new THREE.FontLoader();
+            const textGeometry = new THREE.TextGeometry('$', {
+                font: 'helvetiker',
+                size: 1,
+                height: 0.2
+            });
+
+            for (let i = 0; i < 20; i++) {
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0xffd700,
+                    emissive: 0xffd700,
+                    emissiveIntensity: 0.3
+                });
+
+                const mesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.5, 0.5, 0.5),
+                    material
+                );
+
+                mesh.position.set(
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10
+                );
+
+                mesh.rotation.x = Math.random() * Math.PI;
+                mesh.rotation.y = Math.random() * Math.PI;
+
+                scene.add(mesh);
+                moneyMeshes.push(mesh);
+            }
+        }
+
+        function createTrophy() {
+            const geometry = new THREE.ConeGeometry(1, 2, 8);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0xffd700,
+                emissive: 0xffd700,
+                emissiveIntensity: 0.5,
+                shininess: 100
+            });
+
+            trophyMesh = new THREE.Mesh(geometry, material);
+            trophyMesh.position.set(0, 0, -5);
+            scene.add(trophyMesh);
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+
+            // Rotate particles
+            particles.forEach(p => {
+                p.rotation.y += 0.002;
+                p.rotation.x += 0.001;
+            });
+
+            // Animate money symbols
+            moneyMeshes.forEach((mesh, i) => {
+                mesh.rotation.x += 0.01 * (i % 2 ? 1 : -1);
+                mesh.rotation.y += 0.02 * (i % 3 ? 1 : -1);
+                mesh.position.y += Math.sin(Date.now() * 0.001 + i) * 0.01;
+            });
+
+            // Rotate trophy
+            if (trophyMesh) {
+                trophyMesh.rotation.y += 0.05;
+                trophyMesh.position.y = Math.sin(Date.now() * 0.001) * 0.5;
+            }
+
+            // Move camera
+            camera.position.x = Math.sin(Date.now() * 0.0005) * 2;
+            camera.position.y = Math.cos(Date.now() * 0.0005) * 1;
+            camera.lookAt(scene.position);
+
+            renderer.render(scene, camera);
+        }
+
+        function loadGiphyContent() {
+            const grid = document.getElementById('giphyGrid');
+            grid.innerHTML = '';
+
+            const allGifs = [
+                ...giphyUrls.money,
+                ...giphyUrls.celebration,
+                ...giphyUrls.winning
+            ];
+
+            const shuffled = allGifs.sort(() => 0.5 - Math.random()).slice(0, 8);
+
+            shuffled.forEach((url, index) => {
+                const box = document.createElement('div');
+                box.className = 'gif-box';
+                box.style.animationDelay = `${index * 0.1}s`;
+
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = 'Epic GIF';
+
+                box.appendChild(img);
+                grid.appendChild(box);
+            });
+
+            // Set floating GIFs
+            document.getElementById('floater3D1').src = giphyUrls.money[Math.floor(Math.random() * giphyUrls.money.length)];
+            document.getElementById('floater3D2').src = giphyUrls.celebration[Math.floor(Math.random() * giphyUrls.celebration.length)];
+        }
+
+        function trigger3DInsanity() {
+            // Reload GIFs
+            loadGiphyContent();
+
+            // Create explosion of 3D particles
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const geometry = new THREE.SphereGeometry(0.1, 8, 8);
+                    const material = new THREE.MeshBasicMaterial({
+                        color: new THREE.Color().setHSL(Math.random(), 1.0, 0.5),
+                        emissive: 0xffffff,
+                        emissiveIntensity: 1
+                    });
+
+                    const particle = new THREE.Mesh(geometry, material);
+                    particle.position.set(0, 0, 0);
+
+                    const velocity = {
+                        x: (Math.random() - 0.5) * 0.5,
+                        y: (Math.random() - 0.5) * 0.5,
+                        z: (Math.random() - 0.5) * 0.5
+                    };
+
+                    scene.add(particle);
+
+                    const animateParticle = () => {
+                        particle.position.x += velocity.x;
+                        particle.position.y += velocity.y;
+                        particle.position.z += velocity.z;
+                        velocity.y -= 0.01; // gravity
+
+                        if (particle.position.y < -10) {
+                            scene.remove(particle);
+                        } else {
+                            requestAnimationFrame(animateParticle);
+                        }
+                    };
+                    animateParticle();
+                }, i * 10);
+            }
+
+            // Flash colors
+            const colors = [0xffd700, 0x00ff00, 0xff00ff, 0x00ffff, 0xff0000];
+            colors.forEach((color, index) => {
+                setTimeout(() => {
+                    scene.fog.color.setHex(color);
+                }, index * 200);
+            });
+
+            setTimeout(() => {
+                scene.fog.color.setHex(0x000000);
+            }, 1000);
+
+            // Play audio
+            try {
+                const audio = new Audio('jessica_todays_epic_victory.wav');
+                audio.play();
+            } catch (e) {
+                console.log('Audio attempted');
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            init3D();
+            loadGiphyContent();
+
+            // Auto-refresh every 90 seconds (to give Jessica more time)
+            setInterval(() => {
+                loadGiphyContent();
+            }, 90000);
+
+            // Auto-trigger 3D insanity every 90 seconds (to let Jessica fully finish)
+            setInterval(() => {
+                trigger3DInsanity();
+            }, 90000);
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
