@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚀 $8,040.15 ULTIMATE 3D GIPHY INSANITY 🚀</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🚀 JOEBOB'S $362,816.82 LEGENDARY WEEK 🚀</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -12,8 +12,10 @@
             font-family: 'Arial Black', sans-serif;
             background: #000;
             color: #fff;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             position: relative;
+            min-height: 100vh;
         }
 
         #canvas3d {
@@ -31,6 +33,7 @@
             text-align: center;
             padding: 20px;
             pointer-events: none;
+            min-height: 100vh;
         }
 
         .overlay-content button, .overlay-content .gif-box {
@@ -38,7 +41,7 @@
         }
 
         .profit-3d {
-            font-size: 150px;
+            font-size: clamp(40px, 12vw, 150px);
             font-weight: bold;
             background: linear-gradient(45deg, #FFD700, #FF0000, #00FF00, #0000FF, #FF00FF, #FFD700);
             background-size: 600% 600%;
@@ -65,12 +68,20 @@
             }
         }
 
+        .subtitle {
+            font-size: clamp(20px, 5vw, 50px);
+            color: #FFD700;
+            text-shadow: 0 0 30px #FFD700;
+            margin: 20px 0;
+        }
+
         .win-rate-3d {
-            font-size: 60px;
+            font-size: clamp(24px, 6vw, 60px);
             color: #00FF00;
             text-shadow: 0 0 50px #00FF00, 0 0 100px #00FF00;
             animation: pulse3D 0.5s infinite;
             transform: perspective(300px) rotateX(10deg);
+            margin: 20px 0;
         }
 
         @keyframes pulse3D {
@@ -84,11 +95,18 @@
 
         .giphy-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
             max-width: 1200px;
             margin: 20px auto;
             padding: 0 20px;
+        }
+
+        @media (max-width: 768px) {
+            .giphy-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
         }
 
         .gif-box {
@@ -116,8 +134,8 @@
         }
 
         .mega-3d-button {
-            font-size: 40px;
-            padding: 30px 60px;
+            font-size: clamp(20px, 5vw, 40px);
+            padding: clamp(15px, 3vw, 30px) clamp(30px, 6vw, 60px);
             background: linear-gradient(45deg, #FFD700, #FF0000, #00FF00, #0000FF, #FF00FF);
             background-size: 400% 400%;
             animation: button3D 1s linear infinite;
@@ -129,7 +147,7 @@
             text-shadow: 0 0 20px rgba(0,0,0,0.5);
             box-shadow: 0 10px 50px rgba(255, 215, 0, 0.8),
                        0 0 100px rgba(255, 215, 0, 0.5);
-            margin: 30px;
+            margin: 30px 10px;
             transform: perspective(300px) rotateX(-10deg);
             transition: all 0.3s;
         }
@@ -140,9 +158,17 @@
         }
 
         .mega-3d-button:hover {
-            transform: perspective(300px) rotateX(-10deg) translateZ(50px) scale(1.2);
+            transform: perspective(300px) rotateX(-10deg) translateZ(50px) scale(1.1);
             box-shadow: 0 20px 100px rgba(255, 215, 0, 1),
                        0 0 200px rgba(255, 215, 0, 0.8);
+        }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px auto;
         }
 
         .stats-3d {
@@ -154,8 +180,8 @@
         }
 
         .stat-cube {
-            width: 150px;
-            height: 150px;
+            width: clamp(100px, 20vw, 150px);
+            height: clamp(100px, 20vw, 150px);
             position: relative;
             transform-style: preserve-3d;
             animation: rotateCube 10s infinite linear;
@@ -168,29 +194,29 @@
 
         .cube-face {
             position: absolute;
-            width: 150px;
-            height: 150px;
+            width: 100%;
+            height: 100%;
             background: rgba(255, 215, 0, 0.2);
             border: 2px solid #FFD700;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: clamp(16px, 3vw, 24px);
             font-weight: bold;
         }
 
-        .cube-face.front { transform: translateZ(75px); }
-        .cube-face.back { transform: translateZ(-75px) rotateY(180deg); }
-        .cube-face.right { transform: rotateY(90deg) translateZ(75px); }
-        .cube-face.left { transform: rotateY(-90deg) translateZ(75px); }
-        .cube-face.top { transform: rotateX(90deg) translateZ(75px); }
-        .cube-face.bottom { transform: rotateX(-90deg) translateZ(75px); }
+        .cube-face.front { transform: translateZ(calc(clamp(100px, 20vw, 150px) / 2)); }
+        .cube-face.back { transform: translateZ(calc(-1 * clamp(100px, 20vw, 150px) / 2)) rotateY(180deg); }
+        .cube-face.right { transform: rotateY(90deg) translateZ(calc(clamp(100px, 20vw, 150px) / 2)); }
+        .cube-face.left { transform: rotateY(-90deg) translateZ(calc(clamp(100px, 20vw, 150px) / 2)); }
+        .cube-face.top { transform: rotateX(90deg) translateZ(calc(clamp(100px, 20vw, 150px) / 2)); }
+        .cube-face.bottom { transform: rotateX(-90deg) translateZ(calc(clamp(100px, 20vw, 150px) / 2)); }
 
         .floating-3d-gif {
             position: fixed;
-            width: 150px;
-            height: 150px;
+            width: clamp(75px, 15vw, 150px);
+            height: clamp(75px, 15vw, 150px);
             animation: float3D 15s infinite linear;
             transform-style: preserve-3d;
             z-index: 150;
@@ -214,57 +240,300 @@
             }
         }
 
-        .particle-explosion {
+        /* Music Control Panel */
+        .music-control {
             position: fixed;
-            pointer-events: none;
-            z-index: 1000;
+            bottom: 20px;
+            right: 20px;
+            z-index: 500;
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            backdrop-filter: blur(10px);
+            max-width: 200px;
+        }
+
+        @media (max-width: 768px) {
+            .music-control {
+                bottom: 10px;
+                right: 10px;
+                padding: 5px;
+                max-width: 150px;
+            }
+        }
+
+        .music-control button {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .music-control button:hover {
+            transform: scale(1.1);
+        }
+
+        .music-info {
+            color: #FFD700;
+            font-size: clamp(10px, 2vw, 12px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        #volumeSlider {
+            width: 100px;
+        }
+
+        /* USS Enterprise Control Panel */
+        .enterprise-control {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 100, 200, 0.3));
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 15px;
+            z-index: 200;
+            min-width: 280px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5),
+                       inset 0 0 20px rgba(0, 255, 255, 0.2);
+            animation: enterprisePanelGlow 3s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .enterprise-control {
+                bottom: 10px;
+                left: 10px;
+                min-width: 200px;
+                padding: 10px;
+            }
+        }
+
+        @keyframes enterprisePanelGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.5), inset 0 0 20px rgba(0, 255, 255, 0.2); }
+            50% { box-shadow: 0 0 50px rgba(0, 255, 255, 0.8), inset 0 0 30px rgba(0, 255, 255, 0.4); }
+        }
+
+        .enterprise-control h3 {
+            color: #00ffff;
+            text-align: center;
+            margin: 0 0 15px 0;
+            text-shadow: 0 0 10px #00ffff;
+            font-size: clamp(12px, 3vw, 16px);
+        }
+
+        .enterprise-control .control-row {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            color: #fff;
+            font-size: clamp(10px, 2vw, 12px);
+        }
+
+        .enterprise-control label {
+            flex: 0 0 100px;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+
+        .enterprise-control input[type="range"] {
+            flex: 1;
+            margin: 0 10px;
+        }
+
+        .enterprise-control .value {
+            flex: 0 0 40px;
+            text-align: right;
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        .enterprise-control .warp-button {
+            width: 100%;
+            margin-top: 15px;
+            padding: 10px;
+            background: linear-gradient(45deg, #00ffff, #0080ff);
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: clamp(12px, 3vw, 14px);
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .enterprise-control .warp-button:hover {
+            background: linear-gradient(45deg, #00ffff, #00ff00);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            transform: scale(1.05);
+        }
+
+        .daily-breakdown {
+            margin: 30px auto;
+            max-width: 900px;
+            padding: 0 20px;
+        }
+
+        .daily-breakdown h3 {
+            color: #FFD700;
+            font-size: clamp(20px, 4vw, 36px);
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #FFD700;
+        }
+
+        .day-card {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .day-card h4 {
+            color: #00FF00;
+            font-size: clamp(16px, 3vw, 24px);
+            margin-bottom: 10px;
+        }
+
+        .day-card p {
+            color: #FFF;
+            font-size: clamp(12px, 2.5vw, 16px);
+            margin: 5px 0;
         }
     </style>
 </head>
 <body>
     <canvas id="canvas3d"></canvas>
 
+    <!-- Background Music Player -->
+    <audio id="backgroundMusic" loop></audio>
+
+    <!-- Music Control Panel -->
+    <div class="music-control">
+        <button onclick="toggleMusic()">🎵</button>
+        <span class="music-info" id="songTitle">Loading...</span>
+        <input type="range" id="volumeSlider" min="0" max="100" value="30">
+        <button onclick="nextSong()">⏭️</button>
+    </div>
+
+    <!-- USS Enterprise Control Panel -->
+    <div class="enterprise-control">
+        <h3>🚀 USS Enterprise NCC-1701 🚀</h3>
+        <div class="control-row">
+            <label>Warp Speed:</label>
+            <input type="range" id="warpSpeed" min="0.1" max="5" step="0.1" value="1.5" oninput="updateEnterpriseSpeed(this.value)">
+            <span class="value" id="warpSpeedValue">1.5</span>
+        </div>
+        <div class="control-row">
+            <label>Scale:</label>
+            <input type="range" id="scaleFactor" min="0.5" max="3" step="0.1" value="1.0" oninput="updateEnterpriseScale(this.value)">
+            <span class="value" id="scaleFactorValue">1.0</span>
+        </div>
+        <div class="control-row">
+            <label>Glow:</label>
+            <input type="range" id="glowPower" min="0.1" max="2" step="0.1" value="0.8" oninput="updateEnterpriseGlow(this.value)">
+            <span class="value" id="glowPowerValue">0.8</span>
+        </div>
+        <div class="control-row">
+            <label>Auto-Fly:</label>
+            <input type="checkbox" id="autoFly" checked onchange="updateEnterpriseAutoFly(this.checked)">
+        </div>
+        <button class="warp-button" onclick="engageWarp()">⚡ ENGAGE WARP ⚡</button>
+    </div>
+
     <div class="overlay-content">
-        <h1 class="profit-3d">$8,040.15</h1>
-        <div class="win-rate-3d">💯 100% WIN RATE - 26 WINS - ZERO LOSSES 💯</div>
+        <h1 class="profit-3d">$362,816.82</h1>
+        <h2 class="subtitle">
+            🎉 JOEBOB'S LEGENDARY WEEKLY DOMINATION 🎉
+        </h2>
+        <div class="win-rate-3d">💯 92.6% WIN RATE - 431 TRADES - $47.7M VOLUME 💯</div>
 
         <div class="stats-3d">
             <div class="stat-cube">
-                <div class="cube-face front">56<br>TRADES</div>
-                <div class="cube-face back">56<br>TRADES</div>
-                <div class="cube-face right">56<br>TRADES</div>
-                <div class="cube-face left">56<br>TRADES</div>
-                <div class="cube-face top">56<br>TRADES</div>
-                <div class="cube-face bottom">56<br>TRADES</div>
+                <div class="cube-face front">431<br>TRADES</div>
+                <div class="cube-face back">431<br>TRADES</div>
+                <div class="cube-face right">431<br>TRADES</div>
+                <div class="cube-face left">431<br>TRADES</div>
+                <div class="cube-face top">431<br>TRADES</div>
+                <div class="cube-face bottom">431<br>TRADES</div>
             </div>
             <div class="stat-cube">
-                <div class="cube-face front">$1.2M<br>VOLUME</div>
-                <div class="cube-face back">$1.2M<br>VOLUME</div>
-                <div class="cube-face right">$1.2M<br>VOLUME</div>
-                <div class="cube-face left">$1.2M<br>VOLUME</div>
-                <div class="cube-face top">$1.2M<br>VOLUME</div>
-                <div class="cube-face bottom">$1.2M<br>VOLUME</div>
+                <div class="cube-face front">$47.7M<br>VOLUME</div>
+                <div class="cube-face back">$47.7M<br>VOLUME</div>
+                <div class="cube-face right">$47.7M<br>VOLUME</div>
+                <div class="cube-face left">$47.7M<br>VOLUME</div>
+                <div class="cube-face top">$47.7M<br>VOLUME</div>
+                <div class="cube-face bottom">$47.7M<br>VOLUME</div>
             </div>
             <div class="stat-cube">
-                <div class="cube-face front">$2,600<br>TOP WIN</div>
-                <div class="cube-face back">$2,600<br>TOP WIN</div>
-                <div class="cube-face right">$2,600<br>TOP WIN</div>
-                <div class="cube-face left">$2,600<br>TOP WIN</div>
-                <div class="cube-face top">$2,600<br>TOP WIN</div>
-                <div class="cube-face bottom">$2,600<br>TOP WIN</div>
+                <div class="cube-face front">$161K<br>BEST DAY</div>
+                <div class="cube-face back">$161K<br>BEST DAY</div>
+                <div class="cube-face right">$161K<br>BEST DAY</div>
+                <div class="cube-face left">$161K<br>BEST DAY</div>
+                <div class="cube-face top">$161K<br>BEST DAY</div>
+                <div class="cube-face bottom">$161K<br>BEST DAY</div>
             </div>
         </div>
 
-        <button class="mega-3d-button" onclick="trigger3DInsanity()">
-            🎆 TRIGGER 3D INSANITY 🎆
-        </button>
+        <div class="button-container">
+            <button class="mega-3d-button" onclick="trigger3DInsanity()">
+                🎆 TRIGGER 3D INSANITY 🎆
+            </button>
+            <button class="mega-3d-button" onclick="playJessicaCelebration()">
+                🎤 JESSICA'S CELEBRATION 🎤
+            </button>
+        </div>
 
         <div class="giphy-grid" id="giphyGrid">
             <!-- GIFs will be loaded here -->
         </div>
 
-        <div style="margin-top: 30px; font-size: 40px; color: #FFD700; text-shadow: 0 0 30px #FFD700;">
-            🏆 SEPTEMBER 19, 2025 - LEGENDARY 3D VICTORY 🏆
+        <div class="daily-breakdown">
+            <h3>📊 DAILY BREAKDOWN - OCT 6-10, 2025 📊</h3>
+
+            <div class="day-card">
+                <h4>Monday, Oct 6: $53,943.35 - PERFECT DAY</h4>
+                <p>🎯 100% Win Rate | 89 Trades | Top: AMDL $27K</p>
+            </div>
+
+            <div class="day-card">
+                <h4>Tuesday, Oct 7: $58,478.34</h4>
+                <p>🎯 93.8% Win Rate | 90 Trades | Top: ACET $23.5K</p>
+            </div>
+
+            <div class="day-card" style="border-color: #FF00FF; box-shadow: 0 0 40px rgba(255, 0, 255, 0.8);">
+                <h4 style="color: #FF00FF;">Wednesday, Oct 8: $161,098.07 - LEGENDARY! 🔥</h4>
+                <p>🎯 96.4% Win Rate | 91 Trades | Top: RKDA $69K + ASTX $30.7K</p>
+            </div>
+
+            <div class="day-card">
+                <h4>Thursday, Oct 9: $37,483.23</h4>
+                <p>🎯 87.3% Win Rate | 95 Trades | Top: CABA $77.6K</p>
+            </div>
+
+            <div class="day-card">
+                <h4>Friday, Oct 10: $51,813.83</h4>
+                <p>🎯 85.7% Win Rate | 66 Trades | Top: QNRX $19.9K</p>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; font-size: clamp(20px, 4vw, 40px); color: #FFD700; text-shadow: 0 0 30px #FFD700;">
+            🏆 OCT 6-10, 2025 - JOEBOB'S EPIC WEEK 🏆<br>
+            <span style="font-size: clamp(16px, 3vw, 30px); color: #00FF00;">
+                AVG DAILY: $72,563 | BEST: WED $161K | TOTAL: $362.8K
+            </span>
         </div>
     </div>
 
@@ -273,11 +542,176 @@
     <img class="floating-3d-gif" id="floater3D2" style="animation-delay: 7.5s;">
 
     <script>
+        // Background Music System
+        const songs = [
+            { file: 'aespa_rich_man.mp3', title: 'Aespa - Rich Man' },
+            { file: 'bruno_mars_billionaire.mp3', title: 'Bruno Mars - Billionaire' },
+            { file: 'ccr_fortunate_son.mp3', title: 'CCR - Fortunate Son' },
+            { file: 'pink_floyd_money.mp3', title: 'Pink Floyd - Money' },
+            { file: 'queen_we_are_the_champions.mp3', title: 'Queen - We Are The Champions' },
+            { file: 'queen_we_will_rock_you.mp3', title: 'Queen - We Will Rock You' },
+            { file: 'the_flying_lizards_money.mp3', title: 'The Flying Lizards - Money' }
+        ];
+
+        let currentSongIndex = -1;
+        let musicPlayer;
+        let isPlaying = false;
+
+        function initMusic() {
+            musicPlayer = document.getElementById('backgroundMusic');
+            const volumeSlider = document.getElementById('volumeSlider');
+
+            musicPlayer.volume = 0.3;
+
+            volumeSlider.addEventListener('input', (e) => {
+                musicPlayer.volume = e.target.value / 100;
+            });
+
+            // Auto-play random song on load
+            playRandomSong();
+
+            // Auto-play next random song when current ends
+            musicPlayer.addEventListener('ended', () => {
+                playRandomSong();
+            });
+        }
+
+        function playRandomSong() {
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * songs.length);
+            } while (newIndex === currentSongIndex && songs.length > 1);
+
+            currentSongIndex = newIndex;
+            const song = songs[currentSongIndex];
+
+            // Try multiple paths for maximum compatibility
+            const paths = [
+                `songs/${song.file}`,                           // Same directory (for remote devices)
+                `../claude_cl_tools/songs/${song.file}`,       // Relative path (local)
+                `/home/jjoravet/claude_cl_tools/songs/${song.file}` // Absolute path (fallback)
+            ];
+
+            document.getElementById('songTitle').textContent = song.title;
+
+            // Try first path
+            musicPlayer.src = paths[0];
+
+            musicPlayer.play().then(() => {
+                isPlaying = true;
+                console.log(`Now playing: ${song.title} from ${paths[0]}`);
+            }).catch(err => {
+                console.log('First path failed, trying alternate paths...');
+                // Try second path
+                musicPlayer.src = paths[1];
+                musicPlayer.play().then(() => {
+                    isPlaying = true;
+                    console.log(`Now playing: ${song.title} from ${paths[1]}`);
+                }).catch(err2 => {
+                    console.log('Second path failed, trying absolute path...');
+                    // Try absolute path as last resort
+                    musicPlayer.src = paths[2];
+                    musicPlayer.play().then(() => {
+                        isPlaying = true;
+                        console.log(`Now playing: ${song.title} from ${paths[2]}`);
+                    }).catch(err3 => {
+                        console.error('All music paths failed:', err3);
+                        document.getElementById('songTitle').textContent = 'Click 🎵 to play';
+                        isPlaying = false;
+                    });
+                });
+            });
+        }
+
+        function toggleMusic() {
+            if (isPlaying) {
+                musicPlayer.pause();
+                isPlaying = false;
+            } else {
+                musicPlayer.play().then(() => {
+                    isPlaying = true;
+                    const song = songs[currentSongIndex];
+                    document.getElementById('songTitle').textContent = song.title;
+                });
+            }
+        }
+
+        function nextSong() {
+            playRandomSong();
+        }
+
+        // Jessica's Celebration Audio
+        function playJessicaCelebration() {
+            try {
+                const audio = new Audio('jessica_362k_week_celebration.wav');
+                audio.volume = 0.9;
+                audio.play();
+                console.log('Playing Jessica\'s $362K celebration!');
+            } catch (e) {
+                console.log('Audio playback attempted:', e);
+            }
+        }
+
+        // Enterprise Control Functions
+        let enterpriseSpeed = 1.5;
+        let enterpriseScaleMultiplier = 1.0;
+        let enterpriseGlowIntensity = 0.8;
+        let enterpriseAutoFly = true;
+        let enterpriseBaseScale = 0.3;
+
+        function updateEnterpriseSpeed(value) {
+            enterpriseSpeed = parseFloat(value);
+            document.getElementById('warpSpeedValue').textContent = value;
+        }
+
+        function updateEnterpriseScale(value) {
+            enterpriseScaleMultiplier = parseFloat(value);
+            document.getElementById('scaleFactorValue').textContent = value;
+        }
+
+        function updateEnterpriseGlow(value) {
+            enterpriseGlowIntensity = parseFloat(value);
+            document.getElementById('glowPowerValue').textContent = value;
+
+            if (enterpriseGroup) {
+                enterpriseGroup.traverse((child) => {
+                    if (child.material && child.material.emissive && child.material.emissive.getHex() === 0x00ffff) {
+                        child.material.emissiveIntensity = enterpriseGlowIntensity;
+                    }
+                });
+            }
+        }
+
+        function updateEnterpriseAutoFly(checked) {
+            enterpriseAutoFly = checked;
+            if (checked && enterpriseGroup && enterpriseGroup.position.z >= 50) {
+                startEnterpriseWarp();
+            }
+        }
+
+        function engageWarp() {
+            if (enterpriseGroup) {
+                const startX = (Math.random() - 0.5) * 60;
+                const startY = (Math.random() - 0.5) * 30;
+                const startZ = -150;
+
+                enterpriseGroup.position.set(startX, startY, startZ);
+                enterpriseGroup.rotation.x = (Math.random() - 0.5) * 0.5;
+                enterpriseGroup.rotation.y = Math.PI;
+
+                for (let i = 0; i < 10; i++) {
+                    createWarpTrail();
+                }
+            }
+        }
+
         // Three.js setup
         let scene, camera, renderer;
         let particles = [];
         let moneyMeshes = [];
         let trophyMesh;
+        let enterpriseGroup = null;
+        let warpTrails = [];
 
         // Giphy URLs
         const giphyUrls = {
@@ -317,24 +751,25 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
 
-            // Add lights
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
             scene.add(ambientLight);
 
-            const pointLight = new THREE.PointLight(0xffd700, 2, 100);
-            pointLight.position.set(0, 0, 10);
-            scene.add(pointLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
 
-            // Create particle system
+            const pointLightCyan = new THREE.PointLight(0x00ffff, 1, 100);
+            pointLightCyan.position.set(0, 10, 0);
+            scene.add(pointLightCyan);
+
+            const pointLightGold = new THREE.PointLight(0xffd700, 2, 100);
+            pointLightGold.position.set(0, 0, 10);
+            scene.add(pointLightGold);
+
             createParticleSystem();
-
-            // Create 3D money symbols
             create3DMoneySymbols();
-
-            // Create rotating trophy
             createTrophy();
-
-            // Start animation
+            createEnterprise();
             animate3D();
         }
 
@@ -372,13 +807,6 @@
         }
 
         function create3DMoneySymbols() {
-            const loader = new THREE.FontLoader();
-            const textGeometry = new THREE.TextGeometry('$', {
-                font: 'helvetiker',
-                size: 1,
-                height: 0.2
-            });
-
             for (let i = 0; i < 20; i++) {
                 const material = new THREE.MeshPhongMaterial({
                     color: 0xffd700,
@@ -419,29 +847,203 @@
             scene.add(trophyMesh);
         }
 
+        function createEnterprise() {
+            console.log('Creating USS Enterprise...');
+            enterpriseGroup = new THREE.Group();
+
+            const saucerGeometry = new THREE.CylinderGeometry(2, 2, 0.3, 16);
+            const saucerMaterial = new THREE.MeshPhongMaterial({
+                color: 0xc0c0c0,
+                emissive: 0x444444,
+                emissiveIntensity: 0.3,
+                shininess: 100
+            });
+            const saucer = new THREE.Mesh(saucerGeometry, saucerMaterial);
+            saucer.rotation.z = Math.PI / 2;
+            enterpriseGroup.add(saucer);
+
+            const hullGeometry = new THREE.CylinderGeometry(0.8, 0.8, 3, 8);
+            const hull = new THREE.Mesh(hullGeometry, saucerMaterial);
+            hull.position.y = -1.5;
+            hull.rotation.z = Math.PI / 2;
+            enterpriseGroup.add(hull);
+
+            const nacelleGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2, 8);
+            const nacelleGlow = new THREE.MeshPhongMaterial({
+                color: 0x00ffff,
+                emissive: 0x00ffff,
+                emissiveIntensity: enterpriseGlowIntensity,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const nacelle1 = new THREE.Mesh(nacelleGeometry, nacelleGlow);
+            nacelle1.position.set(1.5, -1.5, 0);
+            nacelle1.rotation.z = Math.PI / 2;
+            enterpriseGroup.add(nacelle1);
+
+            const nacelle2 = new THREE.Mesh(nacelleGeometry, nacelleGlow);
+            nacelle2.position.set(-1.5, -1.5, 0);
+            nacelle2.rotation.z = Math.PI / 2;
+            enterpriseGroup.add(nacelle2);
+
+            const pylonGeometry = new THREE.BoxGeometry(0.8, 0.1, 0.1);
+            const pylon1 = new THREE.Mesh(pylonGeometry, saucerMaterial);
+            pylon1.position.set(1, -1.5, 0);
+            enterpriseGroup.add(pylon1);
+
+            const pylon2 = new THREE.Mesh(pylonGeometry, saucerMaterial);
+            pylon2.position.set(-1, -1.5, 0);
+            enterpriseGroup.add(pylon2);
+
+            const lightGeometry = new THREE.SphereGeometry(0.05, 4, 4);
+            const redLight = new THREE.MeshBasicMaterial({ color: 0xff0000, emissive: 0xff0000 });
+            const greenLight = new THREE.MeshBasicMaterial({ color: 0x00ff00, emissive: 0x00ff00 });
+
+            const light1 = new THREE.Mesh(lightGeometry, redLight);
+            light1.position.set(2, 0, 0);
+            enterpriseGroup.add(light1);
+
+            const light2 = new THREE.Mesh(lightGeometry, greenLight);
+            light2.position.set(-2, 0, 0);
+            enterpriseGroup.add(light2);
+
+            enterpriseGroup.scale.set(1, 1, 1);
+            enterpriseGroup.position.set(0, 0, -20);
+
+            scene.add(enterpriseGroup);
+            console.log('Enterprise added to scene');
+
+            startEnterpriseWarp();
+        }
+
+        function startEnterpriseWarp() {
+            if (!enterpriseGroup) return;
+
+            const warpFlyby = () => {
+                const startX = (Math.random() - 0.5) * 40;
+                const startY = (Math.random() - 0.5) * 20;
+                const startZ = -150;
+
+                enterpriseGroup.position.set(startX, startY, startZ);
+                enterpriseGroup.rotation.x = (Math.random() - 0.5) * 0.2;
+                enterpriseGroup.rotation.y = Math.PI;
+                enterpriseGroup.scale.set(enterpriseBaseScale * 0.05, enterpriseBaseScale * 0.05, enterpriseBaseScale * 0.05);
+                enterpriseGroup.visible = true;
+
+                const animateWarp = () => {
+                    if (enterpriseGroup.position.z < 80) {
+                        enterpriseGroup.position.z += enterpriseSpeed;
+
+                        const zPos = enterpriseGroup.position.z;
+                        const distanceNormalized = (zPos + 150) / 230;
+
+                        let scale = enterpriseBaseScale;
+                        if (distanceNormalized < 0.4) {
+                            scale = enterpriseBaseScale * (0.3 + distanceNormalized * 2);
+                        } else if (distanceNormalized < 0.7) {
+                            scale = enterpriseBaseScale * Math.pow(1 + distanceNormalized * 4, 1.5);
+                        } else {
+                            scale = enterpriseBaseScale * Math.pow(1 + distanceNormalized * 12, 2);
+                        }
+
+                        scale *= enterpriseScaleMultiplier;
+                        enterpriseGroup.scale.set(scale, scale, scale);
+
+                        enterpriseGroup.rotation.y += 0.008 + distanceNormalized * 0.02;
+                        enterpriseGroup.rotation.x = Math.sin(Date.now() * 0.001) * 0.1;
+
+                        if (distanceNormalized > 0.7) {
+                            enterpriseGroup.rotation.z = Math.sin(Date.now() * 0.002) * 0.3;
+                        }
+
+                        if (Math.random() > 0.7) {
+                            createWarpTrail();
+                        }
+
+                        requestAnimationFrame(animateWarp);
+                    } else {
+                        if (enterpriseAutoFly) {
+                            setTimeout(() => {
+                                warpFlyby();
+                            }, 5000 + Math.random() * 10000);
+                        }
+                    }
+                };
+                animateWarp();
+            };
+
+            warpFlyby();
+        }
+
+        function createWarpTrail() {
+            if (warpTrails.length > 60) {
+                const oldTrail = warpTrails.shift();
+                scene.remove(oldTrail);
+            }
+
+            const trailLength = 20 + Math.random() * 20;
+            const trailGeometry = new THREE.CylinderGeometry(1.0, 5.0, trailLength, 8);
+
+            const colors = [0x00ffff, 0x00ff00, 0x0080ff, 0xffffff, 0xff00ff];
+            const trailColor = colors[Math.floor(Math.random() * colors.length)];
+
+            const trailMaterial = new THREE.MeshBasicMaterial({
+                color: trailColor,
+                transparent: true,
+                opacity: 0.9,
+                emissive: trailColor,
+                emissiveIntensity: 3
+            });
+
+            const trail = new THREE.Mesh(trailGeometry, trailMaterial);
+            trail.position.copy(enterpriseGroup.position);
+            trail.position.z -= 10;
+            trail.position.x += (Math.random() - 0.5) * 8;
+            trail.position.y += (Math.random() - 0.5) * 6;
+            trail.rotation.z = Math.PI / 2;
+            trail.rotation.x = (Math.random() - 0.5) * 0.5;
+
+            scene.add(trail);
+            warpTrails.push(trail);
+
+            const fadeTrail = () => {
+                trail.material.opacity -= 0.005;
+                trail.scale.z *= 1.3;
+                trail.scale.x *= 0.85;
+                trail.scale.y *= 0.85;
+                trail.position.z -= 2;
+
+                if (trail.material.opacity > 0) {
+                    requestAnimationFrame(fadeTrail);
+                } else {
+                    scene.remove(trail);
+                    const index = warpTrails.indexOf(trail);
+                    if (index > -1) warpTrails.splice(index, 1);
+                }
+            };
+            fadeTrail();
+        }
+
         function animate3D() {
             requestAnimationFrame(animate3D);
 
-            // Rotate particles
             particles.forEach(p => {
                 p.rotation.y += 0.002;
                 p.rotation.x += 0.001;
             });
 
-            // Animate money symbols
             moneyMeshes.forEach((mesh, i) => {
                 mesh.rotation.x += 0.01 * (i % 2 ? 1 : -1);
                 mesh.rotation.y += 0.02 * (i % 3 ? 1 : -1);
                 mesh.position.y += Math.sin(Date.now() * 0.001 + i) * 0.01;
             });
 
-            // Rotate trophy
             if (trophyMesh) {
                 trophyMesh.rotation.y += 0.05;
                 trophyMesh.position.y = Math.sin(Date.now() * 0.001) * 0.5;
             }
 
-            // Move camera
             camera.position.x = Math.sin(Date.now() * 0.0005) * 2;
             camera.position.y = Math.cos(Date.now() * 0.0005) * 1;
             camera.lookAt(scene.position);
@@ -474,16 +1076,13 @@
                 grid.appendChild(box);
             });
 
-            // Set floating GIFs
             document.getElementById('floater3D1').src = giphyUrls.money[Math.floor(Math.random() * giphyUrls.money.length)];
             document.getElementById('floater3D2').src = giphyUrls.celebration[Math.floor(Math.random() * giphyUrls.celebration.length)];
         }
 
         function trigger3DInsanity() {
-            // Reload GIFs
             loadGiphyContent();
 
-            // Create explosion of 3D particles
             for (let i = 0; i < 100; i++) {
                 setTimeout(() => {
                     const geometry = new THREE.SphereGeometry(0.1, 8, 8);
@@ -508,7 +1107,7 @@
                         particle.position.x += velocity.x;
                         particle.position.y += velocity.y;
                         particle.position.z += velocity.z;
-                        velocity.y -= 0.01; // gravity
+                        velocity.y -= 0.01;
 
                         if (particle.position.y < -10) {
                             scene.remove(particle);
@@ -520,7 +1119,6 @@
                 }, i * 10);
             }
 
-            // Flash colors
             const colors = [0xffd700, 0x00ff00, 0xff00ff, 0x00ffff, 0xff0000];
             colors.forEach((color, index) => {
                 setTimeout(() => {
@@ -532,29 +1130,40 @@
                 scene.fog.color.setHex(0x000000);
             }, 1000);
 
-            // Play audio
-            try {
-                const audio = new Audio('jessica_todays_epic_victory.wav');
-                audio.play();
-            } catch (e) {
-                console.log('Audio attempted');
-            }
+            // Auto-play Jessica's celebration with the button
+            playJessicaCelebration();
         }
 
         // Initialize on load
         window.addEventListener('load', () => {
             init3D();
             loadGiphyContent();
+            initMusic();
 
-            // Auto-refresh every 90 seconds (to give Jessica more time)
             setInterval(() => {
                 loadGiphyContent();
             }, 90000);
 
-            // Auto-trigger 3D insanity every 90 seconds (to let Jessica fully finish)
             setInterval(() => {
                 trigger3DInsanity();
             }, 90000);
+
+            // Fallback: If autoplay is blocked, start music on first user interaction
+            let musicStarted = false;
+            const startMusicOnInteraction = () => {
+                if (!musicStarted && !isPlaying) {
+                    playRandomSong();
+                    musicStarted = true;
+                    // Remove listeners after music starts
+                    document.removeEventListener('click', startMusicOnInteraction);
+                    document.removeEventListener('touchstart', startMusicOnInteraction);
+                    document.removeEventListener('keydown', startMusicOnInteraction);
+                }
+            };
+
+            document.addEventListener('click', startMusicOnInteraction);
+            document.addEventListener('touchstart', startMusicOnInteraction);
+            document.addEventListener('keydown', startMusicOnInteraction);
         });
 
         // Handle window resize
