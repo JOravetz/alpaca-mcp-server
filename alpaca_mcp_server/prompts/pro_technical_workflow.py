@@ -89,7 +89,7 @@ async def pro_technical_workflow(symbol: str, timeframe: str = "comprehensive") 
         analysis_results.append("- Analyzing volume patterns and institutional flow...")
 
         try:
-            from ..tools.market_data_tools import get_enhanced_streaming_analytics
+            from ..tools.market_data_tools import get_enhanced_streaming_analytics  # type: ignore[attr-defined]
 
             flow_analysis = await get_enhanced_streaming_analytics(
                 symbol=symbol, analysis_minutes=15, include_orderbook=True

@@ -185,8 +185,8 @@ class VolumeBarAggregator:
         # Store bar data for volume bar creation
         self.current_prices.extend([bar.open, bar.high, bar.low, bar.close])
         self.current_volumes.append(bar.volume)
-        self.current_vwaps.append(bar.vwap if hasattr(bar, "vwap") else bar.close)
-        self.current_trade_counts.append(bar.trade_count if hasattr(bar, "trade_count") else 1)
+        self.current_vwaps.append(bar.vwap if hasattr(bar, "vwap") else bar.close)  # type: ignore[arg-type]
+        self.current_trade_counts.append(bar.trade_count if hasattr(bar, "trade_count") else 1)  # type: ignore[arg-type]
 
         # Check if we should complete the volume bar
         if self.current_volume >= self._get_volume_threshold():
@@ -302,7 +302,7 @@ class VolumeBarAggregator:
         if total_volume > 0:
             weighted_vwap = (
                 sum(
-                    bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume
+                    bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume  # type: ignore[misc,operator]
                     for bar in self.current_bars
                 )
                 / total_volume
@@ -349,13 +349,13 @@ class VolumeBarAggregator:
 
         # Calculate dollar volume
         dollar_volume = sum(
-            bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume
+            bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume  # type: ignore[misc,operator]
             for bar in self.current_bars
         )
 
         # Sum trade counts
         total_trade_count = sum(
-            bar.trade_count if hasattr(bar, "trade_count") else 1 for bar in self.current_bars
+            bar.trade_count if hasattr(bar, "trade_count") else 1 for bar in self.current_bars  # type: ignore[misc]
         )
 
         return VolumeBar(
@@ -514,13 +514,13 @@ async def stream_volume_bars(
 
     # Set up stream
     stream = StockDataStream(
-        api_key=os.environ.get("APCA_API_KEY_ID"),
-        secret_key=os.environ.get("APCA_API_SECRET_KEY"),
-        feed=data_feed,
+        api_key=os.environ.get("APCA_API_KEY_ID"),  # type: ignore[arg-type]
+        secret_key=os.environ.get("APCA_API_SECRET_KEY"),  # type: ignore[arg-type]
+        feed=data_feed,  # type: ignore[arg-type]
     )
 
     # Trade handler
-    async def handle_trade(trade: Trade):
+    async def handle_trade(trade: Trade) -> None:
         """Process incoming trades"""
         bar = aggregator.process_trade(trade)
         if bar:
@@ -533,11 +533,11 @@ async def stream_volume_bars(
 
     # Subscribe to trades
     for symbol in symbols:
-        stream.subscribe_trades(handle_trade, symbol)
+        stream.subscribe_trades(handle_trade, symbol)  # type: ignore[arg-type]
 
     # Run stream
     logger.info(f"Starting volume bar stream for {symbols}")
-    await stream.run()
+    await stream.run()  # type: ignore[func-returns-value]
 
 
 def calculate_optimal_threshold(
@@ -583,7 +583,7 @@ if __name__ == "__main__":
     }
 
     # Bar completion callback
-    def on_bar(bar: VolumeBar):
+    def on_bar(bar: VolumeBar) -> None:
         print(f"\n{'='*60}")
         print(f"Volume Bar Completed: {bar.symbol}")
         print(f"OHLC: [{bar.open:.2f}, {bar.high:.2f}, {bar.low:.2f}, {bar.close:.2f}]")
@@ -597,7 +597,7 @@ if __name__ == "__main__":
     try:
         asyncio.run(
             stream_volume_bars(
-                symbols=symbols, volume_thresholds=thresholds, on_bar_complete=on_bar
+                symbols=symbols, volume_thresholds=thresholds, on_bar_complete=on_bar  # type: ignore[arg-type]
             )
         )
     except KeyboardInterrupt:

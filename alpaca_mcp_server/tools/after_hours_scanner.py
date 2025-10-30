@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 
 async def scan_after_hours_opportunities(
     symbols: str = "ALL",  # Use ALL tradeable assets by default
-    min_volume: int = None,  # Use global config default
-    min_percent_change: float = None,  # Use global config default
-    max_symbols: int = None,  # Use global config default
-    sort_by: str = None,  # Use global config default
+    min_volume: int | None = None,  # Use global config default
+    min_percent_change: float | None = None,  # Use global config default
+    max_symbols: int | None = None,  # Use global config default
+    sort_by: str | None = None,  # Use global config default
 ) -> str:
     """
     Scan for after-hours trading opportunities with enhanced analytics.
@@ -135,41 +135,41 @@ async def scan_after_hours_opportunities(
                         bid_str, ask_str = bid_ask.split(" / $")
                         symbol_data["bid"] = float(bid_str)
                         symbol_data["ask"] = float(ask_str)
-                        symbol_data["spread"] = symbol_data["ask"] - symbol_data["bid"]
+                        symbol_data["spread"] = symbol_data["ask"] - symbol_data["bid"]  # type: ignore[operator]
 
                 elif line.startswith("=="):  # End of symbol data
-                    if symbol_data["current_price"] > 0 and symbol_data["prev_close"] > 0:
+                    if symbol_data["current_price"] > 0 and symbol_data["prev_close"] > 0:  # type: ignore[operator]
                         # Calculate metrics
                         percent_change = (
-                            (symbol_data["current_price"] - symbol_data["prev_close"])
+                            (symbol_data["current_price"] - symbol_data["prev_close"])  # type: ignore[operator]
                             / symbol_data["prev_close"]
                             * 100
                         )
 
                         # After-hours specific calculations
                         ah_range = (
-                            symbol_data["high"] - symbol_data["low"]
-                            if symbol_data["high"] > 0
+                            symbol_data["high"] - symbol_data["low"]  # type: ignore[operator]
+                            if symbol_data["high"] > 0  # type: ignore[operator]
                             else 0
                         )
                         ah_range_pct = (
-                            (ah_range / symbol_data["prev_close"] * 100)
-                            if symbol_data["prev_close"] > 0
+                            (ah_range / symbol_data["prev_close"] * 100)  # type: ignore[operator]
+                            if symbol_data["prev_close"] > 0  # type: ignore[operator]
                             else 0
                         )
 
                         # Liquidity assessment
                         spread_pct = (
-                            (symbol_data["spread"] / symbol_data["current_price"] * 100)
-                            if symbol_data["current_price"] > 0
+                            (symbol_data["spread"] / symbol_data["current_price"] * 100)  # type: ignore[operator]
+                            if symbol_data["current_price"] > 0  # type: ignore[operator]
                             else 0
                         )
 
                         # Apply filters
                         if (
                             abs(percent_change) >= min_percent_change
-                            and symbol_data["volume"] >= min_volume
-                            and symbol_data["current_price"] <= trading_config.max_stock_price
+                            and symbol_data["volume"] >= min_volume  # type: ignore[operator]
+                            and symbol_data["current_price"] <= trading_config.max_stock_price  # type: ignore[operator]
                         ):
                             symbol_data.update(
                                 {
@@ -177,7 +177,7 @@ async def scan_after_hours_opportunities(
                                     "ah_range_pct": ah_range_pct,
                                     "spread_pct": spread_pct,
                                     "momentum_score": abs(percent_change)
-                                    * (symbol_data["volume"] / 1000000),
+                                    * (symbol_data["volume"] / 1000000),  # type: ignore[operator]
                                     "liquidity_score": max(
                                         0, 100 - (spread_pct * 10)
                                     ),  # Lower spread = higher score
@@ -187,17 +187,17 @@ async def scan_after_hours_opportunities(
                             opportunities.append(symbol_data)
 
                     current_symbol = None
-                    symbol_data = None
+                    symbol_data = None  # type: ignore[assignment]
 
         # Sort opportunities
         if sort_by == "percent_change":
-            opportunities.sort(key=lambda x: abs(x["percent_change"]), reverse=True)
+            opportunities.sort(key=lambda x: abs(x["percent_change"]), reverse=True)  # type: ignore[arg-type]
         elif sort_by == "volume":
-            opportunities.sort(key=lambda x: x["volume"], reverse=True)
+            opportunities.sort(key=lambda x: x["volume"], reverse=True)  # type: ignore[arg-type,return-value]
         elif sort_by == "momentum_score":
-            opportunities.sort(key=lambda x: x["momentum_score"], reverse=True)
+            opportunities.sort(key=lambda x: x["momentum_score"], reverse=True)  # type: ignore[arg-type,return-value]
         else:
-            opportunities.sort(key=lambda x: x["current_price"], reverse=True)
+            opportunities.sort(key=lambda x: x["current_price"], reverse=True)  # type: ignore[arg-type,return-value]
 
         # Limit results
         opportunities = opportunities[:max_symbols]
@@ -236,20 +236,20 @@ async def scan_after_hours_opportunities(
 
         for i, stock in enumerate(opportunities, 1):
             # Determine signal strength
-            if abs(stock["percent_change"]) > 10:
+            if abs(stock["percent_change"]) > 10:  # type: ignore[arg-type]
                 signal = "🚀 STRONG"
-                color = "🔴" if stock["percent_change"] < 0 else "🟢"
-            elif abs(stock["percent_change"]) > 5:
+                color = "🔴" if stock["percent_change"] < 0 else "🟢"  # type: ignore[operator]
+            elif abs(stock["percent_change"]) > 5:  # type: ignore[arg-type]
                 signal = "📈 MODERATE"
-                color = "🔴" if stock["percent_change"] < 0 else "🟢"
+                color = "🔴" if stock["percent_change"] < 0 else "🟢"  # type: ignore[operator]
             else:
                 signal = "⚡ MILD"
-                color = "🔴" if stock["percent_change"] < 0 else "🟢"
+                color = "🔴" if stock["percent_change"] < 0 else "🟢"  # type: ignore[operator]
 
             # Risk assessment
-            if stock["spread_pct"] > 0.5:
+            if stock["spread_pct"] > 0.5:  # type: ignore[operator]
                 risk = "🔴 HIGH SPREAD"
-            elif stock["volume"] < 500000:
+            elif stock["volume"] < 500000:  # type: ignore[operator]
                 risk = "🟡 LOW VOLUME"
             else:
                 risk = "🟢 GOOD LIQUIDITY"
@@ -265,10 +265,20 @@ async def scan_after_hours_opportunities(
 """
 
         # Enhanced analytics summary
-        total_volume = sum(s["volume"] for s in opportunities)
-        avg_change = sum(abs(s["percent_change"]) for s in opportunities) / len(opportunities)
-        top_mover = max(opportunities, key=lambda x: abs(x["percent_change"]))
-        most_active = max(opportunities, key=lambda x: x["volume"])
+        total_volume = sum(s["volume"] for s in opportunities)  # type: ignore[misc]
+        avg_change = sum(abs(s["percent_change"]) for s in opportunities) / len(opportunities)  # type: ignore[arg-type]
+        top_mover = max(opportunities, key=lambda x: abs(x["percent_change"]))  # type: ignore[arg-type]
+        most_active = max(opportunities, key=lambda x: x["volume"])  # type: ignore[arg-type,return-value]
+
+        # Liquidity counts (extract from f-string to avoid type inference issues)
+        high_liq_count = sum(1 for s in opportunities if s["spread_pct"] < 0.2)  # type: ignore[misc,operator]
+        mod_liq_count = sum(1 for s in opportunities if 0.2 <= s["spread_pct"] < 0.5)  # type: ignore[misc,operator]
+        low_liq_count = sum(1 for s in opportunities if s["spread_pct"] >= 0.5)  # type: ignore[misc,operator]
+
+        # Symbol lists for commands (extract to avoid generator type issues)
+        top5_symbols = ",".join(s["symbol"] for s in opportunities[:5])  # type: ignore[misc]
+        top3_symbols = "', '".join(s["symbol"] for s in opportunities[:3])  # type: ignore[misc]
+        first_symbol = opportunities[0]["symbol"] if opportunities else "N/A"  # type: ignore[misc]
 
         result += f"""## 📊 After-Hours Analytics Summary
 
@@ -279,19 +289,19 @@ async def scan_after_hours_opportunities(
 • Most Active: {most_active["symbol"]} ({most_active["volume"]:,} volume)
 
 **Liquidity Assessment:**
-• High Liquidity: {sum(1 for s in opportunities if s["spread_pct"] < 0.2)} stocks
-• Moderate Liquidity: {sum(1 for s in opportunities if 0.2 <= s["spread_pct"] < 0.5)} stocks
-• Low Liquidity: {sum(1 for s in opportunities if s["spread_pct"] >= 0.5)} stocks
+• High Liquidity: {high_liq_count} stocks
+• Moderate Liquidity: {mod_liq_count} stocks
+• Low Liquidity: {low_liq_count} stocks
 
 ## ⚡ Enhanced Actions
 
 **Deep Analysis:**
-• `get_stock_peak_trough_analysis("{",".join(s["symbol"] for s in opportunities[:5])}")`
-• `get_stock_bars_intraday("{opportunities[0]["symbol"]}", timeframe="5Min", limit=100)`
+• `get_stock_peak_trough_analysis("{top5_symbols}")`
+• `get_stock_bars_intraday("{first_symbol}", timeframe="5Min", limit=100)`
 
 **Real-Time Monitoring:**
-• `start_global_stock_stream(["{'", "'.join(s["symbol"] for s in opportunities[:3])}"], ["trades", "quotes"])`
-• `start_differential_trade_scanner("{",".join(s["symbol"] for s in opportunities[:5])}")`
+• `start_global_stock_stream(["{top3_symbols}"], ["trades", "quotes"])`
+• `start_differential_trade_scanner("{top5_symbols}")`
 
 **Risk Management:**
 • Use limit orders only in after-hours

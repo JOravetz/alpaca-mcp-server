@@ -9,7 +9,7 @@ from ..config.settings import get_stock_historical_client
 
 
 async def get_data_quality(
-    test_symbols: list = None,
+    test_symbols: list = None,  # type: ignore[assignment]
     latency_threshold_ms: float = 500.0,
     quote_age_threshold_seconds: float = 60.0,
     spread_threshold_pct: float = 1.0,
@@ -170,7 +170,7 @@ async def get_data_quality(
         ]
 
         if connected_qualities:
-            avg_quality_score = sum(connected_qualities) / len(connected_qualities)
+            avg_quality_score = sum(connected_qualities) / len(connected_qualities)  # type: ignore[arg-type]
         else:
             avg_quality_score = 0
 

@@ -119,8 +119,8 @@ class CPeakTroughAnalyzer:
         # These should already be set, but ensure they're available
         if "APCA_API_KEY_ID" not in env or "APCA_API_SECRET_KEY" not in env:
             from alpaca_mcp_server.config.settings import settings
-            env["APCA_API_KEY_ID"] = settings.api_key
-            env["APCA_API_SECRET_KEY"] = settings.api_secret
+            env["APCA_API_KEY_ID"] = settings.api_key  # type: ignore[assignment]
+            env["APCA_API_SECRET_KEY"] = settings.api_secret  # type: ignore[assignment]
         
         try:
             # Run the C program
@@ -196,7 +196,7 @@ async def analyze_peaks_troughs_fast(
         if symbols.upper() == "AUTO":
             # Get symbols from scanner
             try:
-                from alpaca_mcp_server.tools.day_trading_scanner import get_scanner_results
+                from alpaca_mcp_server.tools.day_trading_scanner import get_scanner_results  # type: ignore[attr-defined]
                 scanner_symbols = await get_scanner_results()
                 if not scanner_symbols:
                     return "No symbols available from scanner. Run scan_day_trading_opportunities first."

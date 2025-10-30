@@ -1,9 +1,9 @@
 from math import log, pi
 
 import numpy as np
-from scipy.fft import fft, ifft
-from scipy.optimize import curve_fit
-from scipy.signal import cspline1d, cspline1d_eval
+from scipy.fft import fft, ifft  # type: ignore[import-untyped]
+from scipy.optimize import curve_fit  # type: ignore[import-untyped]
+from scipy.signal import cspline1d, cspline1d_eval  # type: ignore[import-untyped]
 
 __all__ = [
     "peakdetect",
@@ -87,7 +87,7 @@ def _peakdetect_parabola_fitter(raw_peaks, x_axis, y_axis, points):
     def func(x, a, tau, c):
         return a * ((x - tau) ** 2) + c
 
-    fitted_peaks = []
+    fitted_peaks = []  # type: ignore[var-annotated]
 
     # Handle empty raw_peaks
     if len(raw_peaks) < 2:
@@ -221,7 +221,7 @@ def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0):
     # perform some checks
     if lookahead < 1:
         raise ValueError("Lookahead must be '1' or above in value")
-    if not (np.isscalar(delta) and delta >= 0):
+    if not (np.isscalar(delta) and delta >= 0):  # type: ignore[operator]
         raise ValueError("delta must be a positive number")
 
     # maxima and minima candidates are temporarily stored in
@@ -238,7 +238,7 @@ def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0):
             mnpos = x
 
         # look for max
-        if y < mx - delta and mx != np.inf and y_axis[index : index + lookahead].max() < mx:
+        if y < mx - delta and mx != np.inf and y_axis[index : index + lookahead].max() < mx:  # type: ignore[operator]
             # Maxima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
             max_peaks.append([mxpos, mx])
@@ -252,7 +252,7 @@ def peakdetect(y_axis, x_axis=None, lookahead=200, delta=0):
             continue
 
         # look for min
-        if y > mn + delta and mn != -np.inf and y_axis[index : index + lookahead].min() > mn:
+        if y > mn + delta and mn != -np.inf and y_axis[index : index + lookahead].min() > mn:  # type: ignore[operator]
             # Minima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
             min_peaks.append([mnpos, mn])
@@ -545,7 +545,7 @@ def peakdetect_sine(y_axis, x_axis, points=31, lock_frequency=False):
 
     else:
 
-        def func(x_ax, A, Hz, tau):
+        def func(x_ax, A, Hz, tau):  # type: ignore[misc]
             return A * np.sin(2 * pi * Hz * (x_ax - tau) + pi / 2)
 
     # func = lambda x_ax, A, Hz, tau: A * np.cos(2 * pi * Hz * (x_ax - tau))
@@ -829,7 +829,7 @@ def _smooth(x, window_len=11, window="hanning"):
         return x
     # declare valid windows in a dictionary
     window_funcs = {
-        "flat": lambda _len: np.ones(_len, "d"),
+        "flat": lambda _len: np.ones(_len, "d"),  # type: ignore[arg-type]
         "hanning": np.hanning,
         "hamming": np.hamming,
         "bartlett": np.bartlett,
@@ -869,7 +869,7 @@ def peakdetect_savgol(y_axis, x_axis=None, window_length=5, polyorder=3, delta=1
         of: (position, peak_value)
     """
     import numpy as np
-    from scipy import signal as scipy_signal
+    from scipy import signal as scipy_signal  # type: ignore[import-untyped]
 
     x_axis, y_axis = _datacheck_peakdetect(x_axis, y_axis)
 
@@ -1125,7 +1125,7 @@ def zero_crossings_sine_fit(y_axis, x_axis, fit_window=None, smooth_window=11):
     # get true crossings
     true_crossings = []
     for indice, crossing in zip(zero_indices, approx_crossings, strict=False):
-        p0 = (crossing,)
+        p0 = (crossing,)  # type: ignore[assignment]
         subset_start = max(indice - fit_window, 0.0)
         subset_end = min(indice + fit_window + 1, len(x_axis) - 1.0)
         x_subset = np.asarray(x_axis[subset_start:subset_end])

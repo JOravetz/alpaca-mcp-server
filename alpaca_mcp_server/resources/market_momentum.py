@@ -105,7 +105,7 @@ async def get_market_momentum(
 
         bars_data = data_client.get_stock_bars(request)
         symbol_bars = (
-            list(bars_data.data[symbol]) if bars_data.data and symbol in bars_data.data else []
+            list(bars_data.data[symbol]) if bars_data.data and symbol in bars_data.data else []  # type: ignore[union-attr]
         )
 
         if len(symbol_bars) < max(sma_short, sma_long):

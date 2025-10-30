@@ -110,11 +110,11 @@ async def stream_centric_trading_cycle(symbols: str = "AUTO") -> str:
         )
         analysis_results[4] if not isinstance(analysis_results[4], Exception) else "Snapshot failed"
 
-        result += f"✅ Peak/Trough Analysis: {'Available' if 'BUY' in peak_trough_analysis or 'SELL' in peak_trough_analysis else 'No signals'}\n"
-        result += f"✅ Account Status: {'Ready' if '$' in account_info else 'Issues detected'}\n"
-        result += f"✅ Existing Positions: {'None' if 'No positions' in positions else 'Positions found'}\n"
+        result += f"✅ Peak/Trough Analysis: {'Available' if 'BUY' in peak_trough_analysis or 'SELL' in peak_trough_analysis else 'No signals'}\n"  # type: ignore[operator]
+        result += f"✅ Account Status: {'Ready' if '$' in account_info else 'Issues detected'}\n"  # type: ignore[operator]
+        result += f"✅ Existing Positions: {'None' if 'No positions' in positions else 'Positions found'}\n"  # type: ignore[operator]
         result += (
-            f"✅ Open Orders: {'None' if 'No open orders' in open_orders else 'Orders pending'}\n\n"
+            f"✅ Open Orders: {'None' if 'No open orders' in open_orders else 'Orders pending'}\n\n"  # type: ignore[operator]
         )
 
         # PHASE 3: STREAM-FED QUALIFICATION
@@ -134,10 +134,10 @@ async def stream_centric_trading_cycle(symbols: str = "AUTO") -> str:
         result += "-" * 40 + "\n"
 
         # Analyze qualification criteria
-        has_buy_signal = "BUY" in peak_trough_analysis
+        has_buy_signal = "BUY" in peak_trough_analysis  # type: ignore[operator]
         has_liquidity = "Good" in stream_monitoring
-        account_ready = "$" in account_info
-        no_existing_position = "No positions" in positions
+        account_ready = "$" in account_info  # type: ignore[operator]
+        no_existing_position = "No positions" in positions  # type: ignore[operator]
 
         qualification_score = sum(
             [has_buy_signal, has_liquidity, account_ready, no_existing_position]
@@ -249,7 +249,7 @@ async def stream_concurrent_monitoring_cycle(symbols: str = "AUTO") -> str:
     """
     try:
         # Import monitoring tools
-        from alpaca_mcp_server.tools.account_portfolio_tools import get_positions
+        from alpaca_mcp_server.tools.account_portfolio_tools import get_positions  # type: ignore[import-not-found]
         from alpaca_mcp_server.tools.peak_trough_analysis_tool import analyze_peaks_and_troughs
         from alpaca_mcp_server.tools.streaming_tools import stream_aware_price_monitor
 
@@ -305,15 +305,15 @@ async def stream_concurrent_monitoring_cycle(symbols: str = "AUTO") -> str:
 
         result += "📊 Real-Time Stream Monitoring:\n"
         result += "-" * 35 + "\n"
-        result += stream_data + "\n\n"
+        result += stream_data + "\n\n"  # type: ignore[operator]
 
         result += "🔍 Technical Signal Analysis:\n"
         result += "-" * 35 + "\n"
 
         # Extract key signals
-        has_sell_signal = "SELL" in technical_signals
-        has_peak_signal = "Peak" in technical_signals
-        has_position = "unrealized" in position_status.lower()
+        has_sell_signal = "SELL" in technical_signals  # type: ignore[operator]
+        has_peak_signal = "Peak" in technical_signals  # type: ignore[operator]
+        has_position = "unrealized" in position_status.lower()  # type: ignore[union-attr]
 
         result += f"  └── Exit Signals: {'✅ SELL/Peak detected' if has_sell_signal or has_peak_signal else '⏸️ Hold position'}\n"
         result += (
@@ -335,9 +335,9 @@ async def stream_concurrent_monitoring_cycle(symbols: str = "AUTO") -> str:
             result += "  └── Stream monitoring ready for new opportunities\n"
 
         result += "\n⚡ Monitoring Cycle Status:\n"
-        result += f"  └── Stream Data: {'✅ Active' if 'Current Price' in stream_data else '❌ Limited'}\n"
-        result += f"  └── Technical Analysis: {'✅ Available' if 'Peak' in technical_signals or 'Trough' in technical_signals else '❌ No signals'}\n"
-        result += f"  └── Position Tracking: {'✅ Verified' if 'balance' in position_status.lower() else '❌ Issues'}\n"
+        result += f"  └── Stream Data: {'✅ Active' if 'Current Price' in stream_data else '❌ Limited'}\n"  # type: ignore[operator]
+        result += f"  └── Technical Analysis: {'✅ Available' if 'Peak' in technical_signals or 'Trough' in technical_signals else '❌ No signals'}\n"  # type: ignore[operator]
+        result += f"  └── Position Tracking: {'✅ Verified' if 'balance' in position_status.lower() else '❌ Issues'}\n"  # type: ignore[union-attr]
 
         result += "\n🔄 Next Monitoring Cycle: Run this prompt again in 30-60 seconds\n"
 

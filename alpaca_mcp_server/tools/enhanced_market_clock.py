@@ -1,3 +1,4 @@
+from alpaca.trading.models import Clock
 """Enhanced market clock with extended hours awareness."""
 
 from datetime import time, timedelta
@@ -11,6 +12,10 @@ async def get_extended_market_clock() -> str:
     try:
         client = get_trading_client()
         clock = client.get_clock()
+
+        # Type check for proper Clock access
+        if isinstance(clock, dict):
+            return f"Error: Received dict response instead of Clock: {clock}"
 
         # Get current Eastern time
         now_et, tz_name = get_eastern_time()

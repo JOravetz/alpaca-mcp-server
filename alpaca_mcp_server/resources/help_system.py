@@ -246,7 +246,7 @@ class HelpSystem:
                 "error": str(e),
             }
 
-    def _python_type_to_json_schema(self, python_type) -> str:
+    def _python_type_to_json_schema(self, python_type) -> str:  # type: ignore[no-untyped-def]
         """Convert Python type annotations to JSON Schema types."""
         if python_type == inspect.Parameter.empty:
             return "string"  # Default to string
@@ -810,7 +810,7 @@ Found {len(matches)} matching tools:
 _help_system: HelpSystem | None = None
 
 
-def initialize_help_system(mcp_server: FastMCP):
+def initialize_help_system(mcp_server: FastMCP) -> None:
     """Initialize the global help system."""
     global _help_system
     _help_system = HelpSystem(mcp_server)
@@ -854,7 +854,7 @@ async def get_all_prompts_help_resource() -> str:
 # ============================================================================
 
 
-def with_help_support(tool_name: str):
+def with_help_support(tool_name: str) -> Any:
     """
     Decorator to add --help parameter support to any tool.
 
@@ -889,7 +889,7 @@ def with_help_support(tool_name: str):
     return decorator
 
 
-def check_help_parameter(**kwargs) -> str | None:
+def check_help_parameter(**kwargs) -> str | None:  # type: ignore[no-untyped-def]
     """
     Utility function to check for help parameter in tool calls.
 

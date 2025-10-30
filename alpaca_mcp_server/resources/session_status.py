@@ -1,3 +1,4 @@
+from alpaca.trading.models import Clock
 """Market session status resource with extended hours awareness."""
 
 from datetime import datetime, time
@@ -173,7 +174,7 @@ async def get_session_status() -> dict:
             "session_description": session_description,
             "session_phase": session_phase,
             "is_extended_hours": is_extended_hours,
-            "alpaca_market_open": clock.is_open,
+            "alpaca_market_open": clock.is_open,  # type: ignore[union-attr]
             "progress_percent": (
                 round(progress_percent, 1) if progress_percent is not None else None
             ),
@@ -190,9 +191,9 @@ async def get_session_status() -> dict:
             },
             "trading_notes": trading_notes.get(current_session, []),
             "alpaca_times": {
-                "next_open": clock.next_open.isoformat(),
-                "next_close": clock.next_close.isoformat(),
-                "current_timestamp": clock.timestamp.isoformat(),
+                "next_open": clock.next_open.isoformat(),  # type: ignore[union-attr]
+                "next_close": clock.next_close.isoformat(),  # type: ignore[union-attr]
+                "current_timestamp": clock.timestamp.isoformat(),  # type: ignore[union-attr]
             },
         }
 

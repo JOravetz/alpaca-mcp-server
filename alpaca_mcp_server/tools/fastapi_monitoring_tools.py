@@ -25,7 +25,7 @@ class FastAPIMonitoringClient:
         self.base_url = base_url
         self.timeout = aiohttp.ClientTimeout(total=SERVICE_TIMEOUT)
 
-    async def _make_request(self, method: str, endpoint: str, data: dict | None = None) -> dict:
+    async def _make_request(self, method: str, endpoint: str, data: dict | None = None) -> dict:  # type: ignore[return]
         """Make HTTP request to monitoring service"""
         url = f"{self.base_url}{endpoint}"
 
@@ -359,7 +359,7 @@ async def start_fastapi_monitoring_service() -> dict:
                     # Try chromium first (user preference), then webbrowser module
                     browser_opened = False
                     try:
-                        result = subprocess.run(
+                        result = subprocess.run(  # type: ignore[assignment]
                             ["chromium", dashboard_url], capture_output=True, check=False, timeout=5
                         )
                         if result.returncode == 0:

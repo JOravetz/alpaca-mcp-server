@@ -1,3 +1,4 @@
+from alpaca.trading.models import Clock
 """Market information and calendar tools."""
 
 from datetime import datetime
@@ -24,6 +25,10 @@ async def get_market_clock() -> str:
     try:
         client = get_trading_client()
         clock = client.get_clock()
+
+        # Type check for proper Clock access
+        if isinstance(clock, dict):
+            return f"Error: Received dict response instead of Clock: {clock}"
 
         # Get current time in EDT/EST
         et_tz = pytz.timezone("America/New_York")
@@ -72,16 +77,16 @@ async def get_market_calendar(start_date: str, end_date: str) -> str:
         client = get_trading_client()
         # Different API versions may use different parameter names
         try:
-            calendar = client.get_calendar(start=start_date, end=end_date)
+            calendar = client.get_calendar(start=start_date, end=end_date)  # type: ignore[call-arg]
         except TypeError:
             # Try alternative parameter names
             try:
-                calendar = client.get_calendar(start_date=start_date, end_date=end_date)
+                calendar = client.get_calendar(start_date=start_date, end_date=end_date)  # type: ignore[call-arg]
             except TypeError:
                 calendar = client.get_calendar()
         result = f"Market Calendar ({start_date} to {end_date}):\n----------------------------\n"
         for day in calendar:
-            result += f"Date: {day.date}, Open: {day.open}, Close: {day.close}\n"
+            result += f"Date: {day.date}, Open: {day.open}, Close: {day.close}\n"  # type: ignore[union-attr]
         return result
     except Exception as e:
         return f"Error fetching market calendar: {str(e)}"

@@ -34,7 +34,7 @@ def create_headless_plot(results, plot_dir, dpi=100):
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
     import numpy as np
-    from dateutil import tz
+    from dateutil import tz  # type: ignore[import-untyped]
 
     if not results:
         return None
@@ -54,12 +54,12 @@ def create_headless_plot(results, plot_dir, dpi=100):
 
         # Convert timestamps to datetime objects for plotting
         try:
-            from peak_trough_detection_plot import convert_to_nyc_timezone
+            from peak_trough_detection_plot import convert_to_nyc_timezone  # type: ignore[import-not-found]
 
             timestamps_dt = [convert_to_nyc_timezone(ts) for ts in timestamps]
             use_datetime = True
         except (ValueError, TypeError, AttributeError, ImportError):
-            timestamps_dt = range(len(original_prices))
+            timestamps_dt = range(len(original_prices))  # type: ignore[assignment]
             use_datetime = False
 
         # Plot main price lines
@@ -242,8 +242,8 @@ async def generate_peak_trough_plots_fixed(
     symbols: str,
     timeframe: str = "1Min",
     days: int = 1,
-    window_len: int = None,
-    lookahead: int = None,
+    window_len: int | None = None,
+    lookahead: int | None = None,
     plot_mode: str = "single",
     save_plots: bool = True,
     display_plots: bool = False,

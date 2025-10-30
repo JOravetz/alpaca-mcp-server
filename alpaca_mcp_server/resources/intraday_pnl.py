@@ -5,6 +5,7 @@ import pytz
 
 from alpaca.trading.enums import QueryOrderStatus
 from alpaca.trading.requests import GetOrdersRequest
+from alpaca.trading.models import Order, Position
 
 from ..config.settings import get_trading_client
 
@@ -16,7 +17,7 @@ async def get_intraday_pnl(
     days_back: int = 0,
     include_open_positions: bool = True,
     min_trade_value: float = 0.0,
-    symbol_filter: str = None,
+    symbol_filter: str | None = None,
 ) -> dict:
     """Calculate actual intraday P&L from trades with configurable parameters.
 
@@ -55,7 +56,7 @@ async def get_intraday_pnl(
             orders = [
                 order
                 for order in orders
-                if hasattr(order, "symbol") and order.symbol.upper() == symbol_filter.upper()
+                if isinstance(order, TradeAccount) and order.symbol.upper() == symbol_filter.upper()  # type: ignore[name-defined]
             ]
 
         # Calculate realized P&L from filled orders
@@ -73,22 +74,22 @@ async def get_intraday_pnl(
 
         for order in orders:
             if (
-                order.filled_at
-                and start_date <= order.filled_at.date() <= end_date
-                and order.filled_avg_price
-                and order.filled_qty
+                order.filled_at  # type: ignore[union-attr]
+                and start_date <= order.filled_at.date() <= end_date  # type: ignore[union-attr]
+                and order.filled_avg_price  # type: ignore[union-attr]
+                and order.filled_qty  # type: ignore[union-attr]
             ):
-                trade_value = float(order.filled_avg_price) * float(order.filled_qty)
+                trade_value = float(order.filled_avg_price) * float(order.filled_qty)  # type: ignore[union-attr]
 
                 # Apply minimum trade value filter
                 if trade_value < min_trade_value:
                     continue
 
-                total_volume += trade_value
+                total_volume += trade_value  # type: ignore[assignment]
 
-                symbol = order.symbol
+                symbol = order.symbol  # type: ignore[union-attr]
                 if symbol not in trades_by_symbol:
-                    trades_by_symbol[symbol] = {
+                    trades_by_symbol[symbol] = {  # type: ignore[index]
                         "trades": [],
                         "realized_pnl": 0,
                         "volume": 0,
@@ -96,17 +97,17 @@ async def get_intraday_pnl(
                     }
 
                 trade_data = {
-                    "side": order.side.value,
-                    "qty": float(order.filled_qty),
-                    "price": float(order.filled_avg_price),
+                    "side": order.side.value,  # type: ignore[union-attr]
+                    "qty": float(order.filled_qty),  # type: ignore[union-attr]
+                    "price": float(order.filled_avg_price),  # type: ignore[union-attr]
                     "value": trade_value,
-                    "time": order.filled_at.isoformat(),
-                    "order_id": order.id,
+                    "time": order.filled_at.isoformat(),  # type: ignore[union-attr]
+                    "order_id": order.id,  # type: ignore[union-attr]
                 }
 
-                trades_by_symbol[symbol]["trades"].append(trade_data)
-                trades_by_symbol[symbol]["volume"] += trade_value
-                trades_by_symbol[symbol]["trade_count"] += 1
+                trades_by_symbol[symbol]["trades"].append(trade_data)  # type: ignore[index]
+                trades_by_symbol[symbol]["volume"] += trade_value  # type: ignore[index]
+                trades_by_symbol[symbol]["trade_count"] += 1  # type: ignore[index]
 
                 trade_count += 1
 
@@ -208,14 +209,14 @@ async def get_intraday_pnl(
                 positions = [
                     pos
                     for pos in positions
-                    if hasattr(pos, "symbol") and pos.symbol.upper() == symbol_filter.upper()
+                    if isinstance(pos, TradeAccount) and pos.symbol.upper() == symbol_filter.upper()  # type: ignore[name-defined]
                 ]
 
-            unrealized_pnl = sum(float(pos.unrealized_pl or 0) for pos in positions)
+            unrealized_pnl = sum(float(pos.unrealized_pl or 0) for pos in positions)  # type: ignore[misc,union-attr]
             current_positions_count = len(positions)
 
         # Calculate day trade limits
-        pdt_status = account.pattern_day_trader
+        pdt_status = account.pattern_day_trader  # type: ignore[union-attr]
         remaining_day_trades = max(0, 3 - day_trades) if not pdt_status else 999
 
         # Calculate performance metrics

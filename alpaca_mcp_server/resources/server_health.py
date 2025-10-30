@@ -41,11 +41,11 @@ async def get_server_health() -> dict:
 
             connection_status["trading_api"] = {
                 "status": "connected",
-                "account_id": account.id,
-                "account_status": account.status.value,
+                "account_id": account.id,  # type: ignore[union-attr]
+                "account_status": account.status.value,  # type: ignore[union-attr]
                 "response_time_ms": round(trading_latency, 1),
-                "buying_power": float(account.buying_power or 0),
-                "cash": float(account.cash or 0),
+                "buying_power": float(account.buying_power or 0),  # type: ignore[union-attr]
+                "cash": float(account.cash or 0),  # type: ignore[union-attr]
             }
         except Exception as e:
             connection_status["trading_api"] = {

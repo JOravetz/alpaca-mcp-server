@@ -127,8 +127,8 @@ class CStockAnalyzer:
         env = os.environ.copy()
         if "APCA_API_KEY_ID" not in env or "APCA_API_SECRET_KEY" not in env:
             from alpaca_mcp_server.config.settings import settings
-            env["APCA_API_KEY_ID"] = settings.api_key
-            env["APCA_API_SECRET_KEY"] = settings.api_secret
+            env["APCA_API_KEY_ID"] = settings.api_key  # type: ignore[assignment]
+            env["APCA_API_SECRET_KEY"] = settings.api_secret  # type: ignore[assignment]
         
         try:
             # Run the C program

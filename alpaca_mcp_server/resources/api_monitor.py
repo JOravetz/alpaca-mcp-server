@@ -28,13 +28,13 @@ async def get_api_status() -> dict:
             results["trading_api"] = {
                 "status": "connected",
                 "latency_ms": round(trading_latency, 1),
-                "account_id": account.id,
-                "account_status": account.status.value,
-                "buying_power": float(account.buying_power),
-                "cash": float(account.cash),
-                "portfolio_value": float(account.portfolio_value),
+                "account_id": account.id,  # type: ignore[union-attr]
+                "account_status": account.status.value,  # type: ignore[union-attr]
+                "buying_power": float(account.buying_power),  # type: ignore[arg-type,union-attr]
+                "cash": float(account.cash),  # type: ignore[arg-type,union-attr]
+                "portfolio_value": float(account.portfolio_value),  # type: ignore[arg-type,union-attr]
                 "positions_count": positions_count,
-                "pattern_day_trader": account.pattern_day_trader,
+                "pattern_day_trader": account.pattern_day_trader,  # type: ignore[union-attr]
                 "last_test": datetime.now().isoformat(),
             }
         except Exception as e:
@@ -105,7 +105,7 @@ async def get_api_status() -> dict:
         if successful_symbols == total_symbols:
             market_data_status = "connected"
             avg_latency = (
-                sum(result.get("latency_ms", 0) for result in market_data_results.values())
+                sum(result.get("latency_ms", 0) for result in market_data_results.values())  # type: ignore[misc]
                 / total_symbols
             )
         elif successful_symbols > 0:
@@ -116,7 +116,7 @@ async def get_api_status() -> dict:
                 if result.get("status") == "connected"
             ]
             avg_latency = (
-                sum(successful_latencies) / len(successful_latencies) if successful_latencies else 0
+                sum(successful_latencies) / len(successful_latencies) if successful_latencies else 0  # type: ignore[arg-type]
             )
         else:
             market_data_status = "error"

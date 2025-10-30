@@ -5,6 +5,7 @@ from datetime import date
 from alpaca.data.enums import OptionsFeed
 from alpaca.data.requests import OptionChainRequest, OptionLatestQuoteRequest, OptionSnapshotRequest
 from alpaca.trading.enums import AssetStatus, ContractType
+from alpaca.data.models import Quote
 
 
 async def test_option_client_basic(underlying_symbol: str) -> str:
@@ -62,13 +63,13 @@ async def get_option_contracts(
         # Build request with correct parameter name
         request_params = {"underlying_symbol": underlying_symbol}
         if expiration_date:
-            request_params["expiration_date"] = expiration_date
+            request_params["expiration_date"] = expiration_date  # type: ignore[assignment]
         if strike_price_gte:
-            request_params["strike_price_gte"] = float(strike_price_gte)
+            request_params["strike_price_gte"] = float(strike_price_gte)  # type: ignore[assignment]
         if strike_price_lte:
-            request_params["strike_price_lte"] = float(strike_price_lte)
+            request_params["strike_price_lte"] = float(strike_price_lte)  # type: ignore[assignment]
 
-        request = OptionChainRequest(**request_params)
+        request = OptionChainRequest(**request_params)  # type: ignore[arg-type]
         contracts = client.get_option_chain(request)
 
         if not contracts:
@@ -88,7 +89,7 @@ async def get_option_contracts(
 
             # Extract info from symbol if contract_data doesn't have direct attributes
             if hasattr(contract_data, "strike_price"):
-                strike_price = f"${contract_data.strike_price}"
+                strike_price = f"${contract_data.strike_price}"  # type: ignore[attr-defined]
 
             # Force symbol parsing to always run
             if len(symbol) >= 15:  # Standard option symbol format
@@ -106,7 +107,7 @@ async def get_option_contracts(
                 strike_price = f"Symbol too short: {len(symbol)}"
 
             if hasattr(contract_data, "expiration_date"):
-                expiration = str(contract_data.expiration_date)
+                expiration = str(contract_data.expiration_date)  # type: ignore[attr-defined]
 
             # Force expiration parsing to always run
             if len(symbol) >= 15:
@@ -121,7 +122,7 @@ async def get_option_contracts(
                     expiration = f"Parse error: {str(e)}"
 
             if hasattr(contract_data, "type"):
-                contract_type = str(contract_data.type)
+                contract_type = str(contract_data.type)  # type: ignore[attr-defined]
 
             result += f"""
 Contract: {symbol}
@@ -163,12 +164,21 @@ async def get_option_latest_quote(symbol: str, feed: OptionsFeed | None = None) 
 
         if symbol in quote:
             q = quote[symbol]
+
+            # Type check for proper Quote access
+            if not isinstance(q, Quote):
+                return f"Error: Received unexpected quote format: {type(q)}"
+
+            # Extract attributes (alpaca-py has incomplete type stubs)
+            ask_price = q.ask  # type: ignore[attr-defined]
+            bid_price = q.bid  # type: ignore[attr-defined]
+
             return f"""
 Latest Quote for {symbol}:
 -------------------------
-Ask Price: ${q.ask}
+Ask Price: ${ask_price}
 Ask Size: {q.ask_size}
-Bid Price: ${q.bid}
+Bid Price: ${bid_price}
 Bid Size: {q.bid_size}
 Ask Exchange: {q.ask_exchange}
 Bid Exchange: {q.bid_exchange}
@@ -203,13 +213,13 @@ async def get_option_snapshot(symbol: str) -> str:
 
         # Try different parameter names for OptionSnapshotRequest
         try:
-            request = OptionSnapshotRequest(symbols=[symbol])
+            request = OptionSnapshotRequest(symbols=[symbol])  # type: ignore[call-arg]
         except TypeError:
             try:
                 request = OptionSnapshotRequest(symbol_or_symbols=symbol)
             except TypeError:
                 # Fallback: pass symbol directly if no request wrapper needed
-                snapshot = client.get_option_snapshot(symbol)
+                snapshot = client.get_option_snapshot(symbol)  # type: ignore[arg-type]
                 # Format the direct response
                 if not snapshot:
                     return f"No snapshot data found for {symbol}"
@@ -223,6 +233,10 @@ Option Snapshot for {symbol}:
 
         if not snapshot:
             return f"No snapshot data found for {symbol}"
+
+        # Type check for proper snapshot access
+        if isinstance(snapshot, dict):
+            return f"Error: Received dict response instead of snapshot: {snapshot}"
 
         return f"""
 Option Snapshot for {symbol}:

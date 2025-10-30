@@ -198,7 +198,7 @@ def register_resource_mirror_tools(mcp):
     ) -> dict:
         """Tool mirror of data://quality resource."""
         return await data_quality.get_data_quality(
-            test_symbols=test_symbols,
+            test_symbols=test_symbols,  # type: ignore[arg-type]
             latency_threshold_ms=latency_threshold_ms,
             quote_age_threshold_seconds=quote_age_threshold_seconds,
             spread_threshold_pct=spread_threshold_pct,

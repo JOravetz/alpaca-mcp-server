@@ -9,8 +9,8 @@ from datetime import datetime, timedelta
 import numpy as np
 import pytz
 import requests
-from scipy.signal import filtfilt
-from scipy.signal.windows import hann as hanning
+from scipy.signal import filtfilt  # type: ignore[import-untyped]
+from scipy.signal.windows import hann as hanning  # type: ignore[import-untyped]
 
 # Import global configuration
 from ..config import get_technical_config
@@ -20,13 +20,13 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 sys.path.insert(0, project_root)
 
 try:
-    from peakdetect import peakdetect
+    from peakdetect import peakdetect  # type: ignore[import-not-found]
 except ImportError:
     # Enhanced fallback if peakdetect not found
     def peakdetect(y_axis, x_axis=None, lookahead=1, delta=0):
         """Enhanced fallback peak detection if peakdetect module not available"""
-        peaks = []
-        troughs = []
+        peaks = []  # type: ignore[var-annotated]
+        troughs = []  # type: ignore[var-annotated]
         if x_axis is None:
             x_axis = list(range(len(y_axis)))
 
@@ -98,7 +98,7 @@ def convert_to_nyc_timezone(timestamp_str):
             # If all else fails, assume it's a UTC timestamp and manually convert
             if isinstance(timestamp_str, str):
                 # Try to extract basic time info
-                from dateutil import parser as date_parser
+                from dateutil import parser as date_parser  # type: ignore[import-untyped]
 
                 dt = date_parser.parse(timestamp_str)
                 if dt.tzinfo is None:
@@ -408,10 +408,10 @@ async def analyze_peaks_and_troughs(
     timeframe: str = "1Min",
     days: int = 1,
     limit: int = 1000,
-    window_len: int = None,
-    lookahead: int = None,
+    window_len: int | None = None,
+    lookahead: int | None = None,
     delta: float = 0.0,
-    min_peak_distance: int = None,
+    min_peak_distance: int | None = None,
 ) -> str:
     """
     Enhanced peak and trough analysis for day trading signals using zero-phase filtering.
@@ -869,8 +869,8 @@ async def analyze_peaks_and_troughs_with_plot_py(
     symbols: str,
     timeframe: str = "1Min",
     days: int = 1,
-    window_len: int = None,
-    lookahead: int = None,
+    window_len: int | None = None,
+    lookahead: int | None = None,
     delta: float = 0.0,
     min_peak_distance: int = 5,
 ) -> str:

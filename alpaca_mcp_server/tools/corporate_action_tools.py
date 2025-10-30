@@ -97,32 +97,32 @@ async def get_corporate_announcements(
         result += "=" * 60 + "\n\n"
 
         for announcement in announcements:
-            result += f"Symbol: {announcement.initiating_symbol}\n"
-            result += f"Type: {announcement.ca_type.value.upper()}\n"
+            result += f"Symbol: {announcement.initiating_symbol}\n"  # type: ignore[union-attr]
+            result += f"Type: {announcement.ca_type.value.upper()}\n"  # type: ignore[union-attr]
 
-            if hasattr(announcement, "ca_sub_type") and announcement.ca_sub_type:
+            if isinstance(announcement, CorporateActionAnnouncement) and announcement.ca_sub_type:  # type: ignore[name-defined]
                 result += f"Sub-Type: {announcement.ca_sub_type}\n"
 
             # Key dates
-            if announcement.declaration_date:
-                result += f"Declaration Date: {announcement.declaration_date}\n"
-            if announcement.ex_date:
-                result += f"Ex-Date: {announcement.ex_date}\n"
-            if announcement.record_date:
-                result += f"Record Date: {announcement.record_date}\n"
-            if announcement.payable_date:
-                result += f"Payable Date: {announcement.payable_date}\n"
+            if announcement.declaration_date:  # type: ignore[union-attr]
+                result += f"Declaration Date: {announcement.declaration_date}\n"  # type: ignore[union-attr]
+            if announcement.ex_date:  # type: ignore[union-attr]
+                result += f"Ex-Date: {announcement.ex_date}\n"  # type: ignore[union-attr]
+            if announcement.record_date:  # type: ignore[union-attr]
+                result += f"Record Date: {announcement.record_date}\n"  # type: ignore[union-attr]
+            if announcement.payable_date:  # type: ignore[union-attr]
+                result += f"Payable Date: {announcement.payable_date}\n"  # type: ignore[union-attr]
 
             # Financial details
-            if hasattr(announcement, "cash") and announcement.cash:
+            if isinstance(announcement, CorporateActionAnnouncement) and announcement.cash:  # type: ignore[name-defined]
                 result += f"Cash Amount: ${announcement.cash:.4f} per share\n"
 
-            if hasattr(announcement, "old_rate") and announcement.old_rate:
+            if isinstance(announcement, CorporateActionAnnouncement) and announcement.old_rate:  # type: ignore[name-defined]
                 result += f"Old Rate: {announcement.old_rate}\n"
-            if hasattr(announcement, "new_rate") and announcement.new_rate:
+            if isinstance(announcement, CorporateActionAnnouncement) and announcement.new_rate:  # type: ignore[name-defined]
                 result += f"New Rate: {announcement.new_rate}\n"
 
-            if hasattr(announcement, "target_symbol") and announcement.target_symbol:
+            if isinstance(announcement, CorporateActionAnnouncement) and announcement.target_symbol:  # type: ignore[name-defined]
                 result += f"Target Symbol: {announcement.target_symbol}\n"
 
             result += "-" * 40 + "\n"

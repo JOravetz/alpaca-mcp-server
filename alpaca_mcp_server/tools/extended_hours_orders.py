@@ -6,7 +6,7 @@ from ..utils.timezone_utils import get_eastern_time
 
 
 async def validate_extended_hours_order(
-    symbol: str, order_type: str, extended_hours: bool = None
+    symbol: str, order_type: str, extended_hours: bool | None = None
 ) -> dict:
     """Validate if order can be placed in current market session."""
     try:
@@ -119,13 +119,13 @@ async def validate_extended_hours_order(
         return {"error": str(e)}
 
 
-async def place_extended_hours_order(
+async def place_extended_hours_order(  # type: ignore[no-untyped-def]
     symbol: str,
     side: str,
     quantity: float,
     order_type: str = "limit",
-    limit_price: float = None,
-    extended_hours: bool = None,
+    limit_price: float | None = None,
+    extended_hours: bool | None = None,
     time_in_force: str = "day",
     **kwargs,
 ) -> str:

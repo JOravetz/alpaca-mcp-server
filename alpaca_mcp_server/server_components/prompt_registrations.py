@@ -3,6 +3,7 @@
 from ..prompts import (
     account_analysis_prompt,
     market_analysis_prompt,
+    pnl_bling_prompt,
     position_management_prompt,
     scan_prompt,
     startup_prompt,
@@ -33,7 +34,7 @@ def register_core_prompts(mcp):
 
     @mcp.prompt()
     async def market_analysis(
-        symbols: list = None, timeframe: str = "1Day", analysis_type: str = "comprehensive"
+        symbols: list = None, timeframe: str = "1Day", analysis_type: str = "comprehensive"  # type: ignore[assignment]
     ) -> str:
         """Real-time market analysis with trading opportunities."""
         return await market_analysis_prompt.market_analysis(symbols, timeframe, analysis_type)
@@ -49,13 +50,19 @@ def register_core_prompts(mcp):
         return await startup_prompt.startup()
 
     @mcp.prompt()
-    async def scan() -> str:
+    async def scan(filename: str | None = None, limit: int = 20) -> str:
         """Scan for day trading opportunities using high-liquidity scanner and technical analysis.
 
-        Uses default parameters: 500 trades/minute threshold, 20 result limit, combined.lis file.
-        For custom parameters, use the scan_day_trading_opportunities tool directly.
+        Args:
+            filename: Optional path to file containing symbols (one per line). If not provided, scans ALL tradeable assets.
+            limit: Maximum number of results to return (default: 20)
+
+        Examples:
+            /scan                                    # Scan all tradeable assets
+            /scan ~/autotrade/momentum.lis          # Scan symbols from file
+            /scan ~/autotrade/momentum.lis 50       # Scan file, return top 50
         """
-        return await scan_prompt.scan(500, 20, "combined.lis")
+        return await scan_prompt.scan(trades_threshold=None, limit=limit, filename=filename)
 
     @mcp.prompt()
     async def stock_news(ticker: str) -> str:
@@ -69,6 +76,49 @@ def register_core_prompts(mcp):
             /stock-news TTD
         """
         return await stock_news_prompt.stock_news(ticker)
+
+    @mcp.prompt()
+    async def pnl_bling(date: str | None = None) -> str:
+        """💰 Generate P&L Dashboard with full bling-bling celebrations and Kokoro TTS.
+
+        Features:
+        - Kokoro TTS with Jessica's sultry voice congratulations
+        - Tiered celebration animations based on profit level
+        - LEGENDARY ($10k+): Full effects with trophy and fireworks
+        - EPIC ($5k-$10k): Confetti and money rain
+        - Interactive charts and real-time P&L data
+
+        Args:
+            date: Optional date in YYYY-MM-DD format (default: today)
+
+        Example:
+            /pnl-bling              # Uses today's date
+            /pnl-bling 2025-09-15   # Specific date
+        """
+        import re
+        from datetime import datetime
+
+        import pytz
+
+        # If no date provided or empty string, use today's date
+        if not date or str(date).strip() == "":
+            et_tz = pytz.timezone("America/New_York")
+            date = datetime.now(et_tz).strftime("%Y-%m-%d")
+        else:
+            date = str(date).strip()
+            # Clean up the date string - extract YYYY-MM-DD pattern if present
+            date_match = re.search(r"\d{4}-\d{2}-\d{2}", date)
+            if date_match:
+                date = date_match.group()
+            elif not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+                # If the input doesn't look like a date, use today
+                et_tz = pytz.timezone("America/New_York")
+                date = datetime.now(et_tz).strftime("%Y-%m-%d")
+
+        # Always enable sound for full celebration
+        sound = True
+
+        return pnl_bling_prompt.generate_pnl_bling_prompt_text(date, sound)
 
 
 def register_workflow_prompts(mcp):

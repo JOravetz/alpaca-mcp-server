@@ -15,7 +15,7 @@ class DateTimeEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Fetch stock snapshot data")
     parser.add_argument("-s", "--symbol", required=True, help="Stock symbol to query")
     args = parser.parse_args()

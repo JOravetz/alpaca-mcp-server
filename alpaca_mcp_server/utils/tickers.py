@@ -3,7 +3,7 @@ import os
 import re
 import sys
 
-import pandas as pd  # type: ignore[import-untyped]
+import pandas as pd
 from alpaca_trade_api.rest import REST  # type: ignore
 
 # Pre-compile regex pattern for symbol validation
@@ -88,7 +88,7 @@ class TickerList:
                 file_name += ".txt"
 
             # Save the DataFrame directly to a file
-            df.to_csv(file_name, sep="|", header=None, index=False, columns=["symbol", "name"])
+            df.to_csv(file_name, sep="|", header=None, index=False, columns=["symbol", "name"])  # type: ignore[call-overload]
 
             print(f"Successfully saved {len(symbols)} tradable assets to {file_name}")
 

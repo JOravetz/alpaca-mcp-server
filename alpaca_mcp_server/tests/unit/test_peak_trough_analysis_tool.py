@@ -859,7 +859,7 @@ class TestDataValidationAndConsistency:
         """Test zero-phase filter with NaN values."""
         # Data with NaN values
         data_with_nan = np.array([1.0, 2.0, np.nan, 4.0, 5.0, 6.0, 7.0, 8.0])
-        
+
         # Should handle NaN gracefully
         filtered = zero_phase_filter(data_with_nan, 3)
         assert len(filtered) == len(data_with_nan)
@@ -870,7 +870,7 @@ class TestDataValidationAndConsistency:
         """Test zero-phase filter with infinite values."""
         # Data with infinity
         data_with_inf = np.array([1.0, 2.0, np.inf, 4.0, 5.0, -np.inf, 7.0, 8.0])
-        
+
         filtered = zero_phase_filter(data_with_inf, 3)
         assert len(filtered) == len(data_with_inf)
         print("✅ Zero-phase filter handles infinite values")
@@ -884,7 +884,7 @@ class TestDataValidationAndConsistency:
             {"c": "153.0", "t": "2025-06-22T09:02:00Z", "v": "1300"},
             {"c": "154.0", "t": "2025-06-22T09:03:00Z", "v": "1400"},
         ]
-        
+
         result = process_bars_for_peaks("TEST", bars, window_len=3, lookahead=1)
         # Should handle duplicates gracefully
         if result:
@@ -901,8 +901,8 @@ class TestDataValidationAndConsistency:
             {"c": "152.0", "t": "2025-06-22T09:01:00Z", "v": "1200"},
             {"c": "153.0", "t": "2025-06-22T09:03:00Z", "v": "1300"},
         ]
-        
-        result = process_bars_for_peaks("TEST", bars, window_len=3, lookahead=1)
+
+        process_bars_for_peaks("TEST", bars, window_len=3, lookahead=1)
         # Function should either sort or reject out-of-order data
         print("✅ Out-of-order timestamps handled")
 
@@ -913,18 +913,18 @@ class TestDataValidationAndConsistency:
             {"c": "-150.0", "t": "2025-06-22T09:00:00Z", "v": "1000"},
             {"c": "151.0", "t": "2025-06-22T09:01:00Z", "v": "1100"},
         ]
-        
-        result = process_bars_for_peaks("TEST", bars_negative)
+
+        process_bars_for_peaks("TEST", bars_negative)
         # Should handle negative prices appropriately
         print("✅ Negative price validation")
-        
+
         # Zero prices
         bars_zero = [
             {"c": "0.0", "t": "2025-06-22T09:00:00Z", "v": "1000"},
             {"c": "151.0", "t": "2025-06-22T09:01:00Z", "v": "1100"},
         ]
-        
-        result = process_bars_for_peaks("TEST", bars_zero)
+
+        process_bars_for_peaks("TEST", bars_zero)
         print("✅ Zero price validation")
 
 
@@ -936,26 +936,24 @@ class TestTradingSignalAccuracy:
         # Create perfect sine wave with known peaks
         x = np.linspace(0, 4 * np.pi, 200)
         prices = 150 + 10 * np.sin(x)
-        
+
         bars = []
         for i, price in enumerate(prices):
-            bars.append({
-                "c": str(price),
-                "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z",
-                "v": "1000"
-            })
-        
+            bars.append(
+                {"c": str(price), "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z", "v": "1000"}
+            )
+
         result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=5)
-        
+
         if result:
             # Should detect approximately 2 peaks (sine wave maxima)
             peak_count = len(result["peaks"])
             assert 1 <= peak_count <= 3, f"Should detect 1-3 peaks in sine wave, got {peak_count}"
-            
+
             # Check peak prices are near expected maxima (160)
             for peak in result["peaks"]:
                 assert 158 <= peak["original_price"] <= 162, "Peak should be near sine maximum"
-            
+
             print(f"✅ Peak detection accuracy: {peak_count} peaks found at correct levels")
 
     def test_trough_detection_accuracy(self):
@@ -963,26 +961,26 @@ class TestTradingSignalAccuracy:
         # Create perfect sine wave with known troughs
         x = np.linspace(0, 4 * np.pi, 200)
         prices = 150 + 10 * np.sin(x)
-        
+
         bars = []
         for i, price in enumerate(prices):
-            bars.append({
-                "c": str(price),
-                "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z",
-                "v": "1000"
-            })
-        
+            bars.append(
+                {"c": str(price), "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z", "v": "1000"}
+            )
+
         result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=5)
-        
+
         if result:
             # Should detect approximately 2 troughs (sine wave minima)
             trough_count = len(result["troughs"])
-            assert 1 <= trough_count <= 3, f"Should detect 1-3 troughs in sine wave, got {trough_count}"
-            
+            assert (
+                1 <= trough_count <= 3
+            ), f"Should detect 1-3 troughs in sine wave, got {trough_count}"
+
             # Check trough prices are near expected minima (140)
             for trough in result["troughs"]:
                 assert 138 <= trough["original_price"] <= 142, "Trough should be near sine minimum"
-            
+
             print(f"✅ Trough detection accuracy: {trough_count} troughs found at correct levels")
 
     def test_signal_timing_accuracy(self):
@@ -990,21 +988,19 @@ class TestTradingSignalAccuracy:
         # Create data with sharp peak at known index
         prices = [150.0] * 50
         prices[25] = 160.0  # Sharp peak at index 25
-        
+
         bars = []
         for i, price in enumerate(prices):
-            bars.append({
-                "c": str(price),
-                "t": f"2025-06-22T09:{i:02d}:00Z",
-                "v": "1000"
-            })
-        
+            bars.append({"c": str(price), "t": f"2025-06-22T09:{i:02d}:00Z", "v": "1000"})
+
         result = process_bars_for_peaks("TEST", bars, window_len=5, lookahead=2)
-        
+
         if result and result["peaks"]:
             # Peak should be detected near index 25
             peak_indices = [p["index"] for p in result["peaks"]]
-            assert any(23 <= idx <= 27 for idx in peak_indices), "Peak should be detected near index 25"
+            assert any(
+                23 <= idx <= 27 for idx in peak_indices
+            ), "Peak should be detected near index 25"
             print(f"✅ Signal timing accuracy: Peak detected at indices {peak_indices}")
 
     def test_filter_smoothing_effectiveness(self):
@@ -1014,24 +1010,24 @@ class TestTradingSignalAccuracy:
         base = np.linspace(150, 160, 100)
         noise = np.random.normal(0, 2, 100)
         noisy_prices = base + noise
-        
+
         bars = []
         for i, price in enumerate(noisy_prices):
-            bars.append({
-                "c": str(price),
-                "t": f"2025-06-22T09:{i//60:02d}:{i%60:02d}:00Z",
-                "v": "1000"
-            })
-        
+            bars.append(
+                {"c": str(price), "t": f"2025-06-22T09:{i//60:02d}:{i%60:02d}:00Z", "v": "1000"}
+            )
+
         result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=3)
-        
+
         if result:
             # Filtered prices should have lower variance than original
             original_var = np.var(result["original_prices"])
             filtered_var = np.var(result["filtered_prices"])
-            
+
             assert filtered_var < original_var * 0.8, "Filter should reduce variance significantly"
-            print(f"✅ Filter smoothing: Variance reduced from {original_var:.2f} to {filtered_var:.2f}")
+            print(
+                f"✅ Filter smoothing: Variance reduced from {original_var:.2f} to {filtered_var:.2f}"
+            )
 
 
 class TestBoundaryConditions:
@@ -1040,7 +1036,7 @@ class TestBoundaryConditions:
     def test_single_bar_handling(self):
         """Test with single bar of data."""
         bars = [{"c": "150.0", "t": "2025-06-22T09:00:00Z", "v": "1000"}]
-        
+
         result = process_bars_for_peaks("TEST", bars, window_len=3, lookahead=1)
         assert result is None, "Single bar should not be processed"
         print("✅ Single bar boundary condition handled")
@@ -1050,14 +1046,10 @@ class TestBoundaryConditions:
         # Create exactly minimum required bars for processing
         bars = []
         for i in range(10):  # Minimum for reasonable processing
-            bars.append({
-                "c": str(150 + i * 0.5),
-                "t": f"2025-06-22T09:{i:02d}:00Z",
-                "v": "1000"
-            })
-        
+            bars.append({"c": str(150 + i * 0.5), "t": f"2025-06-22T09:{i:02d}:00Z", "v": "1000"})
+
         result = process_bars_for_peaks("TEST", bars, window_len=3, lookahead=1)
-        
+
         if result:
             assert result["total_bars"] == 10
             print("✅ Minimum bars boundary condition processed")
@@ -1070,19 +1062,19 @@ class TestBoundaryConditions:
         bars = []
         for i in range(200):
             price = 150 + 10 * np.sin(i * 0.1)
-            bars.append({
-                "c": str(price),
-                "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z",
-                "v": "1000"
-            })
-        
+            bars.append(
+                {"c": str(price), "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z", "v": "1000"}
+            )
+
         result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=50)
-        
+
         if result:
             # With very high lookahead, should find fewer but more significant peaks
             assert len(result["peaks"]) <= 5, "High lookahead should find few peaks"
             assert len(result["troughs"]) <= 5, "High lookahead should find few troughs"
-            print(f"✅ Maximum lookahead: {len(result['peaks'])} peaks, {len(result['troughs'])} troughs")
+            print(
+                f"✅ Maximum lookahead: {len(result['peaks'])} peaks, {len(result['troughs'])} troughs"
+            )
 
     def test_maximum_window_length(self):
         """Test with maximum window length."""
@@ -1090,14 +1082,12 @@ class TestBoundaryConditions:
         bars = []
         for i in range(300):
             price = 150 + np.random.randn() * 2
-            bars.append({
-                "c": str(price),
-                "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z",
-                "v": "1000"
-            })
-        
+            bars.append(
+                {"c": str(price), "t": f"2025-06-22T{9 + i//60:02d}:{i%60:02d}:00Z", "v": "1000"}
+            )
+
         result = process_bars_for_peaks("TEST", bars, window_len=101, lookahead=5)
-        
+
         if result:
             # Very large window should produce very smooth filtered data
             filtered_std = np.std(result["filtered_prices"])
@@ -1109,14 +1099,12 @@ class TestBoundaryConditions:
         """Test with all identical prices (flat line)."""
         bars = []
         for i in range(50):
-            bars.append({
-                "c": "150.0",  # All same price
-                "t": f"2025-06-22T09:{i:02d}:00Z",
-                "v": "1000"
-            })
-        
+            bars.append(
+                {"c": "150.0", "t": f"2025-06-22T09:{i:02d}:00Z", "v": "1000"}  # All same price
+            )
+
         result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=3)
-        
+
         if result:
             # Should find no peaks or troughs in flat data
             assert len(result["peaks"]) == 0, "No peaks in flat data"

@@ -22,7 +22,7 @@ async def start_hybrid_monitoring(
     max_concurrent_positions: int = 5,
     watchlist_size_limit: int = 20,
     enable_auto_alerts: bool = True,
-    alert_channels: list[str] = None,
+    alert_channels: list[str] = None,  # type: ignore[assignment]
 ) -> dict:
     """
     Start the hybrid trading monitoring service.
@@ -70,7 +70,7 @@ async def start_hybrid_monitoring(
 
         if result.get("status") == "success":
             # Test alert system
-            await test_alert_system(_service_instance.alert_system)
+            await test_alert_system(_service_instance.alert_system)  # type: ignore[arg-type]
 
             return {
                 "status": "success",
@@ -412,7 +412,7 @@ async def get_current_trading_signals() -> dict:
         signals = await _service_instance.get_current_signals()
 
         # Group signals by type for better organization
-        signal_summary = {"fresh_trough": [], "fresh_peak": [], "other": []}
+        signal_summary = {"fresh_trough": [], "fresh_peak": [], "other": []}  # type: ignore[var-annotated]
 
         for signal in signals:
             signal_type = signal.get("signal_type", "other")
@@ -530,7 +530,7 @@ async def get_monitoring_alerts(count: int = 10) -> dict:
         return {"status": "error", "message": f"Failed to get alerts: {e}", "alerts": []}
 
 
-async def check_positions_after_order(order_info: dict = None) -> dict:
+async def check_positions_after_order(order_info: dict = None) -> dict:  # type: ignore[assignment]
     """
     Force immediate position check after order execution.
     This ensures Claude gets real-time feedback on position changes.

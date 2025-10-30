@@ -1,3 +1,4 @@
+from alpaca.trading.models import Position
 """Account management tools for Alpaca MCP Server."""
 
 from ..config.settings import get_trading_client
@@ -23,6 +24,10 @@ async def get_account_info() -> str:
     try:
         client = get_trading_client()
         account = client.get_account()
+
+        # Type check for proper account access
+        if isinstance(account, dict):
+            return f"Error: Received dict response instead of TradeAccount: {account}"
 
         info = f"""Account Information:
 -------------------
@@ -66,6 +71,9 @@ async def get_positions() -> str:
 
         result = "Current Positions:\n-------------------\n"
         for position in positions:
+            if not isinstance(position, Position):
+                continue
+
             result += f"""Symbol: {position.symbol}
 Quantity: {position.qty} shares
 Market Value: ${float(position.market_value or 0):.2f}
@@ -96,6 +104,10 @@ async def get_open_position(symbol: str) -> str:
 
         # Check if it's an options position by looking for the options symbol pattern
         is_option = len(symbol) > 6 and any(c in symbol for c in ["C", "P"])
+
+        # Type check
+        if isinstance(position, dict):
+            return f"Error: Received dict response: {position}"
 
         # Format quantity based on asset type
         quantity_text = f"{position.qty} contracts" if is_option else f"{position.qty}"

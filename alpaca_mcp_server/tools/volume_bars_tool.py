@@ -44,7 +44,7 @@ _completed_volume_bars: dict[str, list[VolumeBar]] = {}
 
 async def get_volume_bars_from_history(
     symbol: str,
-    volume_threshold: float = None,
+    volume_threshold: float | None = None,
     days: int = 1,
     auto_calculate_threshold: bool = True,
     target_bars_per_day: int = 50,
@@ -99,7 +99,7 @@ async def get_volume_bars_from_history(
 
         # Create volume bar aggregator
         aggregator = VolumeBarAggregator(
-            symbol=symbol, volume_threshold=volume_threshold, lookback_bars=1000, use_bars=use_bars
+            symbol=symbol, volume_threshold=volume_threshold, lookback_bars=1000, use_bars=use_bars  # type: ignore[arg-type]
         )
 
         bars_created = 0
@@ -211,7 +211,7 @@ async def get_volume_bars_from_history(
         )
         if use_bars:
             output.append("  ✅ Using pre-computed VWAP and trade counts from Alpaca bars")
-        output.append(f"Volume Threshold: {format_number(volume_threshold)} shares/bar")
+        output.append(f"Volume Threshold: {format_number(volume_threshold)} shares/bar")  # type: ignore[arg-type]
         output.append(
             f"Total {'Bars' if use_bars else 'Trades'} Processed: {format_number(total_data_points)}"
         )
@@ -253,7 +253,7 @@ async def get_volume_bars_from_history(
 
             for _, bar_row in df.tail(5).iterrows():
                 output.append(
-                    f"  {bar_row.name.strftime('%H:%M:%S')}: "
+                    f"  {bar_row.name.strftime('%H:%M:%S')}: "  # type: ignore[attr-defined]
                     f"OHLC=[{bar_row['open']:.2f}, {bar_row['high']:.2f}, "
                     f"{bar_row['low']:.2f}, {bar_row['close']:.2f}]"
                 )
@@ -275,7 +275,7 @@ async def get_volume_bars_from_history(
 
 async def start_volume_bar_streaming(
     symbols: str,
-    volume_thresholds: str = None,
+    volume_thresholds: str | None = None,
     auto_calculate: bool = True,
     target_bars_per_day: int = 50,
 ) -> str:
@@ -293,7 +293,7 @@ async def start_volume_bar_streaming(
     Returns:
         Status message
     """
-    from ..utils.alpaca_stream import _stock_stream_active
+    from ..utils.alpaca_stream import _stock_stream_active  # type: ignore[attr-defined]
 
     symbol_list = [s.strip().upper() for s in symbols.split(",")]
 
@@ -349,7 +349,7 @@ async def start_volume_bar_streaming(
             threshold_dict[symbol] = 100000  # Default 100k shares
 
     # Create aggregator
-    def on_bar_complete(bar: VolumeBar):
+    def on_bar_complete(bar: VolumeBar) -> None:
         """Store completed bars"""
         if bar.symbol not in _completed_volume_bars:
             _completed_volume_bars[bar.symbol] = []
@@ -397,7 +397,7 @@ async def start_volume_bar_streaming(
     return "\n".join(output)
 
 
-async def get_volume_bar_stats(symbol: str = None) -> str:
+async def get_volume_bar_stats(symbol: str | None = None) -> str:
     """
     Get current volume bar statistics and recent bars
 
@@ -465,7 +465,7 @@ async def get_volume_bar_stats(symbol: str = None) -> str:
 
 
 async def compare_bar_types(
-    symbol: str, days: int = 1, time_bars_minutes: int = 5, volume_threshold: float = None
+    symbol: str, days: int = 1, time_bars_minutes: int = 5, volume_threshold: float | None = None
 ) -> str:
     """
     Compare statistical properties of time bars vs volume bars

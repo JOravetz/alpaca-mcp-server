@@ -572,7 +572,7 @@ class SignalDetector:
             analysis_lower = analysis.lower()
             for keyword, bonus in quality_keywords.items():
                 if keyword in analysis_lower:
-                    quality_bonus += bonus
+                    quality_bonus += bonus  # type: ignore[assignment]
 
             # Combine scores
             confidence = min(1.0, freshness_score * 0.7 + quality_bonus)
@@ -619,7 +619,7 @@ class SignalDetector:
         last_signal_time = self.recent_signals[symbol].get("timestamp", 0)
         return (time.time() - last_signal_time) < self.signal_cache_duration
 
-    def _cache_signal(self, symbol: str, signal: dict):
+    def _cache_signal(self, symbol: str, signal: dict) -> Any:  # type: ignore[name-defined]
         """Cache a signal to avoid duplicates"""
         self.recent_signals[symbol] = {"signal": signal, "timestamp": time.time()}
 

@@ -89,11 +89,11 @@ class AlertSystem:
                 channels_used.append("file")
 
             if "console" in self.channels:
-                tasks.append(self._send_console_alert(alert))
+                tasks.append(self._send_console_alert(alert))  # type: ignore[arg-type]
                 channels_used.append("console")
 
             if "desktop" in self.channels:
-                tasks.append(self._send_desktop_alert(alert))
+                tasks.append(self._send_desktop_alert(alert))  # type: ignore[arg-type]
                 channels_used.append("desktop")
 
             if "discord" in self.channels and self.discord_webhook:
@@ -106,7 +106,7 @@ class AlertSystem:
             # Track which channels succeeded
             for i, result in enumerate(results):
                 if not isinstance(result, Exception):
-                    alert["channels_sent"].append(channels_used[i])
+                    alert["channels_sent"].append(channels_used[i])  # type: ignore[attr-defined]
 
             # Add to history
             self.alert_history.append(alert)
@@ -126,7 +126,7 @@ class AlertSystem:
         except Exception as e:
             self.logger.error(f"Error sending alert '{title}': {e}")
 
-    async def _send_file_alert(self, alert: dict):
+    async def _send_file_alert(self, alert: dict) -> bool:
         """Send alert to file system"""
         try:
             # Daily alert file
@@ -144,7 +144,7 @@ class AlertSystem:
             self.logger.error(f"Error sending file alert: {e}")
             return False
 
-    async def _send_console_alert(self, alert: dict):
+    async def _send_console_alert(self, alert: dict) -> None:
         """Send alert to console/terminal"""
         try:
             priority = alert["priority"]
@@ -171,13 +171,13 @@ class AlertSystem:
             )
 
             print(console_msg)
-            return True
+            return True  # type: ignore[return-value]
 
         except Exception as e:
             self.logger.error(f"Error sending console alert: {e}")
-            return False
+            return False  # type: ignore[return-value]
 
-    async def _send_desktop_alert(self, alert: dict):
+    async def _send_desktop_alert(self, alert: dict) -> None:
         """Send desktop notification (Linux notify-send)"""
         try:
             title = alert["title"]
@@ -210,19 +210,19 @@ class AlertSystem:
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode == 0:
-                return True
+                return True  # type: ignore[return-value]
             else:
                 self.logger.warning(f"Desktop notification failed: {result.stderr}")
-                return False
+                return False  # type: ignore[return-value]
 
         except FileNotFoundError:
             # notify-send not available (not Linux or not installed)
-            return False
+            return False  # type: ignore[return-value]
         except Exception as e:
             self.logger.error(f"Error sending desktop alert: {e}")
-            return False
+            return False  # type: ignore[return-value]
 
-    async def _send_discord_alert(self, alert: dict):
+    async def _send_discord_alert(self, alert: dict) -> bool:
         """Send alert to Discord webhook"""
         try:
             if not self.discord_webhook:
@@ -290,7 +290,7 @@ class AlertSystem:
             metadata={"event_type": "service_startup"},
         )
 
-    async def send_service_shutdown_alert(self, uptime_seconds: float):
+    async def send_service_shutdown_alert(self, uptime_seconds: float) -> None:
         """Send alert when service stops"""
         await self.send_alert(
             "🛑 Trading Monitor Stopped",
@@ -299,7 +299,7 @@ class AlertSystem:
             metadata={"event_type": "service_shutdown", "uptime_seconds": uptime_seconds},
         )
 
-    async def send_position_alert(self, symbol: str, pnl_percent: float, pnl_dollar: float):
+    async def send_position_alert(self, symbol: str, pnl_percent: float, pnl_dollar: float) -> None:
         """Send position-related alert"""
         if pnl_percent > 0:
             emoji = "🚀"
@@ -317,7 +317,7 @@ class AlertSystem:
             metadata={"event_type": "position_alert", "symbol": symbol, "pnl_percent": pnl_percent},
         )
 
-    async def send_signal_alert(self, signal: dict):
+    async def send_signal_alert(self, signal: dict) -> None:
         """Send trading signal alert"""
         symbol = signal["symbol"]
         signal_type = signal["signal_type"]
@@ -333,7 +333,7 @@ class AlertSystem:
             metadata={"event_type": "trading_signal", "signal": signal},
         )
 
-    async def send_error_alert(self, error_message: str, error_count: int):
+    async def send_error_alert(self, error_message: str, error_count: int) -> Any:
         """Send system error alert"""
         await self.send_alert(
             "🚨 System Error",
@@ -363,7 +363,7 @@ class AlertSystem:
 
 
 # Utility functions for alert management
-async def test_alert_system(alert_system: AlertSystem):
+async def test_alert_system(alert_system: AlertSystem) -> None:
     """Test all alert channels"""
     await alert_system.send_alert(
         "🧪 Alert System Test",

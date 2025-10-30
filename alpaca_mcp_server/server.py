@@ -73,7 +73,7 @@ def get_server():
     return patched_mcp
 
 
-def main():
+def main() -> None:
     """Main entry point for the MCP server."""
     # Apply Claude Code compatibility patches
     server = apply_compatibility_patches(mcp)

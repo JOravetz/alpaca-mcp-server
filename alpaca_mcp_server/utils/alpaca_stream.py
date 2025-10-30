@@ -185,7 +185,7 @@ class AlpacaStreamClient:
 
         logger.info(f"Initialized AlpacaStreamClient with {feed.upper()} feed")
 
-    def _create_stream(self):
+    def _create_stream(self) -> None:
         """Create a new stream instance"""
         self.stream = StockDataStream(
             api_key=self.api_key,
@@ -195,7 +195,7 @@ class AlpacaStreamClient:
             websocket_params=self._websocket_params,
         )
 
-    def _update_last_message_time(self):
+    def _update_last_message_time(self) -> None:
         """Update the timestamp of the last received message"""
         self._last_message_time = time.time()
 
@@ -307,55 +307,55 @@ class AlpacaStreamClient:
                 f"Timestamp: {cancel.timestamp}"
             )
 
-    def subscribe_to_trades(self, symbols: list[str]):
+    def subscribe_to_trades(self, symbols: list[str]) -> None:
         """Subscribe to trades for specified symbols"""
         self.stream.subscribe_trades(self.print_trade, *symbols)
         self._subscriptions["trades"].update(symbols)
         logger.info(f"Subscribed to trades for: {', '.join(symbols)}")
 
-    def subscribe_to_quotes(self, symbols: list[str]):
+    def subscribe_to_quotes(self, symbols: list[str]) -> None:
         """Subscribe to quotes for specified symbols"""
         self.stream.subscribe_quotes(self.print_quote, *symbols)
         self._subscriptions["quotes"].update(symbols)
         logger.info(f"Subscribed to quotes for: {', '.join(symbols)}")
 
-    def subscribe_to_bars(self, symbols: list[str]):
+    def subscribe_to_bars(self, symbols: list[str]) -> None:
         """Subscribe to minute bars for specified symbols"""
         self.stream.subscribe_bars(self.print_bar, *symbols)
         self._subscriptions["bars"].update(symbols)
         logger.info(f"Subscribed to minute bars for: {', '.join(symbols)}")
 
-    def subscribe_to_updated_bars(self, symbols: list[str]):
+    def subscribe_to_updated_bars(self, symbols: list[str]) -> None:
         """Subscribe to updated bars for specified symbols"""
         self.stream.subscribe_updated_bars(self.print_updated_bar, *symbols)
         self._subscriptions["updated_bars"].update(symbols)
         logger.info(f"Subscribed to updated bars for: {', '.join(symbols)}")
 
-    def subscribe_to_daily_bars(self, symbols: list[str]):
+    def subscribe_to_daily_bars(self, symbols: list[str]) -> None:
         """Subscribe to daily bars for specified symbols"""
         self.stream.subscribe_daily_bars(self.print_daily_bar, *symbols)
         self._subscriptions["daily_bars"].update(symbols)
         logger.info(f"Subscribed to daily bars for: {', '.join(symbols)}")
 
-    def subscribe_to_statuses(self, symbols: list[str]):
+    def subscribe_to_statuses(self, symbols: list[str]) -> None:
         """Subscribe to trading statuses for specified symbols"""
         self.stream.subscribe_trading_statuses(self.print_status, *symbols)
         self._subscriptions["statuses"].update(symbols)
         logger.info(f"Subscribed to trading statuses for: {', '.join(symbols)}")
 
-    def register_for_corrections(self):
+    def register_for_corrections(self) -> None:
         """Register for trade corrections"""
         self.stream.register_trade_corrections(self.print_correction)
         self._subscriptions["corrections"] = True
         logger.info("Registered for trade corrections")
 
-    def register_for_cancels(self):
+    def register_for_cancels(self) -> None:
         """Register for trade cancels"""
         self.stream.register_trade_cancels(self.print_cancel)
         self._subscriptions["cancels"] = True
         logger.info("Registered for trade cancels")
 
-    def _reapply_subscriptions(self):
+    def _reapply_subscriptions(self) -> None:
         """Reapply all subscriptions after reconnect"""
         # Apply trades subscription
         if self._subscriptions["trades"]:
@@ -402,7 +402,7 @@ class AlpacaStreamClient:
             self.stream.subscribe_trading_statuses(self.print_status, *symbols)
             logger.info(f"Resubscribed to trading statuses for: {', '.join(symbols)}")
 
-    def _start_reconnect_monitor(self):
+    def _start_reconnect_monitor(self) -> None:
         """Monitor connection health and reconnect if needed"""
         if self._reconnect_loop_running:
             return
@@ -410,7 +410,7 @@ class AlpacaStreamClient:
         self._reconnect_loop_running = True
         self._last_message_time = time.time()
 
-        def monitor_loop():
+        def monitor_loop() -> None:
             """Background thread that monitors connection health"""
             while self._reconnect_loop_running and not shutdown_event.is_set():
                 current_time = time.time()
@@ -467,7 +467,7 @@ class AlpacaStreamClient:
         monitor_thread.start()
         logger.info("Started connection health monitor")
 
-    def _run_stream(self):
+    def _run_stream(self) -> None:
         """Run the stream and handle termination"""
         try:
             self._stream_running = True
@@ -478,7 +478,7 @@ class AlpacaStreamClient:
             self._stream_running = False
             logger.info("Stream thread exited")
 
-    def start(self):
+    def start(self) -> None:
         """Start the WebSocket connection with reconnection monitoring"""
         try:
             logger.info("Starting WebSocket stream...")
@@ -495,7 +495,7 @@ class AlpacaStreamClient:
         finally:
             self.stop()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the WebSocket connection and cleanup"""
         logger.info("Stopping WebSocket stream...")
         try:
@@ -618,7 +618,7 @@ async def run_with_timeout(client, data_type, symbols, duration):
             # We'll let the force_exit function handle this
 
 
-def main():
+def main() -> None:
     """Main entry point"""
     args = parse_arguments()
 

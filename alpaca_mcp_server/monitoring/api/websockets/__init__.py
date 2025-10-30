@@ -7,7 +7,7 @@ from datetime import datetime
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from ...utils.timezone_utils import get_eastern_time_string
+from ...utils.timezone_utils import get_eastern_time_string  # type: ignore[import-not-found]
 
 
 class WebSocketManager:
@@ -17,20 +17,20 @@ class WebSocketManager:
         self.active_connections: set[WebSocket] = set()
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket) -> None:
         """Accept a new WebSocket connection"""
         await websocket.accept()
         self.active_connections.add(websocket)
         self.logger.info(f"WebSocket connected. Total connections: {len(self.active_connections)}")
 
-    def disconnect(self, websocket: WebSocket):
+    def disconnect(self, websocket: WebSocket) -> None:
         """Remove a WebSocket connection"""
         self.active_connections.discard(websocket)
         self.logger.info(
             f"WebSocket disconnected. Total connections: {len(self.active_connections)}"
         )
 
-    async def send_personal_message(self, message: str, websocket: WebSocket):
+    async def send_personal_message(self, message: str, websocket: WebSocket) -> None:
         """Send a message to a specific WebSocket"""
         try:
             await websocket.send_text(message)
@@ -38,7 +38,7 @@ class WebSocketManager:
             self.logger.error(f"Error sending personal message: {e}")
             self.disconnect(websocket)
 
-    async def broadcast(self, message: str):
+    async def broadcast(self, message: str) -> None:
         """Broadcast a message to all connected WebSockets"""
         if not self.active_connections:
             return
@@ -55,7 +55,7 @@ class WebSocketManager:
         for connection in disconnected:
             self.disconnect(connection)
 
-    async def broadcast_json(self, data: dict):
+    async def broadcast_json(self, data: dict) -> Any:  # type: ignore[name-defined]
         """Broadcast JSON data to all connected WebSockets"""
         message = json.dumps(data)
         await self.broadcast(message)
@@ -69,7 +69,7 @@ class WebSocketManager:
 websocket_manager = WebSocketManager()
 
 
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket) -> None:
     """Main WebSocket endpoint handler"""
     await websocket_manager.connect(websocket)
 
@@ -135,7 +135,7 @@ async def websocket_endpoint(websocket: WebSocket):
         websocket_manager.disconnect(websocket)
 
 
-async def broadcast_status_update(status_data: dict):
+async def broadcast_status_update(status_data: dict) -> None:
     """Broadcast status updates to all connected clients"""
     message = {
         "type": "status_update",
@@ -145,7 +145,7 @@ async def broadcast_status_update(status_data: dict):
     await websocket_manager.broadcast_json(message)
 
 
-async def broadcast_signal_update(signal_data: dict):
+async def broadcast_signal_update(signal_data: dict) -> None:
     """Broadcast signal updates to all connected clients"""
     message = {
         "type": "signal_update",
@@ -155,7 +155,7 @@ async def broadcast_signal_update(signal_data: dict):
     await websocket_manager.broadcast_json(message)
 
 
-async def broadcast_position_update(position_data: dict):
+async def broadcast_position_update(position_data: dict) -> None:
     """Broadcast position updates to all connected clients"""
     message = {
         "type": "position_update",
@@ -165,7 +165,7 @@ async def broadcast_position_update(position_data: dict):
     await websocket_manager.broadcast_json(message)
 
 
-async def broadcast_alert(alert_data: dict):
+async def broadcast_alert(alert_data: dict) -> None:
     """Broadcast alerts to all connected clients"""
     message = {"type": "alert", "timestamp": get_eastern_time_string(), "data": alert_data}
     await websocket_manager.broadcast_json(message)

@@ -235,7 +235,7 @@ class UniversalBarAggregator:
         self.current_prices.extend([bar.open, bar.high, bar.low, bar.close])
         self.current_volumes.append(bar.volume)
         self.current_dollars.append(
-            bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume
+            bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume  # type: ignore[operator]
         )
 
         # Check if we should complete the bar
@@ -302,7 +302,7 @@ class UniversalBarAggregator:
             else:
                 return 0
 
-    def _update_accumulation_trade(self, trade: Trade, direction: int):
+    def _update_accumulation_trade(self, trade: Trade, direction: int) -> None:
         """Update accumulation based on bar type and trade"""
         trade_value = trade.price * trade.size
 
@@ -317,8 +317,8 @@ class UniversalBarAggregator:
             self.sell_dollars += trade_value
         else:
             # Split evenly for neutral trades
-            self.buy_ticks += 0.5
-            self.sell_ticks += 0.5
+            self.buy_ticks += 0.5  # type: ignore[assignment]
+            self.sell_ticks += 0.5  # type: ignore[assignment]
             self.buy_volume += trade.size / 2
             self.sell_volume += trade.size / 2
             self.buy_dollars += trade_value / 2
@@ -341,17 +341,17 @@ class UniversalBarAggregator:
             # Accumulate signed dollars
             self.current_value += abs(direction * trade_value * self._get_expected_imbalance())
 
-    def _update_accumulation_bar(self, bar: Bar, direction: float):
+    def _update_accumulation_bar(self, bar: Bar, direction: float) -> None:
         """Update accumulation based on bar type and bar data"""
-        bar_value = bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume
+        bar_value = bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume  # type: ignore[operator]
         trade_count = bar.trade_count if hasattr(bar, "trade_count") else 1
 
         # Estimate directional metrics from bar
         buy_ratio = (1 + direction) / 2  # Convert [-1, 1] to [0, 1]
         sell_ratio = 1 - buy_ratio
 
-        self.buy_ticks += trade_count * buy_ratio
-        self.sell_ticks += trade_count * sell_ratio
+        self.buy_ticks += trade_count * buy_ratio  # type: ignore[assignment,operator]
+        self.sell_ticks += trade_count * sell_ratio  # type: ignore[assignment,operator]
         self.buy_volume += bar.volume * buy_ratio
         self.sell_volume += bar.volume * sell_ratio
         self.buy_dollars += bar_value * buy_ratio
@@ -359,13 +359,13 @@ class UniversalBarAggregator:
 
         # Update current value based on bar type
         if self.bar_type == BarType.TICK:
-            self.current_value += trade_count
+            self.current_value += trade_count  # type: ignore[operator]
         elif self.bar_type == BarType.VOLUME:
             self.current_value += bar.volume
         elif self.bar_type == BarType.DOLLAR:
             self.current_value += bar_value
         elif self.bar_type == BarType.TICK_IMBALANCE:
-            self.current_value += abs(direction * trade_count * self._get_expected_imbalance())
+            self.current_value += abs(direction * trade_count * self._get_expected_imbalance())  # type: ignore[operator]
         elif self.bar_type == BarType.VOLUME_IMBALANCE:
             self.current_value += abs(direction * bar.volume * self._get_expected_imbalance())
         elif self.bar_type == BarType.DOLLAR_IMBALANCE:
@@ -384,7 +384,7 @@ class UniversalBarAggregator:
         weights /= weights.sum()
         return np.average(list(self.imbalance_window), weights=weights)
 
-    def _update_expected_imbalance(self, bar: InformationBar):
+    def _update_expected_imbalance(self, bar: InformationBar) -> None:
         """Update expected imbalance based on completed bar"""
         if self.bar_type == BarType.TICK_IMBALANCE:
             self.imbalance_window.append(bar.tick_imbalance)
@@ -489,7 +489,7 @@ class UniversalBarAggregator:
         if total_volume > 0:
             vwap = (
                 sum(
-                    bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume
+                    bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume  # type: ignore[misc,operator]
                     for bar in self.current_bars
                 )
                 / total_volume
@@ -515,7 +515,7 @@ class UniversalBarAggregator:
 
         # Sum trade counts
         total_trade_count = sum(
-            bar.trade_count if hasattr(bar, "trade_count") else 1 for bar in self.current_bars
+            bar.trade_count if hasattr(bar, "trade_count") else 1 for bar in self.current_bars  # type: ignore[misc]
         )
 
         # Calculate duration
@@ -613,9 +613,9 @@ class UniversalBarAggregator:
     def _jarque_bera_test(self, returns: pd.Series) -> dict[str, float]:
         """Perform Jarque-Bera test for normality"""
         if len(returns) < 3:
-            return {"statistic": None, "p_value": None}
+            return {"statistic": None, "p_value": None}  # type: ignore[dict-item]
 
-        from scipy import stats
+        from scipy import stats  # type: ignore[import-untyped]
 
         jb_stat, jb_pvalue = stats.jarque_bera(returns)
         return {"statistic": jb_stat, "p_value": jb_pvalue}
@@ -703,11 +703,11 @@ def calculate_optimal_thresholds(
         Dictionary with optimal thresholds for each bar type
     """
     # Calculate daily averages
-    daily_ticks = len(historical_data) / historical_data.index.normalize().nunique()
-    daily_volume = historical_data["volume"].sum() / historical_data.index.normalize().nunique()
+    daily_ticks = len(historical_data) / historical_data.index.normalize().nunique()  # type: ignore[attr-defined]
+    daily_volume = historical_data["volume"].sum() / historical_data.index.normalize().nunique()  # type: ignore[attr-defined]
     daily_dollars = (
         historical_data["volume"] * historical_data["close"]
-    ).sum() / historical_data.index.normalize().nunique()
+    ).sum() / historical_data.index.normalize().nunique()  # type: ignore[attr-defined]
 
     return {
         "tick_threshold": daily_ticks / target_bars_per_day,

@@ -14,10 +14,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytz
 import requests
-from dateutil import parser as date_parser
+from dateutil import parser as date_parser  # type: ignore[import-untyped]
 from dateutil import tz
-from scipy.signal import filtfilt
-from scipy.signal.windows import hann as hanning
+from scipy.signal import filtfilt  # type: ignore[import-untyped]
+from scipy.signal.windows import hann as hanning  # type: ignore[import-untyped]
 
 # Import peakdetect with fallback
 try:
@@ -25,7 +25,7 @@ try:
 except ImportError:
     # Fallback for when running as script
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-    from peakdetect import peakdetect
+    from peakdetect import peakdetect  # type: ignore[import-not-found,no-redef]
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -458,10 +458,10 @@ def plot_single_symbol(results, save_plot=False, output_dir=".", dpi=400):
         # Verify we have the right number of timestamps
         if len(timestamps) != len(results["original_prices"]):
             logger.warning("Timestamp count mismatch, using indices for x-axis")
-            timestamps = range(len(results["original_prices"]))
+            timestamps = range(len(results["original_prices"]))  # type: ignore[assignment]
     except Exception as e:
         logger.warning(f"Could not parse timestamps: {e}, using indices for x-axis")
-        timestamps = range(len(results["original_prices"]))
+        timestamps = range(len(results["original_prices"]))  # type: ignore[assignment]
 
     # Extract data
     original_prices = np.array(results["original_prices"])
@@ -647,7 +647,7 @@ def plot_single_symbol(results, save_plot=False, output_dir=".", dpi=400):
             data_density["lower_right"] += 1
 
     # Find corner with least density
-    min_density_corner = min(data_density, key=data_density.get)
+    min_density_corner = min(data_density, key=data_density.get)  # type: ignore[arg-type]
 
     # Set legend and stats positions based on least dense corner
     if min_density_corner == "upper_left":
@@ -685,8 +685,8 @@ def plot_single_symbol(results, save_plot=False, output_dir=".", dpi=400):
     )
 
     # Additional check: if legend and stats would still overlap, move stats to opposite corner
-    legend_bbox = legend.get_window_extent(fig.canvas.get_renderer())
-    stats_bbox = stats_box.get_window_extent(fig.canvas.get_renderer())
+    legend_bbox = legend.get_window_extent(fig.canvas.get_renderer())  # type: ignore[attr-defined]
+    stats_bbox = stats_box.get_window_extent(fig.canvas.get_renderer())  # type: ignore[attr-defined]
 
     # Convert to axes coordinates for comparison
     legend_bbox_ax = legend_bbox.transformed(ax.transAxes.inverted())
@@ -763,9 +763,9 @@ def plot_combined_subplots(all_results, save_plot=False, output_dir=".", dpi=400
             timestamps = [convert_to_nyc_timezone(ts) for ts in results["timestamps"]]
             # Verify we have the right number of timestamps
             if len(timestamps) != len(results["original_prices"]):
-                timestamps = range(len(results["original_prices"]))
+                timestamps = range(len(results["original_prices"]))  # type: ignore[assignment]
         except (KeyError, ValueError, TypeError):
-            timestamps = range(len(results["original_prices"]))
+            timestamps = range(len(results["original_prices"]))  # type: ignore[assignment]
 
         # Extract data
         original_prices = np.array(results["original_prices"])
@@ -925,9 +925,9 @@ def plot_overlay(all_results, save_plot=False, output_dir=".", dpi=400):
             timestamps = [convert_to_nyc_timezone(ts) for ts in results["timestamps"]]
             # Verify we have the right number of timestamps
             if len(timestamps) != len(results["original_prices"]):
-                timestamps = range(len(results["original_prices"]))
+                timestamps = range(len(results["original_prices"]))  # type: ignore[assignment]
         except (KeyError, ValueError, TypeError):
-            timestamps = range(len(results["original_prices"]))
+            timestamps = range(len(results["original_prices"]))  # type: ignore[assignment]
 
         # Normalize prices to percentage change from first price
         original_prices = np.array(results["original_prices"])

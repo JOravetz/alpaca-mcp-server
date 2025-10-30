@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def main():
+def main() -> None:
     """Run the Alpaca MCP server."""
     try:
         print("🚀 Starting Alpaca Trading MCP Server...")

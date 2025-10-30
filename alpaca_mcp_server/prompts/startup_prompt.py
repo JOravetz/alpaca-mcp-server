@@ -171,34 +171,34 @@ async def startup() -> str:
         else:
             # Parse position details for summary
             lines = positions_result.split("\n")
-            current_position = {}
+            current_position = {}  # type: ignore[var-annotated]
 
             for line in lines:
                 line = line.strip()
                 if line.startswith("Symbol:"):
                     if current_position:  # Save previous position
                         position_count += 1
-                        total_position_value += current_position.get("market_value", 0.0)
-                        total_unrealized_pnl += current_position.get("unrealized_pl", 0.0)
+                        total_position_value += current_position.get("market_value", 0.0)  # type: ignore[operator]
+                        total_unrealized_pnl += current_position.get("unrealized_pl", 0.0)  # type: ignore[operator]
                     current_position = {"symbol": line.split(": ")[1]}
                 elif line.startswith("Market Value: $"):
                     try:
-                        current_position["market_value"] = float(line.split("$")[1])
+                        current_position["market_value"] = float(line.split("$")[1])  # type: ignore[assignment]
                     except (IndexError, ValueError):
-                        current_position["market_value"] = 0.0
+                        current_position["market_value"] = 0.0  # type: ignore[assignment]
                 elif line.startswith("Unrealized P/L: $"):
                     try:
                         # Extract the P/L amount (before the percentage)
                         pnl_part = line.split("$")[1].split(" ")[0]
-                        current_position["unrealized_pl"] = float(pnl_part)
+                        current_position["unrealized_pl"] = float(pnl_part)  # type: ignore[assignment]
                     except (IndexError, ValueError):
-                        current_position["unrealized_pl"] = 0.0
+                        current_position["unrealized_pl"] = 0.0  # type: ignore[assignment]
 
             # Don't forget the last position
             if current_position:
                 position_count += 1
-                total_position_value += current_position.get("market_value", 0.0)
-                total_unrealized_pnl += current_position.get("unrealized_pl", 0.0)
+                total_position_value += current_position.get("market_value", 0.0)  # type: ignore[operator]
+                total_unrealized_pnl += current_position.get("unrealized_pl", 0.0)  # type: ignore[operator]
 
             if position_count > 0:
                 pnl_emoji = "🟢" if total_unrealized_pnl >= 0 else "🔴"
@@ -391,14 +391,14 @@ async def startup() -> str:
                         current_position["quantity"] = line.split(": ")[1]
                     elif line.startswith("Current Price: $"):
                         try:
-                            current_position["current_price"] = float(line.split("$")[1])
+                            current_position["current_price"] = float(line.split("$")[1])  # type: ignore[assignment]
                         except (IndexError, ValueError):
-                            current_position["current_price"] = 0.0
+                            current_position["current_price"] = 0.0  # type: ignore[assignment]
                     elif line.startswith("Market Value: $"):
                         try:
-                            current_position["market_value"] = float(line.split("$")[1])
+                            current_position["market_value"] = float(line.split("$")[1])  # type: ignore[assignment]
                         except (IndexError, ValueError):
-                            current_position["market_value"] = 0.0
+                            current_position["market_value"] = 0.0  # type: ignore[assignment]
                     elif line.startswith("Unrealized P/L: $"):
                         try:
                             # Extract P/L and percentage
@@ -406,13 +406,13 @@ async def startup() -> str:
                             if "(" in pnl_text:
                                 pnl_amount = float(pnl_text.split(" ")[0])
                                 pnl_percent = pnl_text.split("(")[1].split(")")[0]
-                                current_position["unrealized_pl"] = pnl_amount
+                                current_position["unrealized_pl"] = pnl_amount  # type: ignore[assignment]
                                 current_position["unrealized_pl_percent"] = pnl_percent
                             else:
-                                current_position["unrealized_pl"] = float(pnl_text)
+                                current_position["unrealized_pl"] = float(pnl_text)  # type: ignore[assignment]
                                 current_position["unrealized_pl_percent"] = "0.00%"
                         except (IndexError, ValueError):
-                            current_position["unrealized_pl"] = 0.0
+                            current_position["unrealized_pl"] = 0.0  # type: ignore[assignment]
                             current_position["unrealized_pl_percent"] = "0.00%"
 
                 # Don't forget the last position
@@ -437,7 +437,7 @@ async def startup() -> str:
                         pnl_pct = pos.get("unrealized_pl_percent", "0.00%")
 
                         # Add emoji for P/L status
-                        pnl_emoji = "🟢" if pos.get("unrealized_pl", 0) >= 0 else "🔴"
+                        pnl_emoji = "🟢" if pos.get("unrealized_pl", 0) >= 0 else "🔴"  # type: ignore[operator]
 
                         report.append(
                             f"{symbol:<8} {quantity:<12} {price:<10} {value:<12} {pnl:<12} {pnl_pct:<8} {pnl_emoji}"

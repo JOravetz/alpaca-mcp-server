@@ -93,7 +93,7 @@ class DesktopNotificationService:
             elif self.platform == "windows":
                 # Check for Windows toast notification support
                 try:
-                    import win10toast  # noqa: F401
+                    import win10toast  # noqa: F401  # type: ignore
 
                     self.logger.info("Windows toast notifications available")
                 except ImportError:

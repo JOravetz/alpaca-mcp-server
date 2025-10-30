@@ -1,6 +1,7 @@
 """Watchlist management tools."""
 
 from alpaca.trading.requests import CreateWatchlistRequest, UpdateWatchlistRequest
+from alpaca.trading.models import Watchlist
 
 from ..config.settings import get_trading_client
 
@@ -32,7 +33,7 @@ async def get_watchlists() -> str:
         watchlists = client.get_watchlists()
         result = "Watchlists:\n------------\n"
         for wl in watchlists:
-            if hasattr(wl, "name"):
+            if isinstance(wl, Watchlist):
                 result += f"Name: {wl.name}\n"
                 result += f"ID: {wl.id}\n"
                 result += f"Created: {wl.created_at}\n"

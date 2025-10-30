@@ -34,7 +34,7 @@ async def market_session_workflow(session_type: str = "full_day") -> str:
         session_results.append("- Analyzing current market session and optimal trading windows...")
 
         try:
-            from ..tools.market_info_tools import get_extended_market_clock
+            from ..tools.market_info_tools import get_extended_market_clock  # type: ignore[attr-defined]
 
             market_clock = await get_extended_market_clock()
             session_results.append(f"✅ Market Clock Analysis:\n{market_clock}")
@@ -173,7 +173,7 @@ RISK MANAGEMENT:
         session_results.append("- Validating order types and execution rules...")
 
         try:
-            from ..tools.order_tools import get_extended_hours_info
+            from ..tools.order_tools import get_extended_hours_info  # type: ignore[attr-defined]
 
             eh_info = await get_extended_hours_info()
             session_results.append(f"✅ Extended Hours Rules:\n{eh_info}")

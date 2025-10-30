@@ -12,18 +12,18 @@ from ..tools import (
     options_tools,
     order_tools,
     position_tools,
+    price_trigger_tools,
     streaming_tools,
     volume_bars_tool,
     watchlist_tools,
 )
+from ..tools.c_peak_trough_wrapper import analyze_peaks_troughs_fast as c_peak_trough_fast
+from ..tools.c_peak_trough_wrapper import compare_implementations as c_compare_implementations
 from ..tools.cleanup_tool import cleanup_server
 from ..tools.peak_trough_analysis_tool import (
     analyze_peaks_and_troughs_with_plot_py as peak_trough_analysis,
 )
-from ..tools.c_peak_trough_wrapper import (
-    analyze_peaks_troughs_fast as c_peak_trough_fast,
-    compare_implementations as c_compare_implementations,
-)
+
 # C analyzer imports moved to function level to avoid naming conflicts
 
 
@@ -46,7 +46,7 @@ def register_account_tools(mcp):
         return await account_tools.get_open_position(symbol)
 
     @mcp.tool()
-    async def close_position(symbol: str, qty: str = None, percentage: str = None) -> str:
+    async def close_position(symbol: str, qty: str | None = None, percentage: str | None = None) -> str:
         """Close a specific position."""
         return await position_tools.close_position(symbol, qty, percentage)
 
@@ -69,7 +69,7 @@ def register_market_data_tools(mcp):
             return help_system.get_help_system()
 
     @mcp.tool()
-    async def get_stock_quote(symbol: str, help: str = None) -> str:
+    async def get_stock_quote(symbol: str, help: str | None = None) -> str:
         """Get latest quote for a stock."""
         if help == "--help" or help == "help":
             return get_safe_help_system().get_tool_help("get_stock_quote")
@@ -89,8 +89,8 @@ def register_market_data_tools(mcp):
     async def get_stock_bars_intraday(
         symbol: str,
         timeframe: str = "1Min",
-        start_date: str = None,
-        end_date: str = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
         limit: int = 10000,
     ) -> str:
         """Get intraday historical bars with analysis."""
@@ -99,7 +99,7 @@ def register_market_data_tools(mcp):
         )
 
     @mcp.tool()
-    async def get_stock_trades(symbol: str, days: int = 5, limit: int = None) -> str:
+    async def get_stock_trades(symbol: str, days: int = 5, limit: int | None = None) -> str:
         """Get recent trades for a stock."""
         return await market_data_tools.get_stock_trades(symbol, days, limit)
 
@@ -134,11 +134,11 @@ def register_options_tools(mcp):
     @mcp.tool()
     async def get_option_contracts(
         underlying_symbol: str,
-        expiration_date: str = None,
-        strike_price_gte: str = None,
-        strike_price_lte: str = None,
-        type: str = None,
-        limit: int = None,
+        expiration_date: str | None = None,
+        strike_price_gte: str | None = None,
+        strike_price_lte: str | None = None,
+        type: str | None = None,
+        limit: int | None = None,
     ) -> str:
         """Get option contracts for underlying symbol."""
         from datetime import datetime
@@ -156,7 +156,7 @@ def register_options_tools(mcp):
             parsed_expiration_date,
             strike_price_gte,
             strike_price_lte,
-            type,
+            type,  # type: ignore[arg-type]
             None,
             None,
             limit,
@@ -221,16 +221,16 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
         symbols: str,
         timeframe: str = "1Min",
         days: int = 1,
-        window_len: int = None,
+        window_len: int | None = None,
         filter_key: str = "close",
         feed: str = "sip",
     ) -> str:
         """
         Ultra-fast peak/trough analysis using C implementation (5-10x faster).
-        
+
         This high-performance version uses a compiled C program for speed,
         making it ideal for real-time scanning and high-frequency analysis.
-        
+
         Args:
             symbols: Comma-separated symbols or "AUTO" for scanner results
             timeframe: Bar timeframe (1Min, 5Min, 15Min, 1Hour, 1Day)
@@ -238,14 +238,12 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
             window_len: Hanning filter window length (3-101, odd, uses global config if None)
             filter_key: Data field to filter (close, open, high, low, vwap)
             feed: Data feed source (sip, iex, otc)
-        
+
         Returns:
             Formatted analysis with trading signals
         """
-        return await c_peak_trough_fast(
-            symbols, timeframe, days, window_len, filter_key, feed
-        )
-    
+        return await c_peak_trough_fast(symbols, timeframe, days, window_len, filter_key, feed)
+
     @mcp.tool()
     async def compare_peak_trough_implementations(
         symbol: str,
@@ -254,14 +252,14 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
     ) -> str:
         """
         Compare performance between C and Python peak/trough implementations.
-        
+
         Useful for benchmarking and verifying the speedup of the C version.
-        
+
         Args:
             symbol: Stock symbol to analyze
             timeframe: Bar timeframe
             days: Number of days to analyze
-        
+
         Returns:
             Performance comparison report
         """
@@ -270,7 +268,7 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
     @mcp.tool()
     async def get_volume_bars_from_history(
         symbol: str,
-        volume_threshold: float = None,
+        volume_threshold: float | None = None,
         days: int = 1,
         auto_calculate_threshold: bool = True,
         target_bars_per_day: int = 50,
@@ -307,7 +305,7 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
 
     @mcp.tool()
     async def compare_bar_types(
-        symbol: str, days: int = 1, time_bars_minutes: int = 5, volume_threshold: float = None
+        symbol: str, days: int = 1, time_bars_minutes: int = 5, volume_threshold: float | None = None
     ) -> str:
         """
         Compare statistical properties of time bars vs volume bars.
@@ -332,7 +330,7 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
     @mcp.tool()
     async def start_volume_bar_streaming(
         symbols: str,
-        volume_thresholds: str = None,
+        volume_thresholds: str | None = None,
         auto_calculate: bool = True,
         target_bars_per_day: int = 50,
     ) -> str:
@@ -355,7 +353,7 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
         )
 
     @mcp.tool()
-    async def get_volume_bar_stats(symbol: str = None) -> str:
+    async def get_volume_bar_stats(symbol: str | None = None) -> str:
         """
         Get current volume bar statistics and recent bars.
 
@@ -374,10 +372,11 @@ def register_scanner_tools(mcp):
     @mcp.tool()
     async def scan_day_trading_opportunities(
         symbols: str = "ALL",
-        min_trades_per_minute: int = None,
-        min_percent_change: float = None,
-        max_symbols: int = None,
-        sort_by: str = None,
+        symbol_file: str | None = None,
+        min_trades_per_minute: int | None = None,
+        min_percent_change: float | None = None,
+        max_symbols: int | None = None,
+        sort_by: str | None = None,
     ) -> str:
         """
         Scan for EXPLOSIVE UP-ONLY day-trading opportunities with extreme volatility.
@@ -390,6 +389,7 @@ def register_scanner_tools(mcp):
 
         Args:
             symbols: Comma-separated symbols to scan (default: ALL tradeable assets)
+            symbol_file: Path to file with symbols (one per line) - EFFICIENT for large lists like ~/autotrade/combined.lis
             min_trades_per_minute: IGNORED - Always uses global config value
             min_percent_change: IGNORED - Always uses global config value
             max_symbols: Maximum results to return (default: from global config)
@@ -400,8 +400,8 @@ def register_scanner_tools(mcp):
         """
         from ..tools.day_trading_scanner import scan_day_trading_opportunities as scanner_func
 
-        return await scanner_func(
-            symbols, min_trades_per_minute, min_percent_change, max_symbols, sort_by
+        return await scanner_func(  # type: ignore[call-arg]
+            symbols, symbol_file, min_trades_per_minute, min_percent_change, max_symbols, sort_by  # type: ignore[arg-type]
         )
 
     @mcp.tool()
@@ -459,7 +459,7 @@ def register_scanner_tools(mcp):
 
     @mcp.tool()
     async def analyze_market_activity_fast(
-        symbols: str = None,
+        symbols: str | None = None,
         max_results: int = 10,
         max_price: float = 50.0,
         min_percent_change: float = 5.0,
@@ -468,13 +468,13 @@ def register_scanner_tools(mcp):
     ) -> str:
         """
         Ultra-fast market activity analysis using C implementation (10x+ faster).
-        
+
         Analyzes real-time stock snapshots to find high-activity stocks with
         momentum. Calculates gradients, volume changes, and trade intensity.
-        
+
         Perfect for rapid scanning of hundreds of symbols to find day trading
         opportunities. The C implementation provides industrial-grade performance.
-        
+
         Args:
             symbols: Optional comma-separated symbols (None = use default list)
             max_results: Maximum number of results to return
@@ -482,15 +482,16 @@ def register_scanner_tools(mcp):
             min_percent_change: Minimum percent change threshold
             min_trades: Minimum trades threshold
             sort_by: Sort keys (trades, percent_change, volume, gradient_change)
-        
+
         Returns:
             Formatted analysis with high-activity trading opportunities
         """
         from ..tools.c_stock_analyzer_wrapper import analyze_market_activity_fast as c_analyzer_func
+
         return await c_analyzer_func(
             symbols, max_results, max_price, min_percent_change, min_trades, sort_by
         )
-    
+
     @mcp.tool()
     async def scan_explosive_stocks_fast(
         max_results: int = 20,
@@ -499,37 +500,39 @@ def register_scanner_tools(mcp):
     ) -> str:
         """
         Lightning-fast scan for explosive penny stocks using C analyzer.
-        
+
         Optimized for finding extreme percentage movers with high activity.
         This is the fastest way to find volatile day trading opportunities.
-        
+
         Args:
             max_results: Maximum number of results
             min_percent_change: Minimum percent change for explosive moves
             max_price: Maximum price (focus on penny stocks)
-        
+
         Returns:
             Formatted list of explosive trading opportunities
         """
         from ..tools.c_stock_analyzer_wrapper import scan_explosive_stocks_fast as c_scanner_func
+
         return await c_scanner_func(max_results, min_percent_change, max_price)
-    
+
     @mcp.tool()
     async def compare_analyzer_performance(
         test_symbols: str = "AAPL,MSFT,NVDA,SPY,TSLA",
     ) -> str:
         """
         Compare performance between C analyzer and Python scanners.
-        
+
         Useful for demonstrating the speed advantage of the C implementation.
-        
+
         Args:
             test_symbols: Symbols to test with
-        
+
         Returns:
             Performance comparison report
         """
         from ..tools.c_stock_analyzer_wrapper import compare_analyzer_performance as c_compare_func
+
         return await c_compare_func(test_symbols)
 
     @mcp.tool()
@@ -561,7 +564,7 @@ def register_scanner_tools(mcp):
     @mcp.tool()
     async def get_single_day_pnl(
         date: str,
-        symbol_filter: str = None,
+        symbol_filter: str | None = None,
         min_trade_value: float = 0.0,
     ) -> str:
         """
@@ -601,7 +604,7 @@ def register_watchlist_tools(mcp):
         return await watchlist_tools.get_watchlists()
 
     @mcp.tool()
-    async def update_watchlist(watchlist_id: str, name: str = None, symbols: list = None) -> str:
+    async def update_watchlist(watchlist_id: str, name: str | None = None, symbols: list | None = None) -> str:
         """Update an existing watchlist."""
         return await watchlist_tools.update_watchlist(watchlist_id, name, symbols)
 
@@ -611,10 +614,10 @@ def register_asset_tools(mcp):
 
     @mcp.tool()
     async def get_all_assets(
-        status: str = None,
-        asset_class: str = None,
-        exchange: str = None,
-        attributes: str = None,
+        status: str | None = None,
+        asset_class: str | None = None,
+        exchange: str | None = None,
+        attributes: str | None = None,
         tradable_only: bool = True,
         max_symbol_length: int = 4,
     ) -> str:
@@ -638,8 +641,8 @@ def register_corporate_action_tools(mcp):
         since: str,
         until: str,
         symbol: str | None = None,
-        cusip: str = None,
-        date_type: str = None,
+        cusip: str | None = None,
+        date_type: str | None = None,
     ) -> str:
         """Get corporate action announcements for specified criteria."""
         return await corporate_action_tools.get_corporate_announcements(
@@ -653,10 +656,10 @@ def register_streaming_tools(mcp):
     @mcp.tool()
     async def start_global_stock_stream(
         symbols: list,
-        data_types: list = None,
+        data_types: list = None,  # type: ignore[assignment]
         feed: str = "sip",
-        duration_seconds: int = None,
-        buffer_size_per_symbol: int = None,
+        duration_seconds: int | None = None,
+        buffer_size_per_symbol: int | None = None,
         replace_existing: bool = False,
     ) -> str:
         """Start global real-time stock data stream for day trading."""
@@ -677,13 +680,13 @@ def register_streaming_tools(mcp):
         return await streaming_tools.stop_global_stock_stream()
 
     @mcp.tool()
-    async def add_symbols_to_stock_stream(symbols: list, data_types: list = None) -> str:
+    async def add_symbols_to_stock_stream(symbols: list, data_types: list = None) -> str:  # type: ignore[assignment]
         """Add symbols to existing stock stream."""
         return await streaming_tools.add_symbols_to_stock_stream(symbols, data_types)
 
     @mcp.tool()
     async def get_stock_stream_data(
-        symbol: str, data_type: str, recent_seconds: int = None, limit: int = None
+        symbol: str, data_type: str, recent_seconds: int | None = None, limit: int | None = None
     ) -> str:
         """Get streaming data for analysis."""
         return await streaming_tools.get_stock_stream_data(symbol, data_type, recent_seconds, limit)
@@ -783,7 +786,7 @@ def register_monitoring_tools(mcp):
         max_concurrent_positions: int = 5,
         watchlist_size_limit: int = 20,
         enable_auto_alerts: bool = True,
-        alert_channels: list = None,
+        alert_channels: list = None,  # type: ignore[assignment]
     ) -> dict:
         """Start the hybrid trading monitoring service."""
         return await monitoring_tools.start_hybrid_monitoring(
@@ -836,7 +839,7 @@ def register_monitoring_tools(mcp):
         return await monitoring_tools.get_profit_spike_alerts(count)
 
     @mcp.tool()
-    async def check_positions_after_order(order_info: dict = None) -> dict:
+    async def check_positions_after_order(order_info: dict = None) -> dict:  # type: ignore[assignment]
         """
         Force immediate position check after order execution.
         This ensures real-time feedback on position changes for continuous monitoring.
@@ -923,7 +926,7 @@ def register_fastapi_monitoring_tools(mcp):
         return await fastapi_monitoring_tools.get_fastapi_positions()
 
     @mcp.tool()
-    async def check_positions_after_order_fastapi(order_info: dict = None) -> dict:
+    async def check_positions_after_order_fastapi(order_info: dict = None) -> dict:  # type: ignore[assignment]
         """
         Check positions immediately after an order using the FastAPI service.
 
@@ -993,8 +996,8 @@ def register_plotting_tools(mcp):
         symbols: str,
         timeframe: str = "1Min",
         days: int = 1,
-        window_len: int = None,
-        lookahead: int = None,
+        window_len: int | None = None,
+        lookahead: int | None = None,
         plot_mode: str = "single",
         display_plots: bool = False,
         dpi: int = 100,
@@ -1050,8 +1053,8 @@ def register_plotting_tools(mcp):
         symbols: str,
         timeframe: str = "1Min",
         days: int = 1,
-        window: int = None,
-        lookahead: int = None,
+        window: int | None = None,
+        lookahead: int | None = None,
         feed: str = "sip",
         no_plot: bool = False,
         verbose: bool = False,
@@ -1368,6 +1371,114 @@ def register_cleanup_tools(mcp):
         return await list_cleanup_candidates()
 
 
+def register_price_trigger_tools(mcp):
+    """Register price trigger monitoring tools for day-trading entries."""
+
+    @mcp.tool()
+    def setup_price_trigger_for_entry(
+        symbol: str,
+        trigger_price: float,
+        contract_symbol: str,
+        contract_type: str,
+        side: str,
+        quantity: int,
+        order_type: str = "market",
+        limit_price: float | None = None,
+        notes: str = "",
+    ) -> str:
+        """
+        Set up automatic price trigger for day-trading entry.
+
+        When stock reaches trigger price, you'll get desktop notification
+        with staged order ready to execute. Perfect for entering at
+        resistance (for shorts/puts) or support (for longs/calls).
+
+        Args:
+            symbol: Stock to monitor (e.g., "CMBM")
+            trigger_price: Price to trigger at (e.g., 2.86 for resistance)
+            contract_symbol: What to trade (stock symbol or option contract)
+            contract_type: "stock" or "option"
+            side: "buy" for long, "sell" for short
+            quantity: Number of shares or contracts
+            order_type: "market" or "limit"
+            limit_price: Required if order_type="limit"
+            notes: Your trading strategy notes
+
+        Returns:
+            Setup confirmation with trigger ID
+
+        Example:
+            setup_price_trigger_for_entry(
+                symbol="CMBM",
+                trigger_price=2.86,
+                contract_symbol="CMBM251121P00002500",
+                contract_type="option",
+                side="buy",
+                quantity=6,
+                notes="PUT entry at resistance, target $2.34"
+            )
+        """
+        return price_trigger_tools.setup_price_trigger_for_entry(
+            symbol,
+            trigger_price,
+            contract_symbol,
+            contract_type,
+            side,
+            quantity,
+            order_type,
+            limit_price,
+            notes,
+        )
+
+    @mcp.tool()
+    def get_active_price_triggers() -> str:
+        """
+        Get all active price triggers currently being monitored.
+
+        Shows pending, triggered, and executed triggers with current status.
+
+        Returns:
+            Formatted list of all triggers
+        """
+        return price_trigger_tools.get_active_price_triggers()
+
+    @mcp.tool()
+    def cancel_price_trigger(trigger_id: str) -> str:
+        """
+        Cancel a pending price trigger.
+
+        Args:
+            trigger_id: Trigger ID from setup_price_trigger_for_entry
+
+        Returns:
+            Confirmation message
+        """
+        return price_trigger_tools.cancel_price_trigger(trigger_id)
+
+    @mcp.tool()
+    def mark_trigger_executed(trigger_id: str) -> str:
+        """
+        Mark trigger as executed after you manually placed the order.
+
+        Args:
+            trigger_id: Trigger ID
+
+        Returns:
+            Confirmation message
+        """
+        return price_trigger_tools.mark_trigger_executed(trigger_id)
+
+    @mcp.tool()
+    def get_monitoring_service_status() -> str:
+        """
+        Check if price trigger monitoring service is running.
+
+        Returns:
+            Service status and health information
+        """
+        return price_trigger_tools.get_monitoring_service_status()
+
+
 def register_all_tools(mcp, DEFAULT_WINDOW_LEN):
     """Register all tools with the MCP server."""
     register_account_tools(mcp)
@@ -1383,6 +1494,7 @@ def register_all_tools(mcp, DEFAULT_WINDOW_LEN):
     register_order_tools(mcp)
     register_monitoring_tools(mcp)
     register_fastapi_monitoring_tools(mcp)
+    register_price_trigger_tools(mcp)
     register_extended_hours_tools(mcp)
     register_plotting_tools(mcp)
     register_help_tools(mcp)

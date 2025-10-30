@@ -39,7 +39,7 @@ class TradeConfirmation:
     created_at: str = ""
     confirmed_at: str | None = None
     timeout_at: str = ""
-    notes: list[str] = None
+    notes: list[str] = None  # type: ignore[assignment]
 
     def __post_init__(self):
         if self.created_at == "":
@@ -247,7 +247,7 @@ class TradeConfirmationService:
             self.logger.error(f"Error verifying position for {confirmation.trade_id}: {e}")
             return False
 
-    async def _save_confirmation(self, confirmation: TradeConfirmation):
+    async def _save_confirmation(self, confirmation: TradeConfirmation) -> None:
         """Save confirmation to JSON file"""
         try:
             confirmation_file = self.confirmations_dir / f"{confirmation.trade_id}.json"
@@ -287,7 +287,7 @@ class TradeConfirmationService:
         except Exception as e:
             self.logger.error(f"Error saving confirmation: {e}")
 
-    async def _check_confirmation_timeout(self, trade_id: str):
+    async def _check_confirmation_timeout(self, trade_id: str) -> None:
         """Check for confirmation timeout"""
         try:
             # Wait for timeout period
@@ -307,7 +307,7 @@ class TradeConfirmationService:
                     self.logger.error(f"⏰ TRADE CONFIRMATION TIMEOUT: {trade_id}")
 
                     # Send timeout notification
-                    await self.desktop_notifications.send_notification(
+                    await self.desktop_notifications.send_notification(  # type: ignore[call-arg]
                         title="⏰ Trade Confirmation Timeout",
                         message=f"Trade {confirmation.symbol} requires manual verification",
                         priority="urgent",

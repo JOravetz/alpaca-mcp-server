@@ -308,7 +308,7 @@ async def get_stock_bars_intraday(
         bars_data = client.get_stock_bars(request_params)
 
         # Check if we have any data at all
-        if not bars_data.data:
+        if not bars_data.data:  # type: ignore[union-attr]
             return f"""No intraday data found for symbols {", ".join(symbol_list)} in timeframe {timeframe}.
 
 Possible reasons:
@@ -326,7 +326,7 @@ Suggestions:
         # For single symbol, provide detailed analysis
         if len(symbol_list) == 1:
             symbol = symbol_list[0]
-            if symbol not in bars_data.data or not bars_data.data[symbol]:
+            if symbol not in bars_data.data or not bars_data.data[symbol]:  # type: ignore[union-attr]
                 return f"""No intraday data found for {symbol} in timeframe {timeframe}.
 
 Possible reasons:
@@ -341,7 +341,7 @@ Suggestions:
 • Verify {symbol} is valid and actively traded
 • Check if market was open during specified time range"""
 
-            bars = list(bars_data.data[symbol])
+            bars = list(bars_data.data[symbol])  # type: ignore[union-attr]
 
             # Professional analysis starts here
             result = f"""# Professional Intraday Analysis: {symbol}
@@ -459,11 +459,11 @@ Data Feed: {feed.upper()}
 
             # Analyze each symbol
             for symbol in symbol_list:
-                if symbol not in bars_data.data or not bars_data.data[symbol]:
+                if symbol not in bars_data.data or not bars_data.data[symbol]:  # type: ignore[union-attr]
                     result += f"\n## {symbol} - No Data Available\n"
                     continue
 
-                bars = list(bars_data.data[symbol])
+                bars = list(bars_data.data[symbol])  # type: ignore[union-attr]
                 if len(bars) < 2:
                     result += f"\n## {symbol} - Insufficient Data\n"
                     continue
@@ -519,8 +519,8 @@ Data Feed: {feed.upper()}
             # Collect metrics for ranking
             symbol_metrics = []
             for symbol in symbol_list:
-                if symbol in bars_data.data and bars_data.data[symbol]:
-                    bars = list(bars_data.data[symbol])
+                if symbol in bars_data.data and bars_data.data[symbol]:  # type: ignore[union-attr]
+                    bars = list(bars_data.data[symbol])  # type: ignore[union-attr]
                     if len(bars) >= 2:
                         first_bar = bars[0]
                         last_bar = bars[-1]
@@ -674,7 +674,7 @@ async def get_stock_snapshots(symbols: str | list[str]) -> str:
                         # Get trade count
                         trades = (
                             int(float(minute_bar.trade_count))
-                            if hasattr(minute_bar, "trade_count")
+                            if isinstance(minute_bar, BarSet)  # type: ignore[name-defined]
                             else 0
                         )
 

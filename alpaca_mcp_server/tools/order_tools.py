@@ -75,8 +75,8 @@ async def get_position_average_price(symbol: str) -> float | None:
         positions = client.get_all_positions()
 
         for position in positions:
-            if position.symbol == symbol:
-                return float(position.avg_entry_price)
+            if position.symbol == symbol:  # type: ignore[union-attr]
+                return float(position.avg_entry_price)  # type: ignore[union-attr]
 
         return None
     except Exception:
@@ -127,6 +127,7 @@ from alpaca.trading.enums import (  # noqa: E402
     QueryOrderStatus,
     TimeInForce,
 )
+from alpaca.trading.models import Order, Position  # noqa: E402
 from alpaca.trading.requests import (  # noqa: E402
     GetOrdersRequest,
     LimitOrderRequest,
@@ -179,6 +180,9 @@ async def get_orders(status: str = "all", limit: int = 10) -> str:
         result += "-----------------------------------\n"
 
         for order in orders:
+            if not isinstance(order, Order):
+                continue
+
             result += f"""Symbol: {order.symbol}
 ID: {order.id}
 Type: {order.type}
@@ -187,10 +191,10 @@ Quantity: {order.qty}
 Status: {order.status}
 Submitted At: {order.submitted_at}"""
 
-            if hasattr(order, "filled_at") and order.filled_at:
+            if order.filled_at:
                 result += f"\nFilled At: {order.filled_at}"
 
-            if hasattr(order, "filled_avg_price") and order.filled_avg_price:
+            if order.filled_avg_price:
                 filled_price = float(order.filled_avg_price)
                 if filled_price < 1.00:
                     result += f"\nFilled Price: ${filled_price:.4f}"
@@ -349,6 +353,10 @@ async def place_stock_order(
 
         # Submit order
         order = client.submit_order(order_data)
+
+        if not isinstance(order, Order):
+            return f"Error: Unexpected order response type: {type(order)}"
+
         return f"""Order Placed Successfully:
 -------------------------
 Order ID: {order.id}
@@ -385,11 +393,11 @@ async def cancel_all_orders() -> str:
         response_parts.append("-" * 30)
 
         for response in cancel_responses:
-            status = "Success" if response.status == 200 else "Failed"
-            response_parts.append(f"Order ID: {response.id}")
+            status = "Success" if response.status == 200 else "Failed"  # type: ignore[union-attr]
+            response_parts.append(f"Order ID: {response.id}")  # type: ignore[union-attr]
             response_parts.append(f"Status: {status}")
-            if response.body:
-                response_parts.append(f"Details: {response.body}")
+            if response.body:  # type: ignore[union-attr]
+                response_parts.append(f"Details: {response.body}")  # type: ignore[union-attr]
             response_parts.append("-" * 30)
 
         return "\n".join(response_parts)
@@ -412,7 +420,7 @@ async def cancel_order_by_id(order_id: str) -> str:
         client = get_trading_client()
 
         # Cancel the specific order
-        response = client.cancel_order_by_id(order_id)
+        response = client.cancel_order_by_id(order_id)  # type: ignore[func-returns-value]
 
         # Format the response
         status = "Success" if response.status == 200 else "Failed"
@@ -473,7 +481,7 @@ async def place_option_market_order(
         if order_class == "simple":
             order_class_enum = OrderClass.SIMPLE
         elif order_class == "mleg":
-            order_class_enum = OrderClass.MULTILEG
+            order_class_enum = OrderClass.MULTILEG  # type: ignore[attr-defined]
         else:
             return f"Error: Invalid order_class '{order_class}'. Must be 'simple' or 'mleg'."
 
@@ -508,7 +516,7 @@ async def place_option_market_order(
                 return f"Error processing leg {i + 1}: {str(leg_error)}"
 
         # Create the order request
-        from alpaca.trading.requests import OptionMarketOrderRequest
+        from alpaca.trading.requests import OptionMarketOrderRequest  # type: ignore[attr-defined]
 
         order_request = OptionMarketOrderRequest(
             legs=option_legs,
@@ -521,6 +529,9 @@ async def place_option_market_order(
 
         # Submit the order
         order = client.submit_order(order_request)
+
+        if not isinstance(order, Order):
+            return f"Error: Unexpected order response type: {type(order)}"
 
         # Format successful response
         result = f"""Options Order Placed Successfully:

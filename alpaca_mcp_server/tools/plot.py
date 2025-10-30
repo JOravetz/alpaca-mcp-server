@@ -20,12 +20,12 @@ import numpy as np
 import pandas as pd
 import pytz
 import requests
-from dateutil import parser as date_parser
-from scipy.signal import filtfilt
-from scipy.signal.windows import hann as hanning
+from dateutil import parser as date_parser  # type: ignore[import-untyped]
+from scipy.signal import filtfilt  # type: ignore[import-untyped]
+from scipy.signal.windows import hann as hanning  # type: ignore[import-untyped]
 
 try:
-    import pandas_market_calendars as mcal
+    import pandas_market_calendars as mcal  # type: ignore[import-untyped]
 
     HAS_MARKET_CALENDARS = True
 except ImportError:
@@ -51,7 +51,7 @@ def setup_backend_for_args(no_plot=False):
 
 # Add current directory to path to import peakdetect
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from peakdetect import peakdetect, peakdetect_savgol  # noqa: E402
+from peakdetect import peakdetect, peakdetect_savgol  # noqa: E402  # type: ignore
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -227,7 +227,7 @@ def create_market_calendar_dataframe(timestamps, timeframe):
     trading_days = nyse.schedule(start_date=start_nyc, end_date=end_nyc)
 
     # Create extended hours schedule (4 AM to 8 PM NYC/EDT)
-    extended_schedule = []
+    extended_schedule = []  # type: ignore[var-annotated]
     for date, _row in trading_days.iterrows():
         # Create 4 AM to 8 PM schedule for each trading day
         trading_date = date.date()
@@ -441,7 +441,7 @@ class HistoricalDataFetcher:
             return None
 
         url = "https://data.alpaca.markets/v2/stocks/bars"
-        all_bars_data = {}
+        all_bars_data = {}  # type: ignore[var-annotated]
         next_page_token = None
         page_count = 0
         max_pages = 50  # Safety limit to prevent infinite loops

@@ -4,7 +4,7 @@ import os
 import sys
 
 
-def handle_imports():
+def handle_imports() -> None:
     """Handle import path configuration for direct execution."""
     if __name__ == "__main__" or not __package__:
         # Add parent directory to path for direct execution

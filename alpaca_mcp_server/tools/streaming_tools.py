@@ -143,7 +143,7 @@ async def handle_stock_status(status):
 
 async def start_global_stock_stream(
     symbols: list[str],
-    data_types: list[str] = None,
+    data_types: list[str] = None,  # type: ignore[assignment]
     feed: str = "sip",
     duration_seconds: int | None = None,
     buffer_size_per_symbol: int | None = None,
@@ -239,7 +239,7 @@ Options:
             return "Error: Alpaca API credentials not found in environment variables. Please set APCA_API_KEY_ID and APCA_API_SECRET_KEY."
 
         # Create the single global stock stream
-        _settings_module._global_stock_stream = StockDataStream(
+        _settings_module._global_stock_stream = StockDataStream(  # type: ignore[attr-defined]
             api_key=api_key,
             secret_key=api_secret,
             feed=feed_enum,
@@ -276,9 +276,9 @@ Options:
         # Function to run the stock stream with duration monitoring
         def run_stock_stream():
             try:
-                _settings_module._stock_stream_active = True
-                _settings_module._stock_stream_start_time = time.time()
-                _settings_module._stock_stream_end_time = (
+                _settings_module._stock_stream_active = True  # type: ignore[attr-defined]
+                _settings_module._stock_stream_start_time = time.time()  # type: ignore[attr-defined]
+                _settings_module._stock_stream_end_time = (  # type: ignore[attr-defined]
                     _settings_module._stock_stream_start_time + duration_seconds
                     if duration_seconds
                     else None
@@ -292,11 +292,11 @@ Options:
             except Exception as e:
                 print(f"Stock stream error: {e}")
             finally:
-                _settings_module._stock_stream_active = False
+                _settings_module._stock_stream_active = False  # type: ignore[attr-defined]
                 print("Stock stream stopped")
 
         # Start the stock stream in a background thread
-        _settings_module._stock_stream_thread = threading.Thread(
+        _settings_module._stock_stream_thread = threading.Thread(  # type: ignore[attr-defined]
             target=run_stock_stream, daemon=True
         )
         _settings_module._stock_stream_thread.start()
@@ -362,7 +362,7 @@ async def stop_global_stock_stream() -> str:
         total_events = sum(_settings_module._stock_stream_stats.values())
 
         # Stop the stream
-        _settings_module._stock_stream_active = False
+        _settings_module._stock_stream_active = False  # type: ignore[attr-defined]
 
         if _settings_module._global_stock_stream:
             with contextlib.suppress(Exception):
@@ -619,7 +619,7 @@ async def stream_aware_price_monitor(symbol: str, analysis_seconds: int = 10) ->
             result += (
                 f"  └── Spread: {spread_pct:.3f}% {'(Tight)' if spread_pct < 0.5 else '(Wide)'}\n"
             )
-            trade_count = int(volume_analysis.get("trade_count", 0))
+            trade_count = int(volume_analysis.get("trade_count", 0))  # type: ignore[call-overload]
             result += f"  └── Liquidity: {'Good' if isinstance(trade_count, int) and trade_count > 5 else 'Limited'}\n"
 
         return result

@@ -29,7 +29,7 @@ class ServiceConfig:
     enable_auto_alerts: bool = True
     state_file: str = "hybrid_service_state.json"
     log_file: str = "hybrid_monitoring.log"
-    alert_channels: list[str] = None
+    alert_channels: list[str] = None  # type: ignore[assignment]
 
     def __post_init__(self):
         if self.alert_channels is None:
@@ -63,7 +63,7 @@ class HybridTradingService:
     - JSON-based communication with Claude
     """
 
-    def __init__(self, config: ServiceConfig = None):
+    def __init__(self, config: ServiceConfig | None = None):
         self.config = config or ServiceConfig()
         self.logger = self._setup_logging()
 
@@ -220,7 +220,7 @@ class HybridTradingService:
 
             # Send shutdown alert
             if self.alert_system:
-                uptime = time.time() - self.start_time.timestamp()
+                uptime = time.time() - self.start_time.timestamp()  # type: ignore[union-attr]
                 await self.alert_system.send_alert(
                     "🛑 Hybrid Trading Service STOPPED",
                     f"Service stopped after {uptime:.0f} seconds uptime. "
@@ -233,7 +233,7 @@ class HybridTradingService:
             return {
                 "status": "success",
                 "message": "Service stopped gracefully",
-                "uptime_seconds": time.time() - self.start_time.timestamp(),
+                "uptime_seconds": time.time() - self.start_time.timestamp(),  # type: ignore[union-attr]
                 "final_check_count": self.check_count,
                 "final_error_count": self.error_count,
             }
@@ -246,7 +246,7 @@ class HybridTradingService:
         """Get current service status"""
         uptime = 0
         if self.start_time:
-            uptime = time.time() - self.start_time.timestamp()
+            uptime = time.time() - self.start_time.timestamp()  # type: ignore[assignment]
 
         return ServiceStatus(
             active=self.active,
@@ -375,7 +375,7 @@ class HybridTradingService:
         """Get current trading signals"""
         return self.current_signals.copy()
 
-    async def check_positions_after_order(self, order_info: dict = None) -> dict:
+    async def check_positions_after_order(self, order_info: dict = None) -> dict:  # type: ignore[assignment]
         """
         Check positions immediately after an order is processed.
         This ensures Claude gets immediate feedback on position changes.
@@ -441,7 +441,7 @@ class HybridTradingService:
 
                 # Send error alert if too many errors
                 if self.error_count % 10 == 0:
-                    await self.alert_system.send_alert(
+                    await self.alert_system.send_alert(  # type: ignore[union-attr]
                         "🚨 Monitoring Errors",
                         f"Service has encountered {self.error_count} errors. Latest: {e}",
                         priority="warning",
@@ -469,7 +469,7 @@ class HybridTradingService:
             # Log position changes for Claude awareness
             position_count = len(self.position_tracker.positions)
             if (
-                hasattr(self, "_last_position_count")
+                isinstance(self, AlertSystem)
                 and self._last_position_count != position_count
             ):
                 if position_count > self._last_position_count:
@@ -503,7 +503,7 @@ class HybridTradingService:
         if self.check_count % 50 == 0:  # Every ~100 seconds
             await self._save_state()
 
-    async def _process_signal(self, signal: dict):
+    async def _process_signal(self, signal: dict) -> None:
         """Process a detected trading signal"""
         signal["timestamp"] = datetime.now(UTC).isoformat()
         signal["id"] = f"{signal['symbol']}_{int(time.time())}"
@@ -529,7 +529,7 @@ class HybridTradingService:
             f"Signal detected: {signal['symbol']} - {signal['signal_type']} (confidence: {signal.get('confidence', 0):.2f})"
         )
 
-    async def _send_signal_alert(self, signal: dict):
+    async def _send_signal_alert(self, signal: dict) -> None:
         """Send alert for trading signal"""
         signal_emoji = "🚀" if signal["signal_type"] == "fresh_trough" else "⚠️"
 
@@ -541,7 +541,7 @@ class HybridTradingService:
             f"Action: {signal.get('action', 'analyze')}"
         )
 
-        await self.alert_system.send_alert(
+        await self.alert_system.send_alert(  # type: ignore[union-attr]
             f"Trading Signal: {signal['symbol']}", message, priority="high"
         )
 
@@ -596,7 +596,7 @@ def get_service_instance() -> HybridTradingService | None:
     return _service_instance
 
 
-def set_service_instance(service: HybridTradingService):
+def set_service_instance(service: HybridTradingService) -> None:
     """Set the global service instance"""
     global _service_instance
     _service_instance = service

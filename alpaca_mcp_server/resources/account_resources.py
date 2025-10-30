@@ -13,16 +13,16 @@ async def get_account_status() -> dict:
         positions = client.get_all_positions()
 
         return {
-            "account_id": account.id,
-            "buying_power": float(account.buying_power),
-            "cash": float(account.cash),
-            "portfolio_value": float(account.portfolio_value),
-            "equity": float(account.equity),
+            "account_id": account.id,  # type: ignore[union-attr]
+            "buying_power": float(account.buying_power),  # type: ignore[arg-type,union-attr]
+            "cash": float(account.cash),  # type: ignore[arg-type,union-attr]
+            "portfolio_value": float(account.portfolio_value),  # type: ignore[arg-type,union-attr]
+            "equity": float(account.equity),  # type: ignore[arg-type,union-attr]
             "day_trades_remaining": getattr(account, "daytrade_count", "Unknown"),
-            "pattern_day_trader": account.pattern_day_trader,
+            "pattern_day_trader": account.pattern_day_trader,  # type: ignore[union-attr]
             "positions_count": len(positions),
-            "account_status": account.status,
-            "currency": account.currency,
+            "account_status": account.status,  # type: ignore[union-attr]
+            "currency": account.currency,  # type: ignore[union-attr]
             "last_updated": datetime.now().isoformat(),
         }
     except Exception as e:

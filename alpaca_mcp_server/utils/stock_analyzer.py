@@ -5,7 +5,7 @@ from datetime import datetime, time
 from typing import Any
 from zoneinfo import ZoneInfo
 
-import requests  # type: ignore[import-untyped]
+import requests
 
 API_KEY_ID = os.environ["APCA_API_KEY_ID"]
 SECRET_KEY_ID = os.environ["APCA_API_SECRET_KEY"]

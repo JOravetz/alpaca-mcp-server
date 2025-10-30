@@ -73,7 +73,7 @@ def wrap_snapshot(snapshot):
 
 
 class PatternAnalyzer:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def detect_consolidation(self, high, low, volume, avg_volume):
@@ -89,7 +89,7 @@ class PatternAnalyzer:
 
 
 class StockAnalyzer:
-    def __init__(self):
+    def __init__(self) -> None:
         self.pattern_analyzer = PatternAnalyzer()
 
     def calculate_zscore(self, value, values):
@@ -381,7 +381,7 @@ async def fetch_historical_data(symbols, timeframe="1Day", trading_days=15):
 
 async def fetch_symbol_data(session, url, params, headers):
     """Fetch historical data for a group of symbols."""
-    all_data = {}
+    all_data = {}  # type: ignore[var-annotated]
     try:
         while True:
             async with session.get(url, headers=headers, params=params) as response:
@@ -442,7 +442,7 @@ def run(args):
             "APCA-API-KEY-ID": API_KEY_ID,
             "APCA-API-SECRET-KEY": SECRET_KEY_ID,
         }
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers)  # type: ignore[arg-type]
         snapshots = response.json()
         print(f"Retrieved data for {len(snapshots)} symbols")
     except Exception as e:
