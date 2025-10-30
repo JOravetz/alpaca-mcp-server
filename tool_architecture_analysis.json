@@ -1,0 +1,731 @@
+{
+  "categories": {
+    "scanners": [
+      {
+        "file": "day_trading_scanner.py",
+        "name": "scan_day_trading_opportunities",
+        "lines": 334,
+        "complexity": 31
+      },
+      {
+        "file": "day_trading_scanner.py",
+        "name": "scan_explosive_momentum",
+        "lines": 16,
+        "complexity": 0
+      },
+      {
+        "file": "c_stock_analyzer_wrapper.py",
+        "name": "scan_explosive_stocks_fast",
+        "lines": 82,
+        "complexity": 6
+      },
+      {
+        "file": "after_hours_scanner.py",
+        "name": "scan_after_hours_opportunities",
+        "lines": 301,
+        "complexity": 27
+      }
+    ],
+    "data_fetchers": [
+      {
+        "file": "market_info_tools.py",
+        "name": "get_market_clock",
+        "lines": 51,
+        "complexity": 2
+      },
+      {
+        "file": "market_info_tools.py",
+        "name": "get_market_calendar",
+        "lines": 27,
+        "complexity": 2
+      },
+      {
+        "file": "fastapi_monitoring_tools.py",
+        "name": "get_fastapi_monitoring_status",
+        "lines": 14,
+        "complexity": 1
+      },
+      {
+        "file": "fastapi_monitoring_tools.py",
+        "name": "get_current_watchlist",
+        "lines": 22,
+        "complexity": 1
+      },
+      {
+        "file": "fastapi_monitoring_tools.py",
+        "name": "get_fastapi_positions",
+        "lines": 21,
+        "complexity": 1
+      },
+      {
+        "file": "fastapi_monitoring_tools.py",
+        "name": "get_fastapi_signals",
+        "lines": 20,
+        "complexity": 1
+      },
+      {
+        "file": "fastapi_monitoring_tools.py",
+        "name": "get_hybrid_monitoring_status",
+        "lines": 2,
+        "complexity": 0
+      },
+      {
+        "file": "extended_hours_orders.py",
+        "name": "get_extended_hours_info",
+        "lines": 48,
+        "complexity": 0
+      },
+      {
+        "file": "monitoring_tools.py",
+        "name": "get_hybrid_monitoring_status",
+        "lines": 63,
+        "complexity": 4
+      },
+      {
+        "file": "monitoring_tools.py",
+        "name": "get_current_watchlist",
+        "lines": 29,
+        "complexity": 1
+      },
+      {
+        "file": "monitoring_tools.py",
+        "name": "get_current_trading_signals",
+        "lines": 40,
+        "complexity": 4
+      },
+      {
+        "file": "monitoring_tools.py",
+        "name": "get_profit_spike_alerts",
+        "lines": 56,
+        "complexity": 1
+      },
+      {
+        "file": "monitoring_tools.py",
+        "name": "get_monitoring_alerts",
+        "lines": 29,
+        "complexity": 1
+      },
+      {
+        "file": "watchlist_tools.py",
+        "name": "get_watchlists",
+        "lines": 17,
+        "complexity": 3
+      },
+      {
+        "file": "asset_tools.py",
+        "name": "get_all_assets",
+        "lines": 91,
+        "complexity": 14
+      },
+      {
+        "file": "asset_tools.py",
+        "name": "get_asset_info",
+        "lines": 33,
+        "complexity": 1
+      },
+      {
+        "file": "streaming_tools.py",
+        "name": "get_stock_stream_data",
+        "lines": 128,
+        "complexity": 13
+      },
+      {
+        "file": "streaming_tools.py",
+        "name": "get_stock_stream_buffer_stats",
+        "lines": 87,
+        "complexity": 3
+      },
+      {
+        "file": "corporate_action_tools.py",
+        "name": "get_corporate_announcements",
+        "lines": 122,
+        "complexity": 22
+      },
+      {
+        "file": "market_data_tools.py",
+        "name": "get_stock_quote",
+        "lines": 32,
+        "complexity": 1
+      },
+      {
+        "file": "market_data_tools.py",
+        "name": "get_stock_bars",
+        "lines": 52,
+        "complexity": 3
+      },
+      {
+        "file": "market_data_tools.py",
+        "name": "get_stock_bars_intraday",
+        "lines": 423,
+        "complexity": 21
+      },
+      {
+        "file": "market_data_tools.py",
+        "name": "get_stock_snapshots",
+        "lines": 215,
+        "complexity": 21
+      },
+      {
+        "file": "market_data_tools.py",
+        "name": "get_stock_trades",
+        "lines": 43,
+        "complexity": 3
+      },
+      {
+        "file": "market_data_tools.py",
+        "name": "get_stock_latest_trade",
+        "lines": 31,
+        "complexity": 1
+      },
+      {
+        "file": "market_data_tools.py",
+        "name": "get_stock_latest_bar",
+        "lines": 36,
+        "complexity": 1
+      },
+      {
+        "file": "account_tools.py",
+        "name": "get_account_info",
+        "lines": 42,
+        "complexity": 1
+      },
+      {
+        "file": "account_tools.py",
+        "name": "get_positions",
+        "lines": 36,
+        "complexity": 4
+      },
+      {
+        "file": "account_tools.py",
+        "name": "get_open_position",
+        "lines": 33,
+        "complexity": 1
+      },
+      {
+        "file": "single_day_pnl.py",
+        "name": "get_single_day_pnl",
+        "lines": 201,
+        "complexity": 22
+      },
+      {
+        "file": "order_tools.py",
+        "name": "get_current_stock_price",
+        "lines": 24,
+        "complexity": 4
+      },
+      {
+        "file": "order_tools.py",
+        "name": "get_position_average_price",
+        "lines": 20,
+        "complexity": 3
+      },
+      {
+        "file": "order_tools.py",
+        "name": "get_orders",
+        "lines": 67,
+        "complexity": 9
+      },
+      {
+        "file": "volume_bars_tool.py",
+        "name": "get_volume_bars_from_history",
+        "lines": 228,
+        "complexity": 17
+      },
+      {
+        "file": "volume_bars_tool.py",
+        "name": "get_volume_bar_stats",
+        "lines": 64,
+        "complexity": 9
+      },
+      {
+        "file": "options_tools.py",
+        "name": "get_option_contracts",
+        "lines": 111,
+        "complexity": 12
+      },
+      {
+        "file": "options_tools.py",
+        "name": "get_option_latest_quote",
+        "lines": 50,
+        "complexity": 2
+      },
+      {
+        "file": "options_tools.py",
+        "name": "get_option_snapshot",
+        "lines": 70,
+        "complexity": 3
+      },
+      {
+        "file": "after_hours_scanner.py",
+        "name": "get_enhanced_streaming_analytics",
+        "lines": 75,
+        "complexity": 0
+      },
+      {
+        "file": "enhanced_market_clock.py",
+        "name": "get_extended_market_clock",
+        "lines": 135,
+        "complexity": 5
+      }
+    ],
+    "order_management": [
+      {
+        "file": "extended_hours_orders.py",
+        "name": "place_extended_hours_order",
+        "lines": 99,
+        "complexity": 5
+      },
+      {
+        "file": "order_tools.py",
+        "name": "place_stock_order",
+        "lines": 160,
+        "complexity": 17
+      },
+      {
+        "file": "order_tools.py",
+        "name": "place_option_market_order",
+        "lines": 181,
+        "complexity": 18
+      }
+    ],
+    "analysis": [
+      {
+        "file": "c_peak_trough_wrapper.py",
+        "name": "analyze_peaks_troughs_fast",
+        "lines": 119,
+        "complexity": 11
+      },
+      {
+        "file": "peak_trough_analysis_tool.py",
+        "name": "analyze_peaks_and_troughs",
+        "lines": 459,
+        "complexity": 52
+      },
+      {
+        "file": "peak_trough_analysis_tool.py",
+        "name": "analyze_peaks_and_troughs_with_plot_py",
+        "lines": 99,
+        "complexity": 5
+      },
+      {
+        "file": "c_stock_analyzer_wrapper.py",
+        "name": "analyze_market_activity_fast",
+        "lines": 105,
+        "complexity": 7
+      }
+    ],
+    "monitoring": [],
+    "plotting": [],
+    "other": []
+  },
+  "primitives": [
+    {
+      "file": "fastapi_monitoring_tools.py",
+      "name": "get_hybrid_monitoring_status",
+      "lines": 2,
+      "complexity": 0
+    },
+    {
+      "file": "extended_hours_orders.py",
+      "name": "place_extended_hours_order",
+      "lines": 99,
+      "complexity": 5
+    },
+    {
+      "file": "extended_hours_orders.py",
+      "name": "get_extended_hours_info",
+      "lines": 48,
+      "complexity": 0
+    },
+    {
+      "file": "monitoring_tools.py",
+      "name": "get_hybrid_monitoring_status",
+      "lines": 63,
+      "complexity": 4
+    },
+    {
+      "file": "monitoring_tools.py",
+      "name": "get_current_watchlist",
+      "lines": 29,
+      "complexity": 1
+    },
+    {
+      "file": "monitoring_tools.py",
+      "name": "get_current_trading_signals",
+      "lines": 40,
+      "complexity": 4
+    },
+    {
+      "file": "monitoring_tools.py",
+      "name": "get_profit_spike_alerts",
+      "lines": 56,
+      "complexity": 1
+    },
+    {
+      "file": "monitoring_tools.py",
+      "name": "get_monitoring_alerts",
+      "lines": 29,
+      "complexity": 1
+    },
+    {
+      "file": "c_peak_trough_wrapper.py",
+      "name": "analyze_peaks_troughs_fast",
+      "lines": 119,
+      "complexity": 11
+    },
+    {
+      "file": "peak_trough_analysis_tool.py",
+      "name": "analyze_peaks_and_troughs",
+      "lines": 459,
+      "complexity": 52
+    },
+    {
+      "file": "peak_trough_analysis_tool.py",
+      "name": "analyze_peaks_and_troughs_with_plot_py",
+      "lines": 99,
+      "complexity": 5
+    },
+    {
+      "file": "day_trading_scanner.py",
+      "name": "scan_day_trading_opportunities",
+      "lines": 334,
+      "complexity": 31
+    },
+    {
+      "file": "day_trading_scanner.py",
+      "name": "scan_explosive_momentum",
+      "lines": 16,
+      "complexity": 0
+    },
+    {
+      "file": "streaming_tools.py",
+      "name": "get_stock_stream_data",
+      "lines": 128,
+      "complexity": 13
+    },
+    {
+      "file": "streaming_tools.py",
+      "name": "get_stock_stream_buffer_stats",
+      "lines": 87,
+      "complexity": 3
+    },
+    {
+      "file": "c_stock_analyzer_wrapper.py",
+      "name": "analyze_market_activity_fast",
+      "lines": 105,
+      "complexity": 7
+    },
+    {
+      "file": "c_stock_analyzer_wrapper.py",
+      "name": "scan_explosive_stocks_fast",
+      "lines": 82,
+      "complexity": 6
+    },
+    {
+      "file": "order_tools.py",
+      "name": "get_current_stock_price",
+      "lines": 24,
+      "complexity": 4
+    },
+    {
+      "file": "volume_bars_tool.py",
+      "name": "get_volume_bar_stats",
+      "lines": 64,
+      "complexity": 9
+    },
+    {
+      "file": "after_hours_scanner.py",
+      "name": "scan_after_hours_opportunities",
+      "lines": 301,
+      "complexity": 27
+    },
+    {
+      "file": "after_hours_scanner.py",
+      "name": "get_enhanced_streaming_analytics",
+      "lines": 75,
+      "complexity": 0
+    }
+  ],
+  "composites": [
+    {
+      "file": "market_info_tools.py",
+      "name": "get_market_clock",
+      "lines": 51,
+      "complexity": 2
+    },
+    {
+      "file": "market_info_tools.py",
+      "name": "get_market_calendar",
+      "lines": 27,
+      "complexity": 2
+    },
+    {
+      "file": "fastapi_monitoring_tools.py",
+      "name": "get_fastapi_monitoring_status",
+      "lines": 14,
+      "complexity": 1
+    },
+    {
+      "file": "fastapi_monitoring_tools.py",
+      "name": "get_current_watchlist",
+      "lines": 22,
+      "complexity": 1
+    },
+    {
+      "file": "fastapi_monitoring_tools.py",
+      "name": "get_fastapi_positions",
+      "lines": 21,
+      "complexity": 1
+    },
+    {
+      "file": "fastapi_monitoring_tools.py",
+      "name": "get_fastapi_signals",
+      "lines": 20,
+      "complexity": 1
+    },
+    {
+      "file": "watchlist_tools.py",
+      "name": "get_watchlists",
+      "lines": 17,
+      "complexity": 3
+    },
+    {
+      "file": "asset_tools.py",
+      "name": "get_all_assets",
+      "lines": 91,
+      "complexity": 14
+    },
+    {
+      "file": "asset_tools.py",
+      "name": "get_asset_info",
+      "lines": 33,
+      "complexity": 1
+    },
+    {
+      "file": "corporate_action_tools.py",
+      "name": "get_corporate_announcements",
+      "lines": 122,
+      "complexity": 22
+    },
+    {
+      "file": "market_data_tools.py",
+      "name": "get_stock_quote",
+      "lines": 32,
+      "complexity": 1
+    },
+    {
+      "file": "market_data_tools.py",
+      "name": "get_stock_bars",
+      "lines": 52,
+      "complexity": 3
+    },
+    {
+      "file": "market_data_tools.py",
+      "name": "get_stock_bars_intraday",
+      "lines": 423,
+      "complexity": 21
+    },
+    {
+      "file": "market_data_tools.py",
+      "name": "get_stock_snapshots",
+      "lines": 215,
+      "complexity": 21
+    },
+    {
+      "file": "market_data_tools.py",
+      "name": "get_stock_trades",
+      "lines": 43,
+      "complexity": 3
+    },
+    {
+      "file": "market_data_tools.py",
+      "name": "get_stock_latest_trade",
+      "lines": 31,
+      "complexity": 1
+    },
+    {
+      "file": "market_data_tools.py",
+      "name": "get_stock_latest_bar",
+      "lines": 36,
+      "complexity": 1
+    },
+    {
+      "file": "account_tools.py",
+      "name": "get_account_info",
+      "lines": 42,
+      "complexity": 1
+    },
+    {
+      "file": "account_tools.py",
+      "name": "get_positions",
+      "lines": 36,
+      "complexity": 4
+    },
+    {
+      "file": "account_tools.py",
+      "name": "get_open_position",
+      "lines": 33,
+      "complexity": 1
+    },
+    {
+      "file": "single_day_pnl.py",
+      "name": "get_single_day_pnl",
+      "lines": 201,
+      "complexity": 22
+    },
+    {
+      "file": "order_tools.py",
+      "name": "get_position_average_price",
+      "lines": 20,
+      "complexity": 3
+    },
+    {
+      "file": "order_tools.py",
+      "name": "get_orders",
+      "lines": 67,
+      "complexity": 9
+    },
+    {
+      "file": "order_tools.py",
+      "name": "place_stock_order",
+      "lines": 160,
+      "complexity": 17
+    },
+    {
+      "file": "order_tools.py",
+      "name": "place_option_market_order",
+      "lines": 181,
+      "complexity": 18
+    },
+    {
+      "file": "volume_bars_tool.py",
+      "name": "get_volume_bars_from_history",
+      "lines": 228,
+      "complexity": 17
+    },
+    {
+      "file": "options_tools.py",
+      "name": "get_option_contracts",
+      "lines": 111,
+      "complexity": 12
+    },
+    {
+      "file": "options_tools.py",
+      "name": "get_option_latest_quote",
+      "lines": 50,
+      "complexity": 2
+    },
+    {
+      "file": "options_tools.py",
+      "name": "get_option_snapshot",
+      "lines": 70,
+      "complexity": 3
+    },
+    {
+      "file": "enhanced_market_clock.py",
+      "name": "get_extended_market_clock",
+      "lines": 135,
+      "complexity": 5
+    }
+  ],
+  "large_tools": [
+    {
+      "file": "c_peak_trough_wrapper.py",
+      "name": "analyze_peaks_troughs_fast",
+      "lines": 119,
+      "complexity": 11
+    },
+    {
+      "file": "peak_trough_analysis_tool.py",
+      "name": "analyze_peaks_and_troughs",
+      "lines": 459,
+      "complexity": 52
+    },
+    {
+      "file": "day_trading_scanner.py",
+      "name": "scan_day_trading_opportunities",
+      "lines": 334,
+      "complexity": 31
+    },
+    {
+      "file": "streaming_tools.py",
+      "name": "get_stock_stream_data",
+      "lines": 128,
+      "complexity": 13
+    },
+    {
+      "file": "corporate_action_tools.py",
+      "name": "get_corporate_announcements",
+      "lines": 122,
+      "complexity": 22
+    },
+    {
+      "file": "c_stock_analyzer_wrapper.py",
+      "name": "analyze_market_activity_fast",
+      "lines": 105,
+      "complexity": 7
+    },
+    {
+      "file": "market_data_tools.py",
+      "name": "get_stock_bars_intraday",
+      "lines": 423,
+      "complexity": 21
+    },
+    {
+      "file": "market_data_tools.py",
+      "name": "get_stock_snapshots",
+      "lines": 215,
+      "complexity": 21
+    },
+    {
+      "file": "single_day_pnl.py",
+      "name": "get_single_day_pnl",
+      "lines": 201,
+      "complexity": 22
+    },
+    {
+      "file": "order_tools.py",
+      "name": "place_stock_order",
+      "lines": 160,
+      "complexity": 17
+    },
+    {
+      "file": "order_tools.py",
+      "name": "place_option_market_order",
+      "lines": 181,
+      "complexity": 18
+    },
+    {
+      "file": "volume_bars_tool.py",
+      "name": "get_volume_bars_from_history",
+      "lines": 228,
+      "complexity": 17
+    },
+    {
+      "file": "options_tools.py",
+      "name": "get_option_contracts",
+      "lines": 111,
+      "complexity": 12
+    },
+    {
+      "file": "after_hours_scanner.py",
+      "name": "scan_after_hours_opportunities",
+      "lines": 301,
+      "complexity": 27
+    },
+    {
+      "file": "enhanced_market_clock.py",
+      "name": "get_extended_market_clock",
+      "lines": 135,
+      "complexity": 5
+    }
+  ],
+  "missing_docstrings": [
+    {
+      "file": "watchlist_tools.py",
+      "name": "get_watchlists",
+      "lines": 17,
+      "complexity": 3
+    }
+  ]
+}

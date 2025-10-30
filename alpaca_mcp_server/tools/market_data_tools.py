@@ -60,13 +60,40 @@ def get_smart_date_range():
 
 async def get_stock_quote(symbol: str) -> str:
     """
-    Retrieves and formats the latest quote for a stock.
+    Get real-time bid/ask quote with spread analysis for immediate trading decisions.
+
+    WHEN TO USE:
+    - Checking current price before placing an order
+    - Verifying spread before market/limit order decision
+    - Confirming liquidity via bid/ask sizes
+    - Real-time price monitoring during active trades
+
+    HOW IT WORKS:
+    1. Fetches latest quote from Alpaca market data API
+    2. Returns bid price, ask price, spread, and sizes
+    3. Includes timestamp for quote age verification
+
+    WHY THIS TOOL:
+    Use for IMMEDIATE price checks (last few seconds).
+    For historical prices, use get_stock_bars() instead.
+    For continuous monitoring, use start_global_stock_stream() instead.
+
+    Examples:
+        # Quick price check before order
+        get_stock_quote("AAPL")
+
+        # Verify spread before large order
+        get_stock_quote("TSLA")  # Check if spread <0.5%
 
     Args:
-        symbol (str): Stock ticker symbol (e.g., AAPL, MSFT)
+        symbol: Stock ticker symbol (e.g., "AAPL", "MSFT", "NVDA")
 
     Returns:
-        str: Formatted string containing ask/bid prices, sizes, and timestamp in NYC/EDT
+        Formatted quote with:
+        - Ask Price: $X.XX (size)
+        - Bid Price: $X.XX (size)
+        - Spread (derived from ask - bid)
+        - Timestamp in America/New_York timezone
     """
     try:
         client = get_stock_historical_client()
@@ -95,14 +122,43 @@ Timestamp: {timestamp_nyc.strftime("%Y-%m-%d %H:%M:%S %Z")}"""
 
 async def get_stock_bars(symbol: str, days: int = 5) -> str:
     """
-    Retrieves and formats historical price bars for a stock.
+    Fetch daily OHLCV price bars for technical analysis and charting.
+
+    WHEN TO USE:
+    - Need historical price data for charting patterns
+    - Calculating technical indicators (moving averages, RSI, etc.)
+    - Reviewing recent price trends and volatility
+    - Backtesting strategies on daily timeframes
+
+    HOW IT WORKS:
+    1. Fetches {days} trading days of daily bar data
+    2. Returns OHLCV (Open, High, Low, Close, Volume)
+    3. Sorted chronologically (oldest → newest)
+    4. Includes daily percentage changes
+
+    WHY THIS TOOL:
+    Use for DAILY bars only (one bar per trading day).
+    For intraday (1min, 5min, 15min), use get_stock_bars_intraday() instead.
+    For real-time data, use get_stock_quote() or start_global_stock_stream() instead.
+
+    Examples:
+        # Get last 5 trading days (default)
+        get_stock_bars("AAPL")
+
+        # Get 20 days for longer-term analysis
+        get_stock_bars("TSLA", days=20)
+
+        # Get full month of data
+        get_stock_bars("NVDA", days=30)
 
     Args:
-        symbol (str): Stock ticker symbol (e.g., AAPL, MSFT)
-        days (int): Number of trading days to look back (default: 5)
+        symbol: Stock ticker symbol (e.g., "AAPL", "MSFT", "NVDA")
+        days: Number of trading days to fetch (default: 5, max: 1000)
 
     Returns:
-        str: Formatted string containing historical OHLCV data with daily changes
+        Formatted table with:
+        Date | Open | High | Low | Close | Volume | Change%
+        Sorted oldest to newest for easy trend analysis
     """
     try:
         client = get_stock_historical_client()
