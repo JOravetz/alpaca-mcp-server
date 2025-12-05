@@ -20,6 +20,7 @@ from ..tools import (
 from ..tools.c_peak_trough_wrapper import analyze_peaks_troughs_fast as c_peak_trough_fast
 from ..tools.c_peak_trough_wrapper import compare_implementations as c_compare_implementations
 from ..tools.cleanup_tool import cleanup_server
+from ..tools import perplexity_tools
 from ..tools.peak_trough_analysis_tool import (
     analyze_peaks_and_troughs_with_plot_py as peak_trough_analysis,
 )
@@ -400,8 +401,18 @@ def register_scanner_tools(mcp):
         """
         from ..tools.day_trading_scanner import scan_day_trading_opportunities as scanner_func
 
+        # Handle symbol_file parameter - read symbols from file if provided
+        symbols_to_scan = symbols
+        if symbol_file:
+            try:
+                with open(symbol_file, 'r') as f:
+                    file_symbols = [line.strip().upper() for line in f if line.strip()]
+                symbols_to_scan = ",".join(file_symbols)
+            except Exception as e:
+                return f"Error reading symbol file {symbol_file}: {str(e)}"
+
         return await scanner_func(  # type: ignore[call-arg]
-            symbols, symbol_file, min_trades_per_minute, min_percent_change, max_symbols, sort_by  # type: ignore[arg-type]
+            symbols_to_scan, min_trades_per_minute, min_percent_change, max_symbols, sort_by  # type: ignore[arg-type]
         )
 
     @mcp.tool()
@@ -1479,6 +1490,36 @@ def register_price_trigger_tools(mcp):
         return price_trigger_tools.get_monitoring_service_status()
 
 
+def register_perplexity_tools(mcp):
+    """Register Perplexity Finance research tools."""
+
+    @mcp.tool()
+    async def get_perplexity_quote(symbols: str) -> str:
+        """
+        Get real-time stock quotes from Perplexity Finance.
+
+        Fast REST API access (~2 seconds) for quick price checks during trading.
+        For comprehensive AI analysis with news and bull/bear cases, use /pplx command.
+
+        Args:
+            symbols: Comma-separated stock symbols (e.g., "NVDA,AAPL,SMX")
+
+        Returns:
+            Formatted quote data including price, change, after-hours, volume ratio
+        """
+        return await perplexity_tools.get_perplexity_quote(symbols)
+
+    @mcp.tool()
+    async def get_perplexity_movers() -> str:
+        """
+        Get today's top gainers from Perplexity Finance.
+
+        Fetches the current top movers to identify explosive day-trading opportunities.
+        Returns top gainers with price, change %, and volume data.
+        """
+        return await perplexity_tools.get_perplexity_movers()
+
+
 def register_all_tools(mcp, DEFAULT_WINDOW_LEN):
     """Register all tools with the MCP server."""
     register_account_tools(mcp)
@@ -1500,3 +1541,4 @@ def register_all_tools(mcp, DEFAULT_WINDOW_LEN):
     register_help_tools(mcp)
     register_debug_tools(mcp)
     register_cleanup_tools(mcp)
+    register_perplexity_tools(mcp)
