@@ -11,7 +11,8 @@ Usage:
     uv run python external_tools/perplexity_finance.py KITT PMI PLRZ
     uv run python external_tools/perplexity_finance.py AAPL --full
     uv run python external_tools/perplexity_finance.py TSLA --json
-    uv run python external_tools/perplexity_finance.py NVDA --browser  # Full AI analysis
+    uv run python external_tools/perplexity_finance.py NVDA --browser           # AI analysis (headless)
+    uv run python external_tools/perplexity_finance.py NVDA --browser --visible  # Show browser window
 """
 
 import argparse
@@ -30,29 +31,58 @@ except ImportError:
 BASE_URL = "https://www.perplexity.ai"
 
 
-def fetch_with_browser(symbol: str, timeout: int = 12) -> str:
+def fetch_with_browser(symbol: str, timeout: int = 12, visible: bool = False) -> str:
     """
     Fetch full stock page using undetected-chromedriver.
     Returns formatted text with AI analysis, news, price movement history.
 
-    Requires: xvfb, undetected-chromedriver, html2text
+    Args:
+        symbol: Stock ticker symbol
+        timeout: Seconds to wait for page to load (default: 12)
+        visible: Show browser window on screen (default: False, uses virtual display)
+
+    Note: We use xvfb (virtual framebuffer) instead of headless mode because
+    Cloudflare's bot detection can identify headless browsers. xvfb runs a
+    full browser that renders to a virtual display, bypassing bot detection
+    while keeping your screen clean.
+
+    Requires: xvfb (apt install xvfb), undetected-chromedriver, html2text
     """
     script = f'''
 import undetected_chromedriver as uc
 import time
 
-driver = uc.Chrome(version_main=142)
+options = uc.ChromeOptions()
+options.add_argument("--disable-gpu")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--window-size=1920,1080")
+
+driver = uc.Chrome(version_main=142, options=options)
 driver.get("https://www.perplexity.ai/finance/{symbol.upper()}")
 time.sleep({timeout})
 print(driver.page_source)
 driver.quit()
 '''
 
-    cmd = [
-        "xvfb-run", "--auto-servernum",
+    # Build the base command
+    base_cmd = [
         "uv", "run", "--with", "undetected-chromedriver",
         "python3", "-c", script
     ]
+
+    if visible:
+        # Run with visible browser window
+        cmd = base_cmd
+        env = None  # Use current environment
+    else:
+        # Run in virtual framebuffer (invisible but not headless)
+        # Use env -u DISPLAY to clear existing display, then xvfb-run sets its own
+        cmd = [
+            "env", "-u", "DISPLAY",
+            "xvfb-run", "--auto-servernum", "--server-args=-screen 0 1920x1080x24"
+        ] + base_cmd
+        env = None  # env -u handles the DISPLAY removal
 
     try:
         result = subprocess.run(
@@ -256,14 +286,15 @@ def format_earnings_summary(earnings: list) -> str:
     for e in earnings[:4]:  # Last 4 quarters
         date = e.get("date", "")[:10]
         period = f"{e.get('fiscalPeriod', '')} {e.get('fiscalYear', '')}"
-        revenue = e.get("actualRevenue", 0)
-        eps = e.get("actualEps", 0)
+        revenue = e.get("actualRevenue") or 0
+        eps = e.get("actualEps") or 0
         move = e.get("postEarningsMove1D")
 
         rev_str = f"${revenue/1e6:.1f}M" if revenue >= 1e6 else f"${revenue:,.0f}"
         move_str = f"{move*100:+.1f}%" if move else "N/A"
+        eps_str = f"${eps:.2f}" if eps else "N/A"
 
-        lines.append(f"  {date} ({period}): Rev {rev_str}, EPS ${eps:.2f}, Move: {move_str}")
+        lines.append(f"  {date} ({period}): Rev {rev_str}, EPS {eps_str}, Move: {move_str}")
 
     return "\n".join(lines)
 
@@ -287,6 +318,8 @@ Examples:
     parser.add_argument("--quiet", "-q", action="store_true", help="Minimal output")
     parser.add_argument("--browser", "-b", action="store_true",
                         help="Use browser for full AI analysis (slower but more comprehensive)")
+    parser.add_argument("--visible", "-v", action="store_true",
+                        help="Show browser window (for debugging, default: headless)")
 
     args = parser.parse_args()
 
@@ -298,9 +331,10 @@ Examples:
         # Browser mode - full AI analysis
         if args.browser:
             print(f"\n{'='*60}")
-            print(f"  Fetching {symbol} via browser (AI analysis)...")
+            mode = "visible window" if args.visible else "virtual display (xvfb)"
+            print(f"  Fetching {symbol} via browser ({mode}, AI analysis)...")
             print(f"{'='*60}\n")
-            result = fetch_with_browser(symbol)
+            result = fetch_with_browser(symbol, visible=args.visible)
             print(result)
             continue
 
