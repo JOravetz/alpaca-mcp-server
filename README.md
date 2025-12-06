@@ -16,7 +16,9 @@ A professional-grade **Model Context Protocol (MCP) server** for day-trading wit
 - **Day Trading Opportunities** - Filter by % change, volume, and activity
 
 ### AI-Powered Research
-- **Perplexity Finance Integration** - Headless scraper for AI stock analysis
+- **Perplexity Finance Scrapers** - Multiple headless tools for AI stock analysis
+  - `pplx-stock` - Full HTML with AI summaries (~18s)
+  - `pplx-stock-fast` - REST API for quick quotes (~8s)
 - **SEC EDGAR Tools** - Company filings, insider transactions, financial statements
 - **News Aggregation** - Real-time news from multiple sources
 
@@ -71,8 +73,9 @@ alpaca-mcp-server-enhanced/
 | Document | Description |
 |----------|-------------|
 | [CLAUDE.md](CLAUDE.md) | Development guide and coding standards |
-| [docs/PPLX_STOCK_SCRAPER.md](docs/PPLX_STOCK_SCRAPER.md) | Perplexity Finance headless scraper |
-| [docs/PERPLEXITY_FINANCE_INTEGRATION.md](docs/PERPLEXITY_FINANCE_INTEGRATION.md) | AI research integration |
+| [docs/PPLX_STOCK_SCRAPER.md](docs/PPLX_STOCK_SCRAPER.md) | Perplexity Finance scrapers usage guide |
+| [docs/PPLX_SCRAPER_RESEARCH.md](docs/PPLX_SCRAPER_RESEARCH.md) | Scraper technology research & comparison |
+| [docs/PERPLEXITY_FINANCE_INTEGRATION.md](docs/PERPLEXITY_FINANCE_INTEGRATION.md) | MCP integration for AI research |
 
 ## Key Tools
 
@@ -105,26 +108,39 @@ alpaca-mcp-server-enhanced/
 
 ## External Tools
 
-### pplx-stock
+### Perplexity Finance Scrapers
 
-Headless Perplexity Finance scraper - fetches AI-powered stock analysis without browser windows:
+Three headless scrapers for AI-powered stock analysis:
 
 ```bash
-# Install to ~/bin
-chmod +x ~/bin/pplx-stock
+# Full HTML scraper - comprehensive data (~18s)
+pplx-stock NVDA              # AI summaries, news, analysis
+pplx-stock AMD --raw         # Raw HTML output
 
-# Usage
-pplx-stock NVDA          # Get full analysis
-pplx-stock AMD --raw     # Raw HTML output
+# Fast REST API scraper - structured data (~8s)
+pplx-stock-fast NVDA         # Pretty terminal output
+pplx-stock-fast NVDA --json  # JSON for programmatic use
+
+# Alternative full scraper using DrissionPage
+pplx-stock-drission TSLA     # Same as pplx-stock, different tech
 ```
 
-Features:
-- Bypasses Cloudflare with undetected-chromedriver
-- Runs invisibly using Xvfb virtual display
+**Key Features:**
+- Bypasses Cloudflare protection
+- Runs invisibly using Xvfb virtual display (no window popups)
+- Wayland-compatible via X11 forcing
 - Captures AI-written price movement summaries
-- Extracts bull/bear analyst cases
+- REST API discovery for 2x faster data retrieval
 
-See [docs/PPLX_STOCK_SCRAPER.md](docs/PPLX_STOCK_SCRAPER.md) for full documentation.
+**Technology Tested:**
+| Technology | Result |
+|-----------|--------|
+| Playwright | ❌ Ubuntu 26.04 not supported |
+| curl-impersonate | ❌ Blocked by Cloudflare JS challenge |
+| DrissionPage | ✅ Best performance |
+| undetected-chromedriver | ✅ Works reliably |
+
+See [docs/PPLX_STOCK_SCRAPER.md](docs/PPLX_STOCK_SCRAPER.md) for usage and [docs/PPLX_SCRAPER_RESEARCH.md](docs/PPLX_SCRAPER_RESEARCH.md) for research details.
 
 ## Configuration
 

@@ -1,6 +1,8 @@
-# pplx-stock: Perplexity Finance Headless Scraper
+# Perplexity Finance Scrapers
 
-A command-line tool for fetching comprehensive AI-powered stock analysis from Perplexity Finance without any browser window interrupting your workflow.
+A suite of command-line tools for fetching AI-powered stock analysis from Perplexity Finance without any browser window interrupting your workflow.
+
+**See also:** [PPLX_SCRAPER_RESEARCH.md](PPLX_SCRAPER_RESEARCH.md) for detailed technology comparison and testing results.
 
 ## Overview
 
@@ -8,13 +10,21 @@ A command-line tool for fetching comprehensive AI-powered stock analysis from Pe
 
 **Key Innovation:** Runs completely invisibly using a virtual X11 display, so you can fetch data in the background while working on other tasks.
 
+## Available Scrapers
+
+| Scraper | Technology | Speed | Best For |
+|---------|-----------|-------|----------|
+| `pplx-stock` | undetected-chromedriver | ~18s | Full content, AI summaries, news |
+| `pplx-stock-fast` | DrissionPage + REST API | **~8s** | Quick quotes, programmatic access |
+| `pplx-stock-drission` | DrissionPage | ~17s | Alternative to undetected-chromedriver |
+
 ## Technology Stack
 
 | Component | Purpose |
 |-----------|---------|
 | **undetected-chromedriver** | Bypasses Cloudflare and bot detection systems |
+| **DrissionPage** | Modern browser automation with better Cloudflare bypass |
 | **Xvfb (X Virtual Framebuffer)** | Creates invisible virtual display for Chrome |
-| **xvfb-run** | Manages virtual display lifecycle |
 | **html2text** | Converts HTML to readable terminal output |
 | **uv** | Fast Python package management |
 
@@ -22,9 +32,11 @@ A command-line tool for fetching comprehensive AI-powered stock analysis from Pe
 
 1. **undetected-chromedriver** - Perplexity Finance uses Cloudflare protection. Regular Selenium/requests get blocked. This library patches Chrome to appear as a normal user browser.
 
-2. **Xvfb + X11 Forcing** - The scraper runs Chrome in "headed" mode (with GUI) because headless mode is easily detected. But we redirect Chrome's display to a virtual framebuffer so no window appears on your screen.
+2. **DrissionPage** - Modern Python browser automation that combines Selenium and requests. Better Cloudflare bypass and can execute JavaScript to call internal REST APIs for faster data retrieval.
 
-3. **Wayland Bypass** - Modern Linux uses Wayland display server. We force Chrome to use X11 instead (`--ozone-platform=x11`, `XDG_SESSION_TYPE=x11`) so it connects to our virtual Xvfb display rather than your real Wayland desktop.
+3. **Xvfb + X11 Forcing** - The scraper runs Chrome in "headed" mode (with GUI) because headless mode is easily detected. But we redirect Chrome's display to a virtual framebuffer so no window appears on your screen.
+
+4. **Wayland Bypass** - Modern Linux uses Wayland display server. We force Chrome to use X11 instead (`--ozone-platform=x11`, `XDG_SESSION_TYPE=x11`) so it connects to our virtual Xvfb display rather than your real Wayland desktop.
 
 ## Installation
 
@@ -49,13 +61,10 @@ export PATH="$HOME/bin:$PATH"  # Add to ~/.bashrc
 
 ## Usage
 
-### Basic Usage
+### pplx-stock (Full HTML Scraper)
 
 ```bash
-# Get stock analysis (default: NVDA)
-pplx-stock
-
-# Specific ticker
+# Get full stock analysis with AI summaries
 pplx-stock AAPL
 pplx-stock TSLA
 pplx-stock AMD
@@ -64,9 +73,29 @@ pplx-stock AMD
 pplx-stock NVDA --raw
 ```
 
-### Output Format
+### pplx-stock-fast (Quick REST API Scraper)
 
-By default, output is converted to readable plain text. Use `--raw` to get the original HTML for programmatic parsing.
+```bash
+# Get structured quote data (2x faster)
+pplx-stock-fast NVDA          # Pretty terminal output
+pplx-stock-fast NVDA --json   # Raw JSON for programmatic use
+
+# Sample output:
+# ============================================================
+#  NVIDIA Corporation (NVDA)
+# ============================================================
+#  Price:          $182.41
+#  Change:         -0.97 (-0.53%)
+#  After Hours:    $182.36 (-0.03%)
+#  ...
+```
+
+### Output Comparison
+
+| Scraper | Output | Best For |
+|---------|--------|----------|
+| `pplx-stock` | Full text with news, AI analysis | Research, reading |
+| `pplx-stock-fast` | Structured JSON/formatted | Scripts, automation |
 
 ## What Data You Get
 
