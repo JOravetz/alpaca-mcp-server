@@ -20,6 +20,13 @@ Command-line tools for fetching stock data from financial websites for day-tradi
 | `finviz-premarket` | requests + BeautifulSoup | ~2-3s | Top gainers/losers/volatile/active + quotes |
 | `finviz-format.py` | Python | - | JSON formatter for finviz-premarket |
 
+### Stocktwits Sentiment Scrapers
+
+| Script | Technology | Speed | Description |
+|--------|-----------|-------|-------------|
+| `stocktwits-sentiment` | REST API (urllib) | ~1-2s | Social sentiment, trending, messages |
+| `stocktwits-format.py` | Python | - | JSON formatter with sentiment visualization |
+
 ## Installation
 
 ### Prerequisites
@@ -43,6 +50,8 @@ ln -sf $(pwd)/pplx-stock-drission ~/bin/
 ln -sf $(pwd)/pplx-format.py ~/bin/
 ln -sf $(pwd)/finviz-premarket ~/bin/
 ln -sf $(pwd)/finviz-format.py ~/bin/
+ln -sf $(pwd)/stocktwits-sentiment ~/bin/
+ln -sf $(pwd)/stocktwits-format.py ~/bin/
 ```
 
 Option 2: Add this directory to PATH:
@@ -191,6 +200,112 @@ Returns comprehensive data including:
 
 ---
 
+## Stocktwits Sentiment Scanner
+
+### Usage
+
+```bash
+# Top trending symbols (default)
+stocktwits-sentiment
+
+# Sentiment analysis for specific stock
+stocktwits-sentiment --symbol NVDA
+stocktwits-sentiment -s TSLA
+
+# Get more messages for deeper analysis
+stocktwits-sentiment --symbol AMD --messages 30
+
+# JSON output for programmatic use
+stocktwits-sentiment --trending --json
+stocktwits-sentiment --symbol NVDA --json
+```
+
+### Sample Trending Output
+
+```
+======================================================================
+ STOCKTWITS TRENDING - 2025-12-06 07:16:20
+======================================================================
+
+ #   TICKER   COMPANY                                SCORE   WATCHERS
+----------------------------------------------------------------------
+ 1   TGL      TREASURE GLOBAL INC                    9.55      11.5K
+ 2   CVNA     Carvana Co.                            9.01      40.3K
+ 3   CVKD     Cadrenal Therapeutics, Inc.            7.11       5.5K
+ ...
+
+ Tip: Use --symbol TICKER for detailed sentiment analysis
+======================================================================
+```
+
+### Sample Symbol Sentiment Output
+
+```
+======================================================================
+ NVIDIA Corp (NVDA)
+======================================================================
+
+ Sentiment Analysis
+-----------------------------------
+   Overall Mood:   BULLISH
+   Sentiment Score: +60.0%
+
+   Bullish:    9 (60.0%)
+   Bearish:    0 (0.0%)
+   Neutral:    6
+   Total:      15 messages analyzed
+
+   [████████████████████████████████████████]
+
+   Watchlist: 635K traders watching
+
+ Recent Messages
+-----------------------------------
+   ▲  @Richard12_   $BITF $NVDA...
+   ▲  @FightingIris $NVDA On December 3rd, Bank of America reiterated...
+   ●  @epstok6789   $NVDA Look like the meeting did not end well...
+
+======================================================================
+```
+
+### Data Provided
+
+**Trending Symbols:**
+- Ticker and company name
+- Trending score (higher = more buzz)
+- Watchlist count (number of traders tracking)
+
+**Symbol Sentiment:**
+- Bullish/Bearish/Neutral message counts
+- Sentiment score (-100 to +100)
+- Watchlist count
+- Recent messages with:
+  - User info and follower count
+  - Sentiment tag (Bullish/Bearish)
+  - Like count
+  - Message preview
+
+### Best Use Cases
+
+- **Pre-market sentiment check**: See what retail traders are talking about
+- **Momentum confirmation**: High bullish sentiment + price breakout = conviction
+- **Contrarian signals**: Extreme sentiment can indicate reversal
+- **Social buzz detection**: Trending stocks often have unusual volume
+- **Community pulse**: Understand retail trader sentiment before entry
+
+### Important Notes
+
+**Rate Limits:**
+- Free API: ~200 requests/hour (be mindful of usage)
+- No authentication required
+
+**Data Characteristics:**
+- Social sentiment (not professional analysis)
+- High noise, but useful for gauging retail interest
+- Best combined with technical analysis
+
+---
+
 ## Day-Trading Workflow Integration
 
 ### Morning Pre-Market Research
@@ -203,10 +318,15 @@ echo "=== FINVIZ TOP GAINERS ==="
 finviz-premarket --gainers
 
 echo ""
+echo "=== STOCKTWITS TRENDING ==="
+stocktwits-sentiment --trending
+
+echo ""
 echo "=== AI ANALYSIS FOR TOP PICKS ==="
 for ticker in $(finviz-premarket --json | jq -r '.stocks[:3][].ticker'); do
     echo "--- $ticker ---"
     pplx-stock-fast $ticker
+    stocktwits-sentiment --symbol $ticker
     sleep 2
 done
 ```
@@ -215,7 +335,7 @@ done
 
 ```bash
 #!/bin/bash
-# Get Finviz screener data, then deep-dive with Perplexity AI
+# Get Finviz screener data, then deep-dive with Perplexity AI + sentiment
 
 TICKER="NVDA"
 
@@ -223,8 +343,12 @@ echo "=== FINVIZ DATA ==="
 finviz-premarket --quote $TICKER
 
 echo ""
+echo "=== STOCKTWITS SENTIMENT ==="
+stocktwits-sentiment --symbol $TICKER
+
+echo ""
 echo "=== PERPLEXITY AI ANALYSIS ==="
-pplx-stock $ticker
+pplx-stock $TICKER
 ```
 
 ### Export to JSON for Automation
@@ -284,11 +408,19 @@ updates to the scraper.
 
 | Tool | Speed | Data Richness | Real-time | No Browser |
 |------|-------|---------------|-----------|------------|
+| `stocktwits-sentiment` | **~1s** | ★★★☆☆ | Real-time | ✅ |
 | `finviz-premarket` | **~2s** | ★★★☆☆ | Delayed | ✅ |
 | `pplx-stock-fast` | ~8s | ★★★★☆ | Real-time | ❌ |
 | `pplx-stock` | ~18s | ★★★★★ | Real-time | ❌ |
 
 **Recommendation:**
-- Use `finviz-premarket` for fast screener scans
+- Use `stocktwits-sentiment` for instant social sentiment and trending
+- Use `finviz-premarket` for fast screener scans and fundamentals
 - Use `pplx-stock-fast` for quick AI-powered quotes
 - Use `pplx-stock` for comprehensive research with AI analysis
+
+**Day-Trading Flow:**
+1. `stocktwits-sentiment --trending` → See what's buzzing
+2. `finviz-premarket --gainers` → Top movers by price
+3. `stocktwits-sentiment -s TICKER` → Check sentiment before entry
+4. `pplx-stock-fast TICKER` → AI analysis for conviction

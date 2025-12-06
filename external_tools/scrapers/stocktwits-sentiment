@@ -1,0 +1,241 @@
+#!/bin/bash
+# Stocktwits Sentiment Scanner
+# Usage: stocktwits-sentiment [--json] [--trending|--symbol TICKER|--sectors]
+# Fetches social sentiment data for day-trading research - FAST API-based implementation
+#
+# NOTE: Uses free Stocktwits API (no authentication required)
+# Rate limited to ~200 requests/hour, be mindful of usage
+#
+# Speed: ~1-2 seconds per request (direct API)
+#
+# Examples:
+#   stocktwits-sentiment                       # Top trending symbols (default)
+#   stocktwits-sentiment --trending            # Trending symbols with scores
+#   stocktwits-sentiment --symbol NVDA         # Sentiment for specific stock
+#   stocktwits-sentiment --symbol NVDA --messages 30  # More messages
+#   stocktwits-sentiment --json                # Raw JSON output
+
+set -e
+
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+FORMAT="pretty"
+MODE="trending"
+TICKER=""
+MESSAGE_COUNT=15
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --json)
+            FORMAT="json"
+            shift
+            ;;
+        --trending)
+            MODE="trending"
+            shift
+            ;;
+        --symbol|-s)
+            MODE="symbol"
+            TICKER="$2"
+            shift 2
+            ;;
+        --messages|-m)
+            MESSAGE_COUNT="$2"
+            shift 2
+            ;;
+        --help|-h)
+            echo "Stocktwits Sentiment Scanner"
+            echo ""
+            echo "Usage: stocktwits-sentiment [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --trending           Top trending symbols with scores (default)"
+            echo "  --symbol, -s TICKER  Sentiment analysis for specific stock"
+            echo "  --messages, -m NUM   Number of messages to fetch (default: 15)"
+            echo "  --json               Output raw JSON"
+            echo "  --help               Show this help"
+            echo ""
+            echo "Examples:"
+            echo "  stocktwits-sentiment --trending"
+            echo "  stocktwits-sentiment --symbol NVDA"
+            echo "  stocktwits-sentiment --symbol TSLA --messages 30 --json"
+            echo ""
+            echo "Speed: ~1-2 seconds (direct API, no browser)"
+            echo ""
+            echo "Data includes:"
+            echo "  - Message sentiment (Bullish/Bearish)"
+            echo "  - Trending scores"
+            echo "  - Watchlist counts"
+            echo "  - Recent messages with timestamps"
+            exit 0
+            ;;
+        *)
+            # Check if it's a ticker symbol (no dashes)
+            if [[ ! "$1" =~ ^- ]]; then
+                MODE="symbol"
+                TICKER="$1"
+                shift
+            else
+                echo "Unknown option: $1"
+                echo "Use --help for usage information"
+                exit 1
+            fi
+            ;;
+    esac
+done
+
+# Create temp Python script
+TMPSCRIPT=$(mktemp /tmp/stocktwits_scanner.XXXXXX.py)
+
+cat > "$TMPSCRIPT" << 'PYEOF'
+import sys
+import json
+from datetime import datetime
+import urllib.request
+import urllib.error
+
+mode = sys.argv[1] if len(sys.argv) > 1 else "trending"
+ticker = sys.argv[2] if len(sys.argv) > 2 else ""
+message_count = int(sys.argv[3]) if len(sys.argv) > 3 else 15
+
+base_url = "https://api.stocktwits.com/api/2"
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
+    'Accept': 'application/json',
+}
+
+def fetch_json(url):
+    """Fetch JSON from URL with error handling."""
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            return json.loads(response.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {"error": f"Symbol not found: {ticker}"}
+        return {"error": f"HTTP {e.code}: {e.reason}"}
+    except urllib.error.URLError as e:
+        return {"error": f"Network error: {str(e)}"}
+
+
+def get_trending():
+    """Get trending symbols from Stocktwits."""
+    url = f"{base_url}/trending/symbols.json"
+    data = fetch_json(url)
+
+    if "error" in data:
+        return data
+
+    symbols = data.get("symbols", [])
+
+    result = {
+        "mode": "trending",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "count": len(symbols),
+        "symbols": []
+    }
+
+    for sym in symbols:
+        result["symbols"].append({
+            "ticker": sym.get("symbol", ""),
+            "title": sym.get("title", ""),
+            "trending_score": sym.get("trending_score"),
+            "watchlist_count": sym.get("watchlist_count", 0),
+        })
+
+    return result
+
+
+def get_symbol_sentiment(ticker):
+    """Get sentiment and messages for a specific symbol."""
+    url = f"{base_url}/streams/symbol/{ticker.upper()}.json?limit={message_count}"
+    data = fetch_json(url)
+
+    if "error" in data:
+        return data
+
+    symbol_data = data.get("symbol", {})
+    messages = data.get("messages", [])
+
+    # Calculate sentiment summary
+    bullish = 0
+    bearish = 0
+    neutral = 0
+
+    processed_messages = []
+    for msg in messages:
+        sentiment = None
+        if msg.get("entities", {}).get("sentiment"):
+            sentiment = msg["entities"]["sentiment"].get("basic")
+            if sentiment == "Bullish":
+                bullish += 1
+            elif sentiment == "Bearish":
+                bearish += 1
+            else:
+                neutral += 1
+        else:
+            neutral += 1
+
+        processed_messages.append({
+            "id": msg.get("id"),
+            "body": msg.get("body", "")[:200],  # Truncate long messages
+            "sentiment": sentiment,
+            "created_at": msg.get("created_at", ""),
+            "user": msg.get("user", {}).get("username", ""),
+            "followers": msg.get("user", {}).get("followers", 0),
+            "likes": msg.get("likes", {}).get("total", 0),
+        })
+
+    total = bullish + bearish + neutral
+
+    result = {
+        "mode": "symbol",
+        "ticker": ticker.upper(),
+        "title": symbol_data.get("title", ""),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "sentiment_summary": {
+            "bullish": bullish,
+            "bearish": bearish,
+            "neutral": neutral,
+            "total": total,
+            "bullish_pct": round(bullish / total * 100, 1) if total > 0 else 0,
+            "bearish_pct": round(bearish / total * 100, 1) if total > 0 else 0,
+            "sentiment_score": round((bullish - bearish) / total * 100, 1) if total > 0 else 0,
+        },
+        "watchlist_count": symbol_data.get("watchlist_count", 0),
+        "message_count": len(processed_messages),
+        "messages": processed_messages
+    }
+
+    return result
+
+
+# Main execution
+try:
+    if mode == "trending":
+        result = get_trending()
+    elif mode == "symbol" and ticker:
+        result = get_symbol_sentiment(ticker)
+    else:
+        result = {"error": "Invalid mode or missing ticker"}
+
+    print(json.dumps(result, indent=2, default=str))
+
+except Exception as e:
+    print(json.dumps({"error": str(e)}))
+    sys.exit(1)
+PYEOF
+
+# Run the scraper (no extra dependencies needed - uses stdlib)
+OUTPUT=$(python3 "$TMPSCRIPT" "$MODE" "$TICKER" "$MESSAGE_COUNT" 2>/dev/null)
+
+# Cleanup
+rm -f "$TMPSCRIPT"
+
+# Output
+if [ "$FORMAT" = "json" ]; then
+    echo "$OUTPUT"
+else
+    echo "$OUTPUT" | python3 "$SCRIPT_DIR/stocktwits-format.py"
+fi
