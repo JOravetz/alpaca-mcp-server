@@ -27,6 +27,13 @@ Command-line tools for fetching stock data from financial websites for day-tradi
 | `stocktwits-sentiment` | REST API (urllib) | ~1-2s | Social sentiment, trending, messages |
 | `stocktwits-format.py` | Python | - | JSON formatter with sentiment visualization |
 
+### Barchart Options Flow Scrapers
+
+| Script | Technology | Speed | Description |
+|--------|-----------|-------|-------------|
+| `barchart-options` | REST API (urllib) | ~2-3s | Options flow, unusual activity, smart money |
+| `barchart-format.py` | Python | - | JSON formatter with Vol/OI highlighting |
+
 ## Installation
 
 ### Prerequisites
@@ -52,6 +59,8 @@ ln -sf $(pwd)/finviz-premarket ~/bin/
 ln -sf $(pwd)/finviz-format.py ~/bin/
 ln -sf $(pwd)/stocktwits-sentiment ~/bin/
 ln -sf $(pwd)/stocktwits-format.py ~/bin/
+ln -sf $(pwd)/barchart-options ~/bin/
+ln -sf $(pwd)/barchart-format.py ~/bin/
 ```
 
 Option 2: Add this directory to PATH:
@@ -306,6 +315,102 @@ stocktwits-sentiment --symbol NVDA --json
 
 ---
 
+## Barchart Options Flow Scanner
+
+### Usage
+
+```bash
+# Most active options (default)
+barchart-options
+
+# Unusual activity - smart money signals (Vol/OI > 1.25)
+barchart-options --unusual
+
+# Filter by type
+barchart-options --calls            # Active call options
+barchart-options --puts             # Active put options
+
+# Options for specific symbol
+barchart-options --symbol NVDA
+barchart-options -s TSLA
+
+# JSON output for programmatic use
+barchart-options --active --json
+```
+
+### Sample Output
+
+```
+=====================================================================================
+ BARCHART OPTIONS FLOW - MOST ACTIVE
+ 2025-12-06 07:26:49
+=====================================================================================
+
+ Sentiment Summary
+----------------------------------------
+   Call Volume:       1.2M
+   Put Volume:      276.5K
+   Put/Call Ratio: 0.23 (BULLISH (low P/C))
+
+ Options Flow
+-------------------------------------------------------------------------------------
+ SYM   TYPE   STRIKE        EXP  DTE    LAST     BID     ASK      VOL       OI   V/OI
+-------------------------------------------------------------------------------------
+ NVDA  Call     $185 2025-12-12    6   $2.52   $2.46   $2.53   155.9K    38.3K  4.1
+ NVDA  Call     $190 2025-12-12    6   $0.99   $0.97   $1.00   138.0K    45.0K  3.1
+ AAL   Put       $13 2026-05-15  160   $0.91   $0.89   $0.93    86.2K      719 119.9
+ ...
+
+ Legend:
+   Call = Bullish bet  |  Put = Bearish bet
+   V/OI > 1.5 = Unusual activity (potential smart money)
+   V/OI > 3.0 = Very unusual (strong signal)
+=====================================================================================
+```
+
+### Data Provided
+
+**All Modes:**
+- Symbol, strike price, expiration date
+- Days to expiration (DTE)
+- Bid/ask/last prices
+- Volume and open interest
+- Vol/OI ratio (key unusual activity indicator)
+- Underlying stock price
+
+**Sentiment Summary:**
+- Total call vs put volume
+- Put/call ratio interpretation (bullish/bearish/neutral)
+
+### Vol/OI Ratio Interpretation
+
+| Ratio | Signal | Meaning |
+|-------|--------|---------|
+| < 1.0 | Normal | Regular trading activity |
+| 1.25-1.5 | Elevated | Above-average interest |
+| 1.5-3.0 | **Unusual** | Potential smart money positioning |
+| > 3.0 | **Very Unusual** | Strong institutional signal |
+
+### Best Use Cases
+
+- **Smart money tracking**: High Vol/OI shows unusual institutional interest
+- **Sentiment confirmation**: Call/put ratio validates directional bias
+- **Entry timing**: Unusual activity often precedes big moves
+- **Strike selection**: See where volume is concentrating
+- **Expiration planning**: Identify hot expiration dates
+
+### Important Notes
+
+**Data Delay:**
+- Free tier: 25-30 minute delayed quotes
+- Premier: Real-time data, more filters, historical reports
+
+**API Authentication:**
+- Uses session cookies (no login required)
+- XSRF token automatically extracted from page load
+
+---
+
 ## Day-Trading Workflow Integration
 
 ### Morning Pre-Market Research
@@ -320,6 +425,10 @@ finviz-premarket --gainers
 echo ""
 echo "=== STOCKTWITS TRENDING ==="
 stocktwits-sentiment --trending
+
+echo ""
+echo "=== OPTIONS FLOW (Smart Money) ==="
+barchart-options --unusual
 
 echo ""
 echo "=== AI ANALYSIS FOR TOP PICKS ==="
@@ -410,17 +519,21 @@ updates to the scraper.
 |------|-------|---------------|-----------|------------|
 | `stocktwits-sentiment` | **~1s** | ★★★☆☆ | Real-time | ✅ |
 | `finviz-premarket` | **~2s** | ★★★☆☆ | Delayed | ✅ |
+| `barchart-options` | **~2s** | ★★★★☆ | Delayed | ✅ |
 | `pplx-stock-fast` | ~8s | ★★★★☆ | Real-time | ❌ |
 | `pplx-stock` | ~18s | ★★★★★ | Real-time | ❌ |
 
 **Recommendation:**
 - Use `stocktwits-sentiment` for instant social sentiment and trending
 - Use `finviz-premarket` for fast screener scans and fundamentals
+- Use `barchart-options` for options flow and smart money tracking
 - Use `pplx-stock-fast` for quick AI-powered quotes
 - Use `pplx-stock` for comprehensive research with AI analysis
 
 **Day-Trading Flow:**
 1. `stocktwits-sentiment --trending` → See what's buzzing
 2. `finviz-premarket --gainers` → Top movers by price
-3. `stocktwits-sentiment -s TICKER` → Check sentiment before entry
-4. `pplx-stock-fast TICKER` → AI analysis for conviction
+3. `barchart-options --unusual` → Smart money positioning
+4. `stocktwits-sentiment -s TICKER` → Check sentiment before entry
+5. `barchart-options -s TICKER` → Options flow for specific stock
+6. `pplx-stock-fast TICKER` → AI analysis for conviction

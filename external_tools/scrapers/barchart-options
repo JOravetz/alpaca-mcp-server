@@ -1,0 +1,251 @@
+#!/bin/bash
+# Barchart Options Flow Scanner
+# Usage: barchart-options [--json] [--unusual|--active|--volume|--calls|--puts] [--symbol TICKER]
+# Fetches options flow data for day-trading research - Uses Barchart's internal API
+#
+# NOTE: Data is 25-30 min delayed (free tier). Real-time requires Premier subscription.
+# Best for: Identifying unusual activity, smart money positioning, sentiment signals
+#
+# Speed: ~2-3 seconds (API-based, no browser needed)
+#
+# Examples:
+#   barchart-options                       # Most active options (default)
+#   barchart-options --unusual             # Unusual volume activity (smart money)
+#   barchart-options --calls               # Most active calls only
+#   barchart-options --puts                # Most active puts only
+#   barchart-options --symbol NVDA         # Options for specific stock
+#   barchart-options --json                # Raw JSON output
+
+set -e
+
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+FORMAT="pretty"
+MODE="active"
+TICKER=""
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --json)
+            FORMAT="json"
+            shift
+            ;;
+        --unusual)
+            MODE="unusual"
+            shift
+            ;;
+        --active)
+            MODE="active"
+            shift
+            ;;
+        --volume)
+            MODE="volume"
+            shift
+            ;;
+        --calls)
+            MODE="calls"
+            shift
+            ;;
+        --puts)
+            MODE="puts"
+            shift
+            ;;
+        --symbol|-s)
+            MODE="symbol"
+            TICKER="$2"
+            shift 2
+            ;;
+        --help|-h)
+            echo "Barchart Options Flow Scanner"
+            echo ""
+            echo "Usage: barchart-options [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --active           Most active options by volume (default)"
+            echo "  --unusual          Unusual volume (Vol/OI > 1.25) - smart money signal"
+            echo "  --calls            Most active call options"
+            echo "  --puts             Most active put options"
+            echo "  --volume           Options sorted by absolute volume"
+            echo "  --symbol, -s TICK  Options chain for specific symbol"
+            echo "  --json             Output raw JSON"
+            echo "  --help             Show this help"
+            echo ""
+            echo "Examples:"
+            echo "  barchart-options --unusual --json"
+            echo "  barchart-options --symbol NVDA"
+            echo "  barchart-options --calls"
+            echo ""
+            echo "Speed: ~2-3 seconds (API-based)"
+            echo ""
+            echo "Data includes:"
+            echo "  - Symbol, strike, expiration, type (call/put)"
+            echo "  - Volume, open interest, Vol/OI ratio"
+            echo "  - Bid/ask/last prices"
+            echo "  - Underlying stock price"
+            echo ""
+            echo "Note: Data is 25-30 min delayed (free tier)"
+            exit 0
+            ;;
+        *)
+            # Check if it's a ticker symbol (no dashes)
+            if [[ ! "$1" =~ ^- ]]; then
+                MODE="symbol"
+                TICKER="$1"
+                shift
+            else
+                echo "Unknown option: $1"
+                echo "Use --help for usage information"
+                exit 1
+            fi
+            ;;
+    esac
+done
+
+# Create temp Python script
+TMPSCRIPT=$(mktemp /tmp/barchart_options.XXXXXX.py)
+
+cat > "$TMPSCRIPT" << 'PYEOF'
+import sys
+import json
+import urllib.request
+import urllib.parse
+from datetime import datetime
+from http.cookiejar import CookieJar
+
+mode = sys.argv[1] if len(sys.argv) > 1 else "active"
+ticker = sys.argv[2] if len(sys.argv) > 2 else ""
+
+base_url = "https://www.barchart.com"
+
+def get_session():
+    """Get authenticated session with XSRF token."""
+    cj = CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    }
+
+    # Get main page for cookies
+    req = urllib.request.Request(f'{base_url}/options/unusual-activity/stocks', headers=headers)
+    opener.open(req, timeout=15)
+
+    # Get XSRF token
+    xsrf_token = None
+    for cookie in cj:
+        if cookie.name == 'XSRF-TOKEN':
+            xsrf_token = urllib.parse.unquote(cookie.value)
+            break
+
+    return opener, xsrf_token
+
+
+def fetch_api(opener, xsrf_token, endpoint, params):
+    """Fetch data from Barchart API."""
+    url = f"{base_url}/proxies/core-api/v1/{endpoint}?{params}"
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+        'Referer': f'{base_url}/options/unusual-activity/stocks',
+        'X-XSRF-TOKEN': xsrf_token,
+    }
+
+    req = urllib.request.Request(url, headers=headers)
+    with opener.open(req, timeout=15) as response:
+        return json.loads(response.read().decode('utf-8'))
+
+
+def get_options_flow(mode, ticker=""):
+    """Get options flow data based on mode."""
+    opener, xsrf_token = get_session()
+
+    # Define API parameters based on mode
+    fields = "baseSymbol,baseLastPrice,symbolType,strikePrice,expirationDate,daysToExpiration,bidPrice,askPrice,lastPrice,volume,openInterest,volumeOpenInterestRatio"
+
+    if mode == "unusual":
+        # Unusual activity: Vol/OI > 1.25
+        params = f"list=options.unusual.us&fields={fields}&orderBy=volumeOpenInterestRatio&orderDir=desc&raw=1&limit=30"
+    elif mode == "calls":
+        params = f"list=options.mostActive.us&fields={fields}&symbolType=Call&orderBy=volume&orderDir=desc&raw=1&limit=30"
+    elif mode == "puts":
+        params = f"list=options.mostActive.us&fields={fields}&symbolType=Put&orderBy=volume&orderDir=desc&raw=1&limit=30"
+    elif mode == "volume":
+        params = f"list=options.volume.us&fields={fields}&orderBy=volume&orderDir=desc&raw=1&limit=30"
+    elif mode == "symbol" and ticker:
+        params = f"list=options.mostActive.us&fields={fields}&baseSymbol={ticker.upper()}&orderBy=volume&orderDir=desc&raw=1&limit=30"
+    else:  # active (default)
+        params = f"list=options.mostActive.us&fields={fields}&orderBy=volume&orderDir=desc&raw=1&limit=30"
+
+    data = fetch_api(opener, xsrf_token, "options/get", params)
+
+    # Process results
+    options = []
+    for item in data.get('data', []):
+        raw = item.get('raw', item)
+        options.append({
+            "symbol": raw.get('baseSymbol', ''),
+            "underlying_price": raw.get('baseLastPrice', 0),
+            "type": raw.get('symbolType', ''),
+            "strike": raw.get('strikePrice', 0),
+            "expiration": raw.get('expirationDate', ''),
+            "days_to_exp": raw.get('daysToExpiration', 0),
+            "bid": raw.get('bidPrice', 0),
+            "ask": raw.get('askPrice', 0),
+            "last": raw.get('lastPrice', 0),
+            "volume": raw.get('volume', 0),
+            "open_interest": raw.get('openInterest', 0),
+            "vol_oi_ratio": raw.get('volumeOpenInterestRatio', 0),
+        })
+
+    # Calculate sentiment summary
+    total_call_vol = sum(o['volume'] for o in options if o['type'] == 'Call')
+    total_put_vol = sum(o['volume'] for o in options if o['type'] == 'Put')
+    call_count = sum(1 for o in options if o['type'] == 'Call')
+    put_count = sum(1 for o in options if o['type'] == 'Put')
+
+    result = {
+        "mode": mode,
+        "ticker": ticker.upper() if ticker else None,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "count": len(options),
+        "sentiment": {
+            "call_volume": total_call_vol,
+            "put_volume": total_put_vol,
+            "call_count": call_count,
+            "put_count": put_count,
+            "put_call_ratio": round(total_put_vol / total_call_vol, 2) if total_call_vol > 0 else 0,
+        },
+        "options": options,
+        "note": "Data is 25-30 min delayed. Vol/OI > 1.25 indicates unusual activity."
+    }
+
+    return result
+
+
+# Main execution
+try:
+    result = get_options_flow(mode, ticker)
+    print(json.dumps(result, indent=2, default=str))
+
+except urllib.error.HTTPError as e:
+    print(json.dumps({"error": f"HTTP {e.code}: {e.reason}"}))
+    sys.exit(1)
+except Exception as e:
+    print(json.dumps({"error": str(e)}))
+    sys.exit(1)
+PYEOF
+
+# Run the scraper (no extra dependencies needed - uses stdlib)
+OUTPUT=$(python3 "$TMPSCRIPT" "$MODE" "$TICKER" 2>/dev/null)
+
+# Cleanup
+rm -f "$TMPSCRIPT"
+
+# Output
+if [ "$FORMAT" = "json" ]; then
+    echo "$OUTPUT"
+else
+    echo "$OUTPUT" | python3 "$SCRIPT_DIR/barchart-format.py"
+fi
