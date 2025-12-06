@@ -26,12 +26,18 @@ ln -sf $(pwd)/* ~/bin/
 shortsqueeze-scanner --min-si 30          # Weekly squeeze watchlist
 stocktwits-sentiment --trending            # What's buzzing?
 finviz-premarket --gainers                 # Top price movers
+finnhub-realtime earnings                  # Upcoming earnings this week
 barchart-options --unusual                 # Smart money signals
 
 # Deep-dive on a specific stock
+finnhub-realtime quote -s NVDA            # Real-time quote
+finnhub-realtime news -s NVDA             # Latest news
 stocktwits-sentiment -s NVDA              # Social sentiment
 barchart-options -s NVDA                  # Options flow
 pplx-stock-fast NVDA                      # AI-powered analysis
+
+# Multi-symbol watchlist scan
+finnhub-realtime multi -s NVDA,AAPL,TSLA,GME,AMD
 ```
 
 ## Available Scrapers
@@ -73,6 +79,13 @@ pplx-stock-fast NVDA                      # AI-powered analysis
 | `shortsqueeze-scanner` | HTML scraping (urllib) | ~1-2s | High short interest stocks (>20% SI) |
 | `shortsqueeze-format.py` | Python | - | JSON formatter with squeeze potential highlighting |
 
+### Finnhub Real-Time Data
+
+| Script | Technology | Speed | Description |
+|--------|-----------|-------|-------------|
+| `finnhub-realtime` | REST API (urllib) | ~1-2s | Quotes, news, earnings calendar |
+| `finnhub-format.py` | Python | - | JSON formatter with color-coded output |
+
 ## Installation
 
 ### Prerequisites
@@ -102,6 +115,16 @@ ln -sf $(pwd)/barchart-options ~/bin/
 ln -sf $(pwd)/barchart-format.py ~/bin/
 ln -sf $(pwd)/shortsqueeze-scanner ~/bin/
 ln -sf $(pwd)/shortsqueeze-format.py ~/bin/
+ln -sf $(pwd)/finnhub-realtime ~/bin/
+ln -sf $(pwd)/finnhub-format.py ~/bin/
+```
+
+### Environment Variables
+
+```bash
+# Finnhub API key (required for finnhub-realtime)
+# Get your free key at: https://finnhub.io
+export FINNHUB_API_KEY="your_api_key_here"
 ```
 
 Option 2: Add this directory to PATH:
@@ -567,6 +590,166 @@ This data is best for research and watchlist building, not for real-time trading
 
 ---
 
+## Finnhub Real-Time Data
+
+### Setup
+
+```bash
+# Get your free API key at https://finnhub.io
+export FINNHUB_API_KEY="your_api_key_here"
+```
+
+### Usage
+
+```bash
+# Real-time quote for a single stock
+finnhub-realtime quote -s NVDA
+
+# Multi-quote scanner (sorted by % change)
+finnhub-realtime multi -s NVDA,AAPL,TSLA,GME,AMD
+
+# Company-specific news
+finnhub-realtime news -s NVDA --limit 10
+
+# General market news
+finnhub-realtime market-news --category general
+
+# Earnings calendar (next 7 days)
+finnhub-realtime earnings
+
+# Earnings for specific date range
+finnhub-realtime earnings --from 2025-12-06 --to 2025-12-20
+
+# JSON output for programmatic use
+finnhub-realtime quote -s NVDA --json
+finnhub-realtime multi -s NVDA,AAPL --json
+```
+
+### Sample Quote Output
+
+```
+============================================================
+ FINNHUB REAL-TIME QUOTE - NVDA
+ 2025-12-06 08:18:00
+============================================================
+
+ Current Price:
+   $182.41
+   -0.97 (-0.53%)
+
+ Today's Range:
+   Low:  $180.91
+   High: $184.66
+   Open: $183.89
+
+ Previous Close: $183.38
+
+============================================================
+ Source: finnhub.io | Data may be delayed 15 minutes
+============================================================
+```
+
+### Sample Multi-Quote Output
+
+```
+================================================================================
+ FINNHUB MULTI-QUOTE SCANNER
+ 2025-12-06 08:18:09
+================================================================================
+
+ Summary
+----------------------------------------
+   Total: 4 symbols
+   Gainers: 2
+   Losers: 2
+
+ Real-Time Quotes (sorted by % change)
+--------------------------------------------------------------------------------
+ SYMBOL      CURRENT     CHANGE    CHANGE%       HIGH        LOW       OPEN
+--------------------------------------------------------------------------------
+ GME          $23.00      +0.05     +0.22%     $23.07     $22.53     $23.00
+ TSLA        $455.00      +0.47     +0.10%    $458.87    $451.66    $453.03
+ NVDA        $182.41      -0.97     -0.53%    $184.66    $180.91    $183.89
+ AAPL        $278.78      -1.92     -0.68%    $281.14    $278.05    $280.54
+
+================================================================================
+```
+
+### Sample Earnings Output
+
+```
+====================================================================================================
+ FINNHUB EARNINGS CALENDAR
+ 2025-12-06 08:18:19 | Range: 2025-12-06 to 2025-12-13
+====================================================================================================
+
+ Upcoming Earnings (157 companies)
+----------------------------------------------------------------------------------------------------
+ DATE         SYMBOL   TIME   Q       EPS EST    EPS ACT   SURPRISE      REV EST
+----------------------------------------------------------------------------------------------------
+ 2025-12-08   GME      AMC    Q3        $0.20          -          -       997.2M
+ 2025-12-10   ADBE     AMC    Q4        $5.50          -          -         6.2B
+ 2025-12-10   ORCL     AMC    Q2        $1.67          -          -        16.5B
+ 2025-12-11   AVGO     AMC    Q4        $1.90          -          -        17.8B
+ 2025-12-11   COST     AMC    Q1        $4.36          -          -        68.5B
+ ...
+
+ Legend:
+   BMO = Before Market Open (pre-market)
+   AMC = After Market Close (after-hours)
+   DMH = During Market Hours
+====================================================================================================
+```
+
+### Data Provided
+
+**Quote Mode:**
+- Current price with change and percent change
+- Day high, low, open prices
+- Previous close
+
+**Multi-Quote Mode:**
+- All quote data for multiple symbols
+- Sorted by percent change (best performers first)
+- Summary of gainers vs losers
+
+**News Mode:**
+- Headlines with summaries (truncated for readability)
+- Source and publication datetime
+- Related ticker symbols
+- Full URLs available in JSON output
+
+**Earnings Mode:**
+- Company symbol and earnings date
+- Timing (BMO/AMC/DMH)
+- EPS estimates and actuals (when available)
+- Revenue estimates
+- Earnings surprise calculations
+
+### Best Use Cases
+
+- **Pre-market scanning**: Quick multi-quote check on watchlist
+- **News monitoring**: Real-time news alerts for positions
+- **Earnings tracking**: Plan trades around earnings announcements
+- **Sentiment confirmation**: Cross-reference news with price action
+- **Watchlist building**: Identify stocks with upcoming catalysts
+
+### Important Notes
+
+**Rate Limits:**
+- Free tier: 30 API calls/second
+- Generous for day-trading research
+
+**Data Characteristics:**
+- Quotes may be delayed 15 minutes on free tier
+- News is real-time
+- Earnings calendar is comprehensive and up-to-date
+
+**API Key Required:**
+Get your free API key at [finnhub.io](https://finnhub.io) and set the `FINNHUB_API_KEY` environment variable.
+
+---
+
 ## Day-Trading Workflow Integration
 
 ### Complete Morning Research Script
@@ -830,6 +1013,7 @@ updates to the scraper.
 |------|-------|---------------|-----------|------------|
 | `stocktwits-sentiment` | **~1s** | ★★★☆☆ | Real-time | ✅ |
 | `shortsqueeze-scanner` | **~1s** | ★★★☆☆ | Weekly | ✅ |
+| `finnhub-realtime` | **~1s** | ★★★★☆ | Real-time | ✅ |
 | `finviz-premarket` | **~2s** | ★★★☆☆ | Delayed | ✅ |
 | `barchart-options` | **~2s** | ★★★★☆ | Delayed | ✅ |
 | `pplx-stock-fast` | ~8s | ★★★★☆ | Real-time | ❌ |
@@ -838,6 +1022,7 @@ updates to the scraper.
 **Recommendation:**
 - Use `stocktwits-sentiment` for instant social sentiment and trending
 - Use `shortsqueeze-scanner` for weekly squeeze candidate watchlist
+- Use `finnhub-realtime` for real-time quotes, news, and earnings calendar
 - Use `finviz-premarket` for fast screener scans and fundamentals
 - Use `barchart-options` for options flow and smart money tracking
 - Use `pplx-stock-fast` for quick AI-powered quotes
@@ -847,10 +1032,13 @@ updates to the scraper.
 1. `shortsqueeze-scanner --min-si 30` → Weekly squeeze watchlist
 2. `stocktwits-sentiment --trending` → See what's buzzing
 3. `finviz-premarket --gainers` → Top movers by price
-4. `barchart-options --unusual` → Smart money positioning
-5. `stocktwits-sentiment -s TICKER` → Check sentiment before entry
-6. `barchart-options -s TICKER` → Options flow for specific stock
-7. `pplx-stock-fast TICKER` → AI analysis for conviction
+4. `finnhub-realtime earnings` → Check for earnings this week
+5. `barchart-options --unusual` → Smart money positioning
+6. `finnhub-realtime multi -s WATCHLIST` → Quick multi-quote scan
+7. `stocktwits-sentiment -s TICKER` → Check sentiment before entry
+8. `finnhub-realtime news -s TICKER` → Latest news for the stock
+9. `barchart-options -s TICKER` → Options flow for specific stock
+10. `pplx-stock-fast TICKER` → AI analysis for conviction
 
 ---
 
@@ -1011,6 +1199,35 @@ All scrapers tested at 07:30 AM ET (pre-market):
    - 10 news headlines
    - Analyst ratings and targets
    - Response time: 2.8 seconds
+```
+
+### Finnhub Real-Time Data
+
+```
+✅ finnhub-realtime quote -s NVDA
+   - Current: $182.41 (-0.53%)
+   - Day range: $180.91 - $184.66
+   - Response time: ~1.2 seconds
+
+✅ finnhub-realtime multi -s NVDA,AAPL,TSLA,GME
+   - 4 symbols fetched successfully
+   - Sorted by % change
+   - Response time: ~1.5 seconds
+
+✅ finnhub-realtime news -s NVDA --limit 5
+   - 5 articles fetched
+   - Headlines with summaries
+   - Response time: ~1.3 seconds
+
+✅ finnhub-realtime market-news --limit 5
+   - General market news
+   - Multiple sources (MarketWatch, etc.)
+   - Response time: ~1.2 seconds
+
+✅ finnhub-realtime earnings --from 2025-12-06 --to 2025-12-13
+   - 157 upcoming earnings found
+   - Notable: GME (12/8 AMC), ADBE (12/10), AVGO (12/11)
+   - Response time: ~1.4 seconds
 ```
 
 ### Perplexity Finance Scrapers

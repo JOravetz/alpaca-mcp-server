@@ -1,0 +1,465 @@
+#!/bin/bash
+# Finnhub Real-Time Data Scraper
+# Usage: finnhub-realtime [MODE] [OPTIONS]
+#
+# Modes:
+#   quote -s SYMBOL        Get real-time quote for a stock
+#   news -s SYMBOL         Get company-specific news
+#   market-news            Get general market news
+#   earnings               Get upcoming earnings calendar
+#   multi -s SYM1,SYM2     Get quotes for multiple symbols
+#
+# Fast REST API scraper (~1-2 seconds) - No browser required
+# Rate limit: 30 calls/second (free tier)
+#
+# Requires: FINNHUB_API_KEY environment variable
+#
+# Examples:
+#   finnhub-realtime quote -s NVDA
+#   finnhub-realtime news -s AAPL --limit 10
+#   finnhub-realtime market-news --category general
+#   finnhub-realtime earnings --from 2025-12-06 --to 2025-12-13
+#   finnhub-realtime multi -s NVDA,AAPL,TSLA,GME
+
+set -e
+
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+FORMAT="pretty"
+MODE=""
+SYMBOL=""
+SYMBOLS=""
+LIMIT=20
+CATEGORY="general"
+FROM_DATE=""
+TO_DATE=""
+
+# Show help
+show_help() {
+    echo "Finnhub Real-Time Data Scraper"
+    echo ""
+    echo "Usage: finnhub-realtime [MODE] [OPTIONS]"
+    echo ""
+    echo "Modes:"
+    echo "  quote              Get real-time quote for a stock"
+    echo "  news               Get company-specific news"
+    echo "  market-news        Get general market news"
+    echo "  earnings           Get upcoming earnings calendar"
+    echo "  multi              Get quotes for multiple symbols"
+    echo ""
+    echo "Options:"
+    echo "  -s, --symbol SYM   Stock symbol (required for quote/news)"
+    echo "  --symbols SYMS     Comma-separated symbols (for multi mode)"
+    echo "  --limit N          Number of results (default: 20)"
+    echo "  --category CAT     News category: general, forex, crypto, merger (default: general)"
+    echo "  --from DATE        Start date YYYY-MM-DD (for earnings)"
+    echo "  --to DATE          End date YYYY-MM-DD (for earnings)"
+    echo "  --json             Output raw JSON"
+    echo "  --help             Show this help"
+    echo ""
+    echo "Environment:"
+    echo "  FINNHUB_API_KEY    Your Finnhub API key (required)"
+    echo ""
+    echo "Examples:"
+    echo "  finnhub-realtime quote -s NVDA"
+    echo "  finnhub-realtime news -s AAPL --limit 5"
+    echo "  finnhub-realtime market-news --category merger"
+    echo "  finnhub-realtime earnings --from 2025-12-06 --to 2025-12-13"
+    echo "  finnhub-realtime multi -s NVDA,AAPL,TSLA"
+    echo ""
+    echo "Speed: ~1-2 seconds (REST API, no browser)"
+    echo "Rate Limit: 30 calls/second (free tier)"
+    echo ""
+    echo "Get your free API key at: https://finnhub.io"
+    exit 0
+}
+
+# Check for API key
+if [ -z "$FINNHUB_API_KEY" ]; then
+    echo "Error: FINNHUB_API_KEY environment variable not set"
+    echo ""
+    echo "Get your free API key at: https://finnhub.io"
+    echo "Then set it: export FINNHUB_API_KEY=your_key_here"
+    exit 1
+fi
+
+# Parse arguments
+if [ $# -eq 0 ]; then
+    show_help
+fi
+
+# First argument is the mode
+MODE="$1"
+shift
+
+# Parse remaining arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -s|--symbol)
+            SYMBOL="$2"
+            shift 2
+            ;;
+        --symbols)
+            SYMBOLS="$2"
+            shift 2
+            ;;
+        --limit)
+            LIMIT="$2"
+            shift 2
+            ;;
+        --category)
+            CATEGORY="$2"
+            shift 2
+            ;;
+        --from)
+            FROM_DATE="$2"
+            shift 2
+            ;;
+        --to)
+            TO_DATE="$2"
+            shift 2
+            ;;
+        --json)
+            FORMAT="json"
+            shift
+            ;;
+        --help|-h)
+            show_help
+            ;;
+        *)
+            # Check if it's a symbol without -s flag
+            if [[ "$1" =~ ^[A-Z]+$ ]]; then
+                SYMBOL="$1"
+                shift
+            else
+                echo "Unknown option: $1"
+                echo "Use --help for usage information"
+                exit 1
+            fi
+            ;;
+    esac
+done
+
+# Handle multi mode with -s flag (comma-separated)
+if [ "$MODE" = "multi" ] && [ -n "$SYMBOL" ] && [ -z "$SYMBOLS" ]; then
+    SYMBOLS="$SYMBOL"
+fi
+
+# Validate mode-specific requirements
+case $MODE in
+    quote)
+        if [ -z "$SYMBOL" ]; then
+            echo "Error: quote mode requires -s SYMBOL"
+            exit 1
+        fi
+        ;;
+    news)
+        if [ -z "$SYMBOL" ]; then
+            echo "Error: news mode requires -s SYMBOL"
+            exit 1
+        fi
+        ;;
+    multi)
+        if [ -z "$SYMBOLS" ]; then
+            echo "Error: multi mode requires -s SYM1,SYM2,... or --symbols"
+            exit 1
+        fi
+        ;;
+    market-news|earnings)
+        # No symbol required
+        ;;
+    --help|-h)
+        show_help
+        ;;
+    *)
+        echo "Unknown mode: $MODE"
+        echo "Valid modes: quote, news, market-news, earnings, multi"
+        echo "Use --help for usage information"
+        exit 1
+        ;;
+esac
+
+# Create temp Python script
+TMPSCRIPT=$(mktemp /tmp/finnhub_realtime.XXXXXX.py)
+
+cat > "$TMPSCRIPT" << 'PYEOF'
+import sys
+import json
+import os
+import urllib.request
+import urllib.error
+from datetime import datetime, timedelta
+
+API_KEY = os.environ.get('FINNHUB_API_KEY', '')
+BASE_URL = "https://finnhub.io/api/v1"
+
+def make_request(endpoint, params=None):
+    """Make authenticated request to Finnhub API."""
+    url = f"{BASE_URL}/{endpoint}"
+    if params:
+        param_str = "&".join(f"{k}={v}" for k, v in params.items())
+        url = f"{url}?{param_str}&token={API_KEY}"
+    else:
+        url = f"{url}?token={API_KEY}"
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+    }
+
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=10) as response:
+            return json.loads(response.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            return {"error": "Rate limit exceeded. Wait a moment and try again."}
+        elif e.code == 401:
+            return {"error": "Invalid API key. Check your FINNHUB_API_KEY."}
+        elif e.code == 403:
+            return {"error": "Access forbidden. This endpoint may require a premium subscription."}
+        else:
+            return {"error": f"HTTP Error {e.code}: {e.reason}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def get_quote(symbol):
+    """Get real-time quote for a symbol."""
+    data = make_request("quote", {"symbol": symbol.upper()})
+
+    if "error" in data:
+        return data
+
+    # Handle empty response (invalid symbol)
+    if data.get('c') == 0 and data.get('h') == 0 and data.get('l') == 0:
+        return {"error": f"No data found for symbol: {symbol}"}
+
+    return {
+        "mode": "quote",
+        "symbol": symbol.upper(),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "quote": {
+            "current": data.get('c', 0),
+            "high": data.get('h', 0),
+            "low": data.get('l', 0),
+            "open": data.get('o', 0),
+            "previous_close": data.get('pc', 0),
+            "change": data.get('d', 0),
+            "change_percent": data.get('dp', 0),
+        },
+        "source": "finnhub.io"
+    }
+
+
+def get_multi_quotes(symbols):
+    """Get quotes for multiple symbols."""
+    symbol_list = [s.strip().upper() for s in symbols.split(',')]
+    quotes = []
+    errors = []
+
+    for symbol in symbol_list:
+        data = make_request("quote", {"symbol": symbol})
+
+        if "error" in data:
+            errors.append({"symbol": symbol, "error": data["error"]})
+            continue
+
+        # Skip empty responses
+        if data.get('c') == 0 and data.get('h') == 0 and data.get('l') == 0:
+            errors.append({"symbol": symbol, "error": "No data found"})
+            continue
+
+        quotes.append({
+            "symbol": symbol,
+            "current": data.get('c', 0),
+            "high": data.get('h', 0),
+            "low": data.get('l', 0),
+            "open": data.get('o', 0),
+            "previous_close": data.get('pc', 0),
+            "change": data.get('d', 0),
+            "change_percent": data.get('dp', 0),
+        })
+
+    # Sort by change percent descending
+    quotes.sort(key=lambda x: x.get('change_percent', 0), reverse=True)
+
+    return {
+        "mode": "multi",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "count": len(quotes),
+        "quotes": quotes,
+        "errors": errors if errors else None,
+        "source": "finnhub.io"
+    }
+
+
+def get_company_news(symbol, limit=20):
+    """Get news for a specific company."""
+    # News requires date range - use last 7 days
+    to_date = datetime.now().strftime("%Y-%m-%d")
+    from_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+
+    data = make_request("company-news", {
+        "symbol": symbol.upper(),
+        "from": from_date,
+        "to": to_date
+    })
+
+    if "error" in data:
+        return data
+
+    if not isinstance(data, list):
+        return {"error": "Unexpected response format"}
+
+    # Limit and format results
+    articles = []
+    for item in data[:limit]:
+        articles.append({
+            "headline": item.get('headline', ''),
+            "summary": item.get('summary', '')[:300] + '...' if len(item.get('summary', '')) > 300 else item.get('summary', ''),
+            "source": item.get('source', ''),
+            "url": item.get('url', ''),
+            "datetime": datetime.fromtimestamp(item.get('datetime', 0)).strftime("%Y-%m-%d %H:%M") if item.get('datetime') else '',
+            "related": item.get('related', ''),
+        })
+
+    return {
+        "mode": "news",
+        "symbol": symbol.upper(),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "date_range": f"{from_date} to {to_date}",
+        "count": len(articles),
+        "articles": articles,
+        "source": "finnhub.io"
+    }
+
+
+def get_market_news(category="general", limit=20):
+    """Get general market news."""
+    data = make_request("news", {"category": category})
+
+    if "error" in data:
+        return data
+
+    if not isinstance(data, list):
+        return {"error": "Unexpected response format"}
+
+    articles = []
+    for item in data[:limit]:
+        articles.append({
+            "headline": item.get('headline', ''),
+            "summary": item.get('summary', '')[:300] + '...' if len(item.get('summary', '')) > 300 else item.get('summary', ''),
+            "source": item.get('source', ''),
+            "url": item.get('url', ''),
+            "datetime": datetime.fromtimestamp(item.get('datetime', 0)).strftime("%Y-%m-%d %H:%M") if item.get('datetime') else '',
+            "category": item.get('category', ''),
+            "related": item.get('related', ''),
+        })
+
+    return {
+        "mode": "market-news",
+        "category": category,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "count": len(articles),
+        "articles": articles,
+        "source": "finnhub.io"
+    }
+
+
+def get_earnings_calendar(from_date=None, to_date=None):
+    """Get upcoming earnings calendar."""
+    # Default to next 7 days if no dates provided
+    if not from_date:
+        from_date = datetime.now().strftime("%Y-%m-%d")
+    if not to_date:
+        to_date = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
+
+    data = make_request("calendar/earnings", {
+        "from": from_date,
+        "to": to_date
+    })
+
+    if "error" in data:
+        return data
+
+    earnings_list = data.get('earningsCalendar', [])
+
+    # Format earnings data
+    earnings = []
+    for item in earnings_list:
+        eps_estimate = item.get('epsEstimate')
+        eps_actual = item.get('epsActual')
+        revenue_estimate = item.get('revenueEstimate')
+        revenue_actual = item.get('revenueActual')
+
+        # Calculate surprise if we have both estimate and actual
+        eps_surprise = None
+        if eps_estimate and eps_actual:
+            eps_surprise = round(eps_actual - eps_estimate, 4)
+
+        earnings.append({
+            "symbol": item.get('symbol', ''),
+            "date": item.get('date', ''),
+            "hour": item.get('hour', ''),  # bmo, amc, dmh
+            "quarter": item.get('quarter'),
+            "year": item.get('year'),
+            "eps_estimate": eps_estimate,
+            "eps_actual": eps_actual,
+            "eps_surprise": eps_surprise,
+            "revenue_estimate": revenue_estimate,
+            "revenue_actual": revenue_actual,
+        })
+
+    # Sort by date
+    earnings.sort(key=lambda x: x.get('date', ''))
+
+    return {
+        "mode": "earnings",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "date_range": f"{from_date} to {to_date}",
+        "count": len(earnings),
+        "earnings": earnings,
+        "source": "finnhub.io",
+        "note": "hour: bmo=before market open, amc=after market close, dmh=during market hours"
+    }
+
+
+# Main execution
+if __name__ == "__main__":
+    mode = sys.argv[1] if len(sys.argv) > 1 else ""
+    symbol = sys.argv[2] if len(sys.argv) > 2 else ""
+    limit = int(sys.argv[3]) if len(sys.argv) > 3 else 20
+    category = sys.argv[4] if len(sys.argv) > 4 else "general"
+    from_date = sys.argv[5] if len(sys.argv) > 5 and sys.argv[5] != "None" else None
+    to_date = sys.argv[6] if len(sys.argv) > 6 and sys.argv[6] != "None" else None
+
+    result = {}
+
+    if mode == "quote":
+        result = get_quote(symbol)
+    elif mode == "news":
+        result = get_company_news(symbol, limit)
+    elif mode == "market-news":
+        result = get_market_news(category, limit)
+    elif mode == "earnings":
+        result = get_earnings_calendar(from_date, to_date)
+    elif mode == "multi":
+        result = get_multi_quotes(symbol)  # symbol contains comma-separated list
+    else:
+        result = {"error": f"Unknown mode: {mode}"}
+
+    print(json.dumps(result, indent=2, default=str))
+PYEOF
+
+# Run the scraper
+OUTPUT=$(python3 "$TMPSCRIPT" "$MODE" "$SYMBOL" "$LIMIT" "$CATEGORY" "$FROM_DATE" "$TO_DATE" 2>&1)
+
+# Cleanup
+rm -f "$TMPSCRIPT"
+
+# Output
+if [ "$FORMAT" = "json" ]; then
+    echo "$OUTPUT"
+else
+    echo "$OUTPUT" | python3 "$SCRIPT_DIR/finnhub-format.py"
+fi

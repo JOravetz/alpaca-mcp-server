@@ -81,6 +81,7 @@ All scrapers follow this architecture:
 | `barchart-options` | urllib + Session Cookies | Internal API with XSRF token |
 | `shortsqueeze-scanner` | urllib + HTML regex | Simple HTML table structure |
 | `finviz-premarket` | requests + BeautifulSoup | Complex HTML needs proper parsing |
+| `finnhub-realtime` | urllib + REST API | Free API with key, comprehensive data |
 
 ### Browser-Based Scrapers (Cloudflare Bypass)
 
@@ -346,6 +347,7 @@ $ pplx-stock NVDA
 | Barchart | Internal REST | Session + XSRF | Unknown (no issues) |
 | Finviz | HTML scraping | None | ~60/min recommended |
 | Highshortinterest | HTML scraping | None | Unknown (simple table) |
+| Finnhub | Public REST | API Key | 30/second (free tier) |
 | Perplexity | Internal REST | Cloudflare session | Unknown |
 | Benzinga | Internal REST | **Requires login** | N/A |
 
@@ -369,6 +371,7 @@ Tested on Ubuntu 22.04, Python 3.12, 100Mbps connection:
 | Scraper | Avg Time | Memory | CPU | Dependencies |
 |---------|----------|--------|-----|--------------|
 | `stocktwits-sentiment` | 1.2s | 15MB | Low | urllib only |
+| `finnhub-realtime` | 1.3s | 15MB | Low | urllib only |
 | `shortsqueeze-scanner` | 1.5s | 15MB | Low | urllib only |
 | `barchart-options` | 2.2s | 18MB | Low | urllib only |
 | `finviz-premarket` | 2.5s | 45MB | Low | requests, bs4 |
@@ -410,6 +413,11 @@ Total: ~1-2s
 | `shortsqueeze-scanner --nasdaq` | ✅ Working | Exchange filter works |
 | `finviz-premarket --gainers` | ✅ Working | Top 20 gainers |
 | `finviz-premarket --quote NVDA` | ✅ Working | Full fundamentals |
+| `finnhub-realtime quote -s NVDA` | ✅ Working | Real-time quote, 1.2s |
+| `finnhub-realtime multi -s NVDA,AAPL,TSLA,GME` | ✅ Working | Multi-quote sorted by % |
+| `finnhub-realtime news -s NVDA` | ✅ Working | 5+ articles with summaries |
+| `finnhub-realtime market-news` | ✅ Working | General market news |
+| `finnhub-realtime earnings` | ✅ Working | 157 earnings upcoming |
 | `pplx-stock-fast NVDA` | ✅ Working | Fast quote data |
 | `pplx-stock NVDA` | ✅ Working | Full AI analysis |
 
