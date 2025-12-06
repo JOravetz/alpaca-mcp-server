@@ -1,0 +1,53 @@
+#!/bin/bash
+# Perplexity Finance Stock Scraper
+# Usage: pplx-stock TICKER [--raw]
+# Runs Chrome in virtual framebuffer - no window appears on screen
+
+TICKER="${1:-NVDA}"
+RAW="${2:-}"
+
+# Create temp Python script (xvfb-run needs a file, not -c with complex code)
+TMPSCRIPT=$(mktemp /tmp/pplx_scraper.XXXXXX.py)
+cat > "$TMPSCRIPT" << 'PYEOF'
+import sys
+import os
+import time
+
+ticker = sys.argv[1] if len(sys.argv) > 1 else 'NVDA'
+
+# Force X11 instead of Wayland
+os.environ['XDG_SESSION_TYPE'] = 'x11'
+os.environ['GDK_BACKEND'] = 'x11'
+
+import undetected_chromedriver as uc
+
+options = uc.ChromeOptions()
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--disable-gpu')
+options.add_argument('--window-size=1920,1080')
+# Force X11 for Chrome
+options.add_argument('--ozone-platform=x11')
+
+driver = uc.Chrome(version_main=142, options=options, headless=False)
+driver.get(f'https://www.perplexity.ai/finance/{ticker}')
+time.sleep(8)
+# Scroll down to load more content
+driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+time.sleep(3)
+# Scroll back up
+driver.execute_script("window.scrollTo(0, 0);")
+time.sleep(2)
+print(driver.page_source)
+driver.quit()
+PYEOF
+
+# Run entire process under xvfb-run with explicit display settings
+# This ensures ALL subprocesses (including Chrome) inherit the virtual DISPLAY
+xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24 -ac +extension GLX +render -noreset" \
+    env XDG_SESSION_TYPE=x11 GDK_BACKEND=x11 \
+    uv run --with undetected-chromedriver python3 "$TMPSCRIPT" "$TICKER" 2>/dev/null \
+    | if [ "$RAW" = "--raw" ]; then cat; else html2text; fi
+
+# Cleanup
+rm -f "$TMPSCRIPT"

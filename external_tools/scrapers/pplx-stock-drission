@@ -1,0 +1,58 @@
+#!/bin/bash
+# Perplexity Finance Scraper using DrissionPage
+# Usage: pplx-stock-drission TICKER [--raw]
+# Faster alternative to undetected-chromedriver
+
+TICKER="${1:-NVDA}"
+RAW="${2:-}"
+
+# Cleanup any existing processes
+pkill -9 Xvfb 2>/dev/null
+pkill -9 chrome 2>/dev/null
+sleep 0.5
+
+# Start virtual display
+export DISPLAY=:99
+Xvfb :99 -screen 0 1920x1080x24 -ac &
+XVFB_PID=$!
+sleep 1
+
+# Run the scraper
+OUTPUT=$(env DISPLAY=:99 XDG_SESSION_TYPE=x11 GDK_BACKEND=x11 \
+    uv run python3 << EOF 2>/dev/null
+import sys
+import time
+import os
+os.environ['DISPLAY'] = ':99'
+
+from DrissionPage import ChromiumPage, ChromiumOptions
+
+ticker = "${TICKER}"
+
+options = ChromiumOptions()
+options.set_argument('--no-sandbox')
+options.set_argument('--disable-dev-shm-usage')
+options.set_argument('--ozone-platform=x11')
+
+page = ChromiumPage(options)
+page.get(f'https://www.perplexity.ai/finance/{ticker}')
+time.sleep(8)
+page.scroll.to_bottom()
+time.sleep(3)
+page.scroll.to_top()
+time.sleep(1)
+print(page.html)
+page.quit()
+EOF
+)
+
+# Cleanup
+kill $XVFB_PID 2>/dev/null
+pkill -9 chrome 2>/dev/null
+
+# Output
+if [ "$RAW" = "--raw" ]; then
+    echo "$OUTPUT"
+else
+    echo "$OUTPUT" | html2text
+fi

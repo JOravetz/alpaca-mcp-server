@@ -1,0 +1,75 @@
+#!/bin/bash
+# Perplexity Finance FAST Scraper
+# Usage: pplx-stock-fast TICKER [--json]
+# Uses REST API via browser for blazing fast data retrieval (~8 seconds)
+
+TICKER="${1:-NVDA}"
+FORMAT="${2:-}"
+SCRIPT_DIR="$(dirname "$0")"
+
+# Cleanup any existing processes
+pkill -9 Xvfb 2>/dev/null
+pkill -9 chrome 2>/dev/null
+sleep 0.5
+
+# Start virtual display
+export DISPLAY=:99
+Xvfb :99 -screen 0 1920x1080x24 -ac &
+XVFB_PID=$!
+sleep 1
+
+# Create temp script
+TMPSCRIPT=$(mktemp /tmp/pplx_fast.XXXXXX.py)
+cat > "$TMPSCRIPT" << PYEOF
+import time
+import os
+import json
+os.environ['DISPLAY'] = ':99'
+
+from DrissionPage import ChromiumPage, ChromiumOptions
+
+ticker = "${TICKER}"
+
+options = ChromiumOptions()
+options.set_argument('--no-sandbox')
+options.set_argument('--disable-dev-shm-usage')
+options.set_argument('--ozone-platform=x11')
+
+page = ChromiumPage(options)
+page.get(f'https://www.perplexity.ai/finance/{ticker}')
+time.sleep(4)
+
+# Fetch quote data via REST API
+quote = page.run_js(f'''
+    return fetch('/rest/finance/quote/{ticker}?with_history=false&with_ui_hints=true')
+        .then(r => r.json())
+        .catch(e => ({{"error": e.toString()}}));
+''')
+
+# Fetch profile data
+profile = page.run_js(f'''
+    return fetch('/rest/finance/profile/{ticker}')
+        .then(r => r.json())
+        .catch(e => ({{"error": e.toString()}}));
+''')
+
+result = {"quote": quote, "profile": profile, "ticker": ticker}
+print(json.dumps(result, indent=2))
+page.quit()
+PYEOF
+
+# Run the scraper
+OUTPUT=$(env DISPLAY=:99 XDG_SESSION_TYPE=x11 GDK_BACKEND=x11 \
+    uv run python3 "$TMPSCRIPT" 2>/dev/null)
+
+# Cleanup
+kill $XVFB_PID 2>/dev/null
+pkill -9 chrome 2>/dev/null
+rm -f "$TMPSCRIPT"
+
+# Output
+if [ "$FORMAT" = "--json" ]; then
+    echo "$OUTPUT"
+else
+    echo "$OUTPUT" | python3 "$SCRIPT_DIR/pplx-format.py"
+fi
