@@ -34,6 +34,13 @@ Command-line tools for fetching stock data from financial websites for day-tradi
 | `barchart-options` | REST API (urllib) | ~2-3s | Options flow, unusual activity, smart money |
 | `barchart-format.py` | Python | - | JSON formatter with Vol/OI highlighting |
 
+### Short Squeeze Scanner
+
+| Script | Technology | Speed | Description |
+|--------|-----------|-------|-------------|
+| `shortsqueeze-scanner` | HTML scraping (urllib) | ~1-2s | High short interest stocks (>20% SI) |
+| `shortsqueeze-format.py` | Python | - | JSON formatter with squeeze potential highlighting |
+
 ## Installation
 
 ### Prerequisites
@@ -61,6 +68,8 @@ ln -sf $(pwd)/stocktwits-sentiment ~/bin/
 ln -sf $(pwd)/stocktwits-format.py ~/bin/
 ln -sf $(pwd)/barchart-options ~/bin/
 ln -sf $(pwd)/barchart-format.py ~/bin/
+ln -sf $(pwd)/shortsqueeze-scanner ~/bin/
+ln -sf $(pwd)/shortsqueeze-format.py ~/bin/
 ```
 
 Option 2: Add this directory to PATH:
@@ -411,6 +420,121 @@ barchart-options --active --json
 
 ---
 
+## Short Squeeze Scanner
+
+### Usage
+
+```bash
+# All exchanges with >20% short interest (default)
+shortsqueeze-scanner
+
+# Filter by exchange
+shortsqueeze-scanner --nasdaq          # Nasdaq stocks only
+shortsqueeze-scanner --nyse            # NYSE stocks only
+shortsqueeze-scanner --amex            # AMEX stocks only
+
+# Higher short interest threshold
+shortsqueeze-scanner --min-si 30       # Only >30% short interest
+shortsqueeze-scanner --min-si 40       # Extreme squeeze candidates
+
+# JSON output for programmatic use
+shortsqueeze-scanner --json
+shortsqueeze-scanner --nasdaq --min-si 35 --json
+```
+
+### Sample Output
+
+```
+===============================================================================================
+ SHORT SQUEEZE CANDIDATES - ALL EXCHANGES
+ Data from highshortinterest.com | Updated: November 26, 2025
+ Scanned: 2025-12-06 07:32:22 | Min SI: 20.0%
+===============================================================================================
+
+ Summary
+----------------------------------------
+   Stocks found: 49
+   Avg Short Interest: 27.0%
+   Max Short Interest: 43.5%
+
+ High Short Interest Stocks
+-----------------------------------------------------------------------------------------------
+ #   TICKER COMPANY                      EXCH       SI%      FLOAT      OUTST INDUSTRY
+-----------------------------------------------------------------------------------------------
+ 1   HTZ    Hertz Global Holdings Inc    Nasdaq   43.5%    126.27M    311.59M Passenger Transporta
+ 2   AIRS   AirSculpt Technologies, Inc. Nasdaq   42.3%     14.62M     62.44M Health Care Provider
+ 3   GRPN   Groupon Inc                  Nasdaq   38.8%     23.67M     40.75M Retailers - Discount
+ 4   SONN   Sonnet Biotherapeutics Holdi Nasdaq   37.6%      6.74M      6.83M Pharmaceuticals
+ 5   CAPR   Capricor Therapeutics, Inc.  Nasdaq   35.2%     40.19M     45.72M Biotechnology
+ ...
+
+ Short Interest Guide:
+   40%+ = Extreme squeeze potential (high risk/reward)
+   30-40% = High squeeze potential
+   25-30% = Moderate squeeze potential
+   20-25% = Elevated short interest
+
+ Squeeze Factors:
+   - High SI% + Low Float = Maximum squeeze pressure
+   - Positive catalyst + High SI% = Squeeze trigger
+   - Watch for volume spikes indicating covering
+===============================================================================================
+```
+
+### Data Provided
+
+- **Ticker**: Stock symbol
+- **Company**: Company name
+- **Exchange**: Nasdaq, NYSE, or AMEX
+- **Short Interest %**: Percentage of float sold short
+- **Float**: Shares available for trading
+- **Outstanding**: Total shares outstanding
+- **Industry**: Business sector
+
+### Short Interest Interpretation
+
+| SI% Range | Signal | Trading Implication |
+|-----------|--------|---------------------|
+| 40%+ | **Extreme** | Maximum squeeze potential, very high risk/reward |
+| 30-40% | **High** | Strong squeeze candidate, watch for catalysts |
+| 25-30% | **Moderate** | Elevated interest, potential for squeeze on news |
+| 20-25% | **Elevated** | Above normal, worth monitoring |
+
+### Squeeze Setup Factors
+
+**Maximum Squeeze Potential:**
+- High SI% (>30%) + Low float (<20M shares)
+- Positive catalyst (earnings beat, FDA approval, etc.)
+- Increasing volume indicating covering
+- Low days-to-cover ratio
+
+**Day-Trading Strategy:**
+1. Identify high SI stocks with upcoming catalysts
+2. Monitor for volume spikes indicating short covering
+3. Enter on breakout confirmation
+4. Set tight stops (squeeze plays can reverse violently)
+5. Take profits quickly - squeeze momentum fades fast
+
+### Best Use Cases
+
+- **Morning watchlist building**: Identify potential squeeze plays
+- **Catalyst tracking**: Monitor high SI stocks for news triggers
+- **Risk assessment**: Know what's heavily shorted before trading
+- **Contrarian plays**: High SI can mean undervalued if thesis intact
+
+### Important Notes
+
+**Data Characteristics:**
+- Updated weekly (not real-time)
+- Source: highshortinterest.com
+- Short interest data has ~2 week reporting lag
+- Float/outstanding may differ from other sources
+
+**NOT Real-Time:**
+This data is best for research and watchlist building, not for real-time trading decisions. Combine with live market data from Alpaca MCP tools for execution.
+
+---
+
 ## Day-Trading Workflow Integration
 
 ### Morning Pre-Market Research
@@ -518,6 +642,7 @@ updates to the scraper.
 | Tool | Speed | Data Richness | Real-time | No Browser |
 |------|-------|---------------|-----------|------------|
 | `stocktwits-sentiment` | **~1s** | ★★★☆☆ | Real-time | ✅ |
+| `shortsqueeze-scanner` | **~1s** | ★★★☆☆ | Weekly | ✅ |
 | `finviz-premarket` | **~2s** | ★★★☆☆ | Delayed | ✅ |
 | `barchart-options` | **~2s** | ★★★★☆ | Delayed | ✅ |
 | `pplx-stock-fast` | ~8s | ★★★★☆ | Real-time | ❌ |
@@ -525,15 +650,17 @@ updates to the scraper.
 
 **Recommendation:**
 - Use `stocktwits-sentiment` for instant social sentiment and trending
+- Use `shortsqueeze-scanner` for weekly squeeze candidate watchlist
 - Use `finviz-premarket` for fast screener scans and fundamentals
 - Use `barchart-options` for options flow and smart money tracking
 - Use `pplx-stock-fast` for quick AI-powered quotes
 - Use `pplx-stock` for comprehensive research with AI analysis
 
 **Day-Trading Flow:**
-1. `stocktwits-sentiment --trending` → See what's buzzing
-2. `finviz-premarket --gainers` → Top movers by price
-3. `barchart-options --unusual` → Smart money positioning
-4. `stocktwits-sentiment -s TICKER` → Check sentiment before entry
-5. `barchart-options -s TICKER` → Options flow for specific stock
-6. `pplx-stock-fast TICKER` → AI analysis for conviction
+1. `shortsqueeze-scanner --min-si 30` → Weekly squeeze watchlist
+2. `stocktwits-sentiment --trending` → See what's buzzing
+3. `finviz-premarket --gainers` → Top movers by price
+4. `barchart-options --unusual` → Smart money positioning
+5. `stocktwits-sentiment -s TICKER` → Check sentiment before entry
+6. `barchart-options -s TICKER` → Options flow for specific stock
+7. `pplx-stock-fast TICKER` → AI analysis for conviction

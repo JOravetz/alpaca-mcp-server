@@ -1,0 +1,239 @@
+#!/bin/bash
+# Short Squeeze Scanner
+# Usage: shortsqueeze-scanner [--json] [--all|--nasdaq|--nyse|--amex] [--min-si PCT]
+# Fetches high short interest stocks for squeeze potential analysis
+#
+# Data source: highshortinterest.com (updated weekly)
+# Shows stocks with >20% short interest - prime squeeze candidates
+#
+# Speed: ~1-2 seconds (simple HTML scrape, no browser)
+#
+# Examples:
+#   shortsqueeze-scanner                    # All exchanges (default)
+#   shortsqueeze-scanner --nasdaq           # Nasdaq only
+#   shortsqueeze-scanner --min-si 30        # Only >30% short interest
+#   shortsqueeze-scanner --json             # Raw JSON output
+
+set -e
+
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+FORMAT="pretty"
+EXCHANGE="all"
+MIN_SI=20
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --json)
+            FORMAT="json"
+            shift
+            ;;
+        --all)
+            EXCHANGE="all"
+            shift
+            ;;
+        --nasdaq)
+            EXCHANGE="nasdaq"
+            shift
+            ;;
+        --nyse)
+            EXCHANGE="nyse"
+            shift
+            ;;
+        --amex)
+            EXCHANGE="amex"
+            shift
+            ;;
+        --min-si)
+            MIN_SI="$2"
+            shift 2
+            ;;
+        --help|-h)
+            echo "Short Squeeze Scanner"
+            echo ""
+            echo "Usage: shortsqueeze-scanner [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --all              All exchanges (default)"
+            echo "  --nasdaq           Nasdaq stocks only"
+            echo "  --nyse             NYSE stocks only"
+            echo "  --amex             AMEX stocks only"
+            echo "  --min-si PCT       Minimum short interest % (default: 20)"
+            echo "  --json             Output raw JSON"
+            echo "  --help             Show this help"
+            echo ""
+            echo "Examples:"
+            echo "  shortsqueeze-scanner --nasdaq --min-si 30"
+            echo "  shortsqueeze-scanner --all --json"
+            echo ""
+            echo "Speed: ~1-2 seconds (simple HTML scrape)"
+            echo ""
+            echo "Data includes:"
+            echo "  - Short interest percentage (>20%)"
+            echo "  - Float and outstanding shares"
+            echo "  - Exchange and industry"
+            echo ""
+            echo "Note: Data updated weekly from highshortinterest.com"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Create temp Python script
+TMPSCRIPT=$(mktemp /tmp/shortsqueeze_scanner.XXXXXX.py)
+
+cat > "$TMPSCRIPT" << 'PYEOF'
+import sys
+import json
+import re
+import urllib.request
+from datetime import datetime
+
+exchange = sys.argv[1] if len(sys.argv) > 1 else "all"
+min_si = float(sys.argv[2]) if len(sys.argv) > 2 else 20.0
+
+# Map exchange to URL path
+exchange_paths = {
+    "all": "all",
+    "nasdaq": "nasdaq",
+    "nyse": "nyse",
+    "amex": "amex"
+}
+
+base_url = "https://www.highshortinterest.com"
+path = exchange_paths.get(exchange, "all")
+url = f"{base_url}/{path}/"
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+}
+
+def parse_float_shares(value):
+    """Parse share count strings like '126.27M' or '14.62M'."""
+    if not value:
+        return 0
+    value = value.strip().upper()
+    multiplier = 1
+    if value.endswith('B'):
+        multiplier = 1_000_000_000
+        value = value[:-1]
+    elif value.endswith('M'):
+        multiplier = 1_000_000
+        value = value[:-1]
+    elif value.endswith('K'):
+        multiplier = 1_000
+        value = value[:-1]
+    try:
+        return float(value) * multiplier
+    except ValueError:
+        return 0
+
+
+def parse_percentage(value):
+    """Parse percentage strings like '43.50%'."""
+    if not value:
+        return 0
+    value = value.strip().replace('%', '')
+    try:
+        return float(value)
+    except ValueError:
+        return 0
+
+
+try:
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=15) as response:
+        html = response.read().decode('utf-8')
+except Exception as e:
+    print(json.dumps({"error": f"Failed to fetch data: {str(e)}"}))
+    sys.exit(1)
+
+# Extract last updated date
+updated_match = re.search(r'Database last updated on ([^<]+)', html)
+last_updated = updated_match.group(1).strip() if updated_match else "Unknown"
+
+# Parse table rows - looking for the stocks table
+stocks = []
+
+# Find all table rows with stock data
+# Pattern: <tr><td><a href="...">TICKER</a></td><td>Company</td><td>Exchange</td><td>ShortInt%</td><td>Float</td><td>Outstd</td><td>Industry</td>
+# Also handle alternating row class (tdi)
+
+row_pattern = re.compile(
+    r'<tr>\s*<td[^>]*>\s*<a[^>]*>([A-Z]+)</a>\s*</td>\s*'
+    r'<td[^>]*>([^<]*)</td>\s*'
+    r'<td[^>]*>([^<]*)</td>\s*'
+    r'<td[^>]*>([^<]*)</td>\s*'
+    r'<td[^>]*>([^<]*)</td>\s*'
+    r'<td[^>]*>([^<]*)</td>\s*'
+    r'<td[^>]*>([^<]*)</td>',
+    re.IGNORECASE | re.DOTALL
+)
+
+for match in row_pattern.finditer(html):
+    ticker = match.group(1).strip()
+    company = match.group(2).strip()
+    exch = match.group(3).strip()
+    short_interest_str = match.group(4).strip()
+    float_shares = match.group(5).strip()
+    outstanding = match.group(6).strip()
+    industry = match.group(7).strip()
+
+    short_interest = parse_percentage(short_interest_str)
+
+    # Skip if below minimum short interest
+    if short_interest < min_si:
+        continue
+
+    # Filter by exchange if specified
+    if exchange != "all" and exch.lower() != exchange.lower():
+        continue
+
+    stocks.append({
+        "ticker": ticker,
+        "company": company,
+        "exchange": exch,
+        "short_interest": short_interest,
+        "short_interest_str": short_interest_str,
+        "float": float_shares,
+        "float_shares": parse_float_shares(float_shares),
+        "outstanding": outstanding,
+        "outstanding_shares": parse_float_shares(outstanding),
+        "industry": industry
+    })
+
+# Sort by short interest descending
+stocks.sort(key=lambda x: x['short_interest'], reverse=True)
+
+result = {
+    "source": "highshortinterest.com",
+    "exchange_filter": exchange,
+    "min_short_interest": min_si,
+    "last_updated": last_updated,
+    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    "count": len(stocks),
+    "stocks": stocks,
+    "note": "Short interest >20% indicates high squeeze potential. Data updated weekly."
+}
+
+print(json.dumps(result, indent=2, default=str))
+PYEOF
+
+# Run the scraper (no extra dependencies needed - uses stdlib)
+OUTPUT=$(python3 "$TMPSCRIPT" "$EXCHANGE" "$MIN_SI" 2>/dev/null)
+
+# Cleanup
+rm -f "$TMPSCRIPT"
+
+# Output
+if [ "$FORMAT" = "json" ]; then
+    echo "$OUTPUT"
+else
+    echo "$OUTPUT" | python3 "$SCRIPT_DIR/shortsqueeze-format.py"
+fi
