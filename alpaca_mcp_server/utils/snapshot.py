@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import aiohttp
 import numpy as np
 import pandas as pd
-import pandas_market_calendars as mcal  # type: ignore
+import pandas_market_calendars as mcal  # type: ignore[import-untyped]
 import requests
 
 # Load Alpaca API credentials from the environment variables

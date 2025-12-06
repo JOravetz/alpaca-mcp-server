@@ -25,7 +25,7 @@ try:
 except ImportError:
     # Fallback for when running as script
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-    from peakdetect import peakdetect  # type: ignore[import-not-found,no-redef]
+    from peakdetect import peakdetect  # type: ignore[no-redef]
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

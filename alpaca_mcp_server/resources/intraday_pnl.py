@@ -1,16 +1,19 @@
 """Intraday P&L resource with configurable parameters."""
 
-from datetime import datetime, time, timedelta
-import pytz
+# mypy: disable-error-code="union-attr"
 
+from datetime import datetime, time, timedelta
+from typing import Any
+
+import pytz
 from alpaca.trading.enums import QueryOrderStatus
+from alpaca.trading.models import Order
 from alpaca.trading.requests import GetOrdersRequest
-from alpaca.trading.models import Order, Position
 
 from ..config.settings import get_trading_client
 
 # NYC timezone for proper market time display
-NYC_TZ = pytz.timezone('America/New_York')
+NYC_TZ = pytz.timezone("America/New_York")
 
 
 async def get_intraday_pnl(
@@ -56,14 +59,13 @@ async def get_intraday_pnl(
             orders = [
                 order
                 for order in orders
-                if isinstance(order, TradeAccount) and order.symbol.upper() == symbol_filter.upper()  # type: ignore[name-defined]
+                if isinstance(order, Order) and order.symbol.upper() == symbol_filter.upper()
             ]
 
         # Calculate realized P&L from filled orders
         realized_pnl = 0
         trade_count = 0
         day_trades = 0
-        from typing import Any
 
         trades_by_symbol: dict[str, dict[str, Any]] = {}
         total_volume = 0
@@ -206,13 +208,15 @@ async def get_intraday_pnl(
 
             # Filter positions by symbol if specified
             if symbol_filter:
+                from alpaca.trading.models import Position
+
                 positions = [
                     pos
                     for pos in positions
-                    if isinstance(pos, TradeAccount) and pos.symbol.upper() == symbol_filter.upper()  # type: ignore[name-defined]
+                    if isinstance(pos, Position) and pos.symbol.upper() == symbol_filter.upper()
                 ]
 
-            unrealized_pnl = sum(float(pos.unrealized_pl or 0) for pos in positions)  # type: ignore[misc,union-attr]
+            unrealized_pnl = sum(float(pos.unrealized_pl or 0) for pos in positions)  # type: ignore[misc]
             current_positions_count = len(positions)
 
         # Calculate day trade limits
@@ -231,7 +235,7 @@ async def get_intraday_pnl(
 
         # Get current NYC time for timestamps
         current_time_nyc = datetime.now(NYC_TZ)
-        
+
         return {
             "analysis_date": end_date.isoformat(),
             "date_range": f"{start_date.isoformat()} to {end_date.isoformat()}",

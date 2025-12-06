@@ -51,7 +51,7 @@ def setup_backend_for_args(no_plot=False):
 
 # Add current directory to path to import peakdetect
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from peakdetect import peakdetect, peakdetect_savgol  # noqa: E402  # type: ignore
+from peakdetect import peakdetect, peakdetect_savgol  # noqa: E402
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -1480,7 +1480,7 @@ def plot_single_symbol(results):
 
         # Calculate density for all corners
         corner_scores = calculate_region_density(corner_regions)
-        
+
         # For legend: strongly prefer LEFT corners to avoid covering recent data
         # Add penalty to right corners (where recent data is)
         adjusted_scores = {}
@@ -1490,11 +1490,11 @@ def plot_single_symbol(results):
                 adjusted_scores[region] = score * 10
             else:
                 adjusted_scores[region] = score
-        
+
         # Choose best corner for legend (lowest adjusted score)
         sorted_corners = sorted(adjusted_scores.items(), key=lambda x: x[1])
         best_legend_corner = sorted_corners[0][0]
-        
+
         # Stats box goes to opposite corner
         if best_legend_corner == "upper_left":
             best_stats_corner = "lower_right"

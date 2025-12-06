@@ -1,4 +1,5 @@
 from alpaca.trading.models import Position
+
 """Account management tools for Alpaca MCP Server."""
 
 from ..config.settings import get_trading_client

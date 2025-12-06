@@ -1,8 +1,10 @@
 """Asset tools for retrieving information about tradeable assets."""
 
+# mypy: disable-error-code="union-attr"
+
 from alpaca.trading.enums import AssetClass, AssetStatus
-from alpaca.trading.requests import GetAssetsRequest
 from alpaca.trading.models import Asset
+from alpaca.trading.requests import GetAssetsRequest
 
 from ..config.settings import get_trading_client
 
@@ -56,19 +58,19 @@ async def get_all_assets(
 
         # Apply additional filters
         if exchange:
-            assets = [asset for asset in assets if asset.exchange == exchange.upper()]  # type: ignore[misc,union-attr]
+            assets = [asset for asset in assets if asset.exchange == exchange.upper()]  # type: ignore[misc]
 
         # Filter for tradable assets only if requested
         if tradable_only:
-            assets = [asset for asset in assets if asset.tradable]  # type: ignore[misc,union-attr]
+            assets = [asset for asset in assets if asset.tradable]  # type: ignore[misc]
 
         # Apply attributes filter after basic filters
         if attributes and attributes.lower() == "shortable":
-            assets = [asset for asset in assets if asset.shortable]  # type: ignore[misc,union-attr]
+            assets = [asset for asset in assets if asset.shortable]  # type: ignore[misc]
 
         # Filter by symbol length if requested
         if max_symbol_length is not None:
-            assets = [asset for asset in assets if len(asset.symbol) <= max_symbol_length]  # type: ignore[misc,union-attr]
+            assets = [asset for asset in assets if len(asset.symbol) <= max_symbol_length]  # type: ignore[misc]
 
         # Format output
         total_count = len(assets)

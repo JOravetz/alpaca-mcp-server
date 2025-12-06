@@ -1,4 +1,6 @@
-from alpaca.trading.models import Position
+# mypy: disable-error-code="arg-type"
+
+
 """Position management prompt implementation."""
 
 from ..config.settings import get_trading_client
@@ -16,11 +18,11 @@ async def position_management(symbol: str | None = None) -> str:
                 position = client.get_open_position(symbol)
 
                 # Calculate position metrics
-                current_value = float(position.market_value)  # type: ignore[arg-type,union-attr]
-                unrealized_pnl = float(position.unrealized_pl)  # type: ignore[arg-type,union-attr]
-                unrealized_pnl_pct = float(position.unrealized_plpc) * 100  # type: ignore[arg-type,union-attr]
+                current_value = float(position.market_value)  # type: ignore[union-attr]
+                unrealized_pnl = float(position.unrealized_pl)  # type: ignore[union-attr]
+                unrealized_pnl_pct = float(position.unrealized_plpc) * 100  # type: ignore[union-attr]
                 entry_price = float(position.avg_entry_price)  # type: ignore[union-attr]
-                current_price = float(position.current_price)  # type: ignore[arg-type,union-attr]
+                current_price = float(position.current_price)  # type: ignore[union-attr]
                 quantity = float(position.qty)  # type: ignore[union-attr]
 
                 # Determine position analysis
@@ -114,7 +116,7 @@ Popular starting strategies:
             neutral = []
 
             for pos in positions:
-                pnl_pct = float(pos.unrealized_plpc) * 100  # type: ignore[arg-type,union-attr]
+                pnl_pct = float(pos.unrealized_plpc) * 100  # type: ignore[union-attr]
                 if pnl_pct > 5:
                     winners.append((pos, pnl_pct))
                 elif pnl_pct < -5:
@@ -140,18 +142,14 @@ Losers: {len(losers)} positions (>5% loss)
             if winners:
                 result += "## Top Performers\n"
                 for pos, pnl_pct in winners[:5]:
-                    result += (
-                        f"• {pos.symbol}: {pnl_pct:+.1f}% (${float(pos.unrealized_pl):,.2f})\n"  # type: ignore[arg-type,union-attr]
-                    )
+                    result += f"• {pos.symbol}: {pnl_pct:+.1f}% (${float(pos.unrealized_pl):,.2f})\n"  # type: ignore[union-attr]
                 result += "\n"
 
             # Analyze losers
             if losers:
                 result += "## Underperformers\n"
                 for pos, pnl_pct in losers[:5]:
-                    result += (
-                        f"• {pos.symbol}: {pnl_pct:+.1f}% (${float(pos.unrealized_pl):,.2f})\n"  # type: ignore[arg-type,union-attr]
-                    )
+                    result += f"• {pos.symbol}: {pnl_pct:+.1f}% (${float(pos.unrealized_pl):,.2f})\n"  # type: ignore[union-attr]
                 result += "\n"
 
             # Strategic recommendations

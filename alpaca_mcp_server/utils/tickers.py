@@ -4,7 +4,7 @@ import re
 import sys
 
 import pandas as pd
-from alpaca_trade_api.rest import REST  # type: ignore
+from alpaca_trade_api.rest import REST  # type: ignore[import-untyped]
 
 # Pre-compile regex pattern for symbol validation
 SYMBOL_PATTERN = re.compile("^[A-Z]+$")

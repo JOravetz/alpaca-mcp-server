@@ -3,6 +3,8 @@
 import time
 from typing import Any
 
+from alpaca.trading.models import Position
+
 from ..config.settings import get_trading_client
 
 
@@ -72,11 +74,14 @@ async def get_position_average_price(symbol: str) -> float | None:
     """
     try:
         client = get_trading_client()
-        positions = client.get_all_positions()
+        all_positions = client.get_all_positions()
+
+        # Filter to only Position objects (not error strings)
+        positions = [p for p in all_positions if isinstance(p, Position)]
 
         for position in positions:
-            if position.symbol == symbol:  # type: ignore[union-attr]
-                return float(position.avg_entry_price)  # type: ignore[union-attr]
+            if position.symbol == symbol:
+                return float(position.avg_entry_price)
 
         return None
     except Exception:
@@ -127,7 +132,7 @@ from alpaca.trading.enums import (  # noqa: E402
     QueryOrderStatus,
     TimeInForce,
 )
-from alpaca.trading.models import Order, Position  # noqa: E402
+from alpaca.trading.models import Order  # noqa: E402
 from alpaca.trading.requests import (  # noqa: E402
     GetOrdersRequest,
     LimitOrderRequest,
@@ -392,13 +397,20 @@ async def cancel_all_orders() -> str:
         response_parts = ["Order Cancellation Results:"]
         response_parts.append("-" * 30)
 
+        # Process cancel responses
         for response in cancel_responses:
-            status = "Success" if response.status == 200 else "Failed"  # type: ignore[union-attr]
-            response_parts.append(f"Order ID: {response.id}")  # type: ignore[union-attr]
-            response_parts.append(f"Status: {status}")
-            if response.body:  # type: ignore[union-attr]
-                response_parts.append(f"Details: {response.body}")  # type: ignore[union-attr]
-            response_parts.append("-" * 30)
+            # Handle both CancelOrderResponse objects and error strings
+            if isinstance(response, str):
+                response_parts.append(f"Error: {response}")
+                response_parts.append("-" * 30)
+            else:
+                # It's a CancelOrderResponse object
+                status = "Success" if response.status == 200 else "Failed"
+                response_parts.append(f"Order ID: {response.id}")
+                response_parts.append(f"Status: {status}")
+                if response.body:
+                    response_parts.append(f"Details: {response.body}")
+                response_parts.append("-" * 30)
 
         return "\n".join(response_parts)
 
@@ -419,18 +431,14 @@ async def cancel_order_by_id(order_id: str) -> str:
     try:
         client = get_trading_client()
 
-        # Cancel the specific order
-        response = client.cancel_order_by_id(order_id)  # type: ignore[func-returns-value]
+        # Cancel the specific order (returns None on success)
+        client.cancel_order_by_id(order_id)
 
-        # Format the response
-        status = "Success" if response.status == 200 else "Failed"
+        # Success if no exception was raised
         result = f"""Order Cancellation Result:
 ------------------------
-Order ID: {response.id}
-Status: {status}"""
-
-        if response.body:
-            result += f"\nDetails: {response.body}"
+Order ID: {order_id}
+Status: Success"""
 
         return result
 
@@ -481,7 +489,9 @@ async def place_option_market_order(
         if order_class == "simple":
             order_class_enum = OrderClass.SIMPLE
         elif order_class == "mleg":
-            order_class_enum = OrderClass.MULTILEG  # type: ignore[attr-defined]
+            # NOTE: OrderClass.MULTILEG does not exist in current Alpaca API
+            # Multi-leg options not yet supported
+            return "Error: Multi-leg options orders not yet supported by Alpaca API"
         else:
             return f"Error: Invalid order_class '{order_class}'. Must be 'simple' or 'mleg'."
 
@@ -516,15 +526,16 @@ async def place_option_market_order(
                 return f"Error processing leg {i + 1}: {str(leg_error)}"
 
         # Create the order request
-        from alpaca.trading.requests import OptionMarketOrderRequest  # type: ignore[attr-defined]
+        # NOTE: OptionMarketOrderRequest does not exist in current Alpaca API
+        # Using MarketOrderRequest for options orders
+        from alpaca.trading.requests import MarketOrderRequest
 
-        order_request = OptionMarketOrderRequest(
-            legs=option_legs,
-            type=OrderType.MARKET,
-            order_class=order_class_enum,
+        order_request = MarketOrderRequest(
+            symbol=option_legs[0].symbol if option_legs else "",  # Use first leg's symbol
             qty=quantity,
+            side=option_legs[0].side if option_legs else OrderSide.BUY,
+            type=OrderType.MARKET,
             time_in_force=time_in_force,
-            extended_hours=extended_hours,
         )
 
         # Submit the order

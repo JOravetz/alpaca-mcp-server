@@ -1,10 +1,9 @@
-from alpaca.trading.models import Clock
 """Market session status resource with extended hours awareness."""
 
 from datetime import datetime, time
 
 import pandas as pd
-import pandas_market_calendars as mcal  # type: ignore
+import pandas_market_calendars as mcal  # type: ignore[import-untyped]
 
 from ..config.settings import get_trading_client
 
@@ -69,6 +68,7 @@ async def get_session_status() -> dict:
             is_extended_hours = True
             next_event = "market_open"
             next_event_time = now_et.replace(hour=9, minute=30, second=0, microsecond=0)
+            progress_percent = None
 
         elif market_open <= current_time < market_close:
             current_session = "regular_market"

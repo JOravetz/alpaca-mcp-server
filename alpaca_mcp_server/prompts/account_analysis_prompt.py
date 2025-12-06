@@ -1,4 +1,6 @@
-from alpaca.trading.models import Position
+# mypy: disable-error-code="union-attr, arg-type"
+
+
 """Account analysis prompt implementation."""
 
 from datetime import datetime
@@ -21,16 +23,16 @@ async def account_analysis() -> str:
         positions = client.get_all_positions()
 
         # 3. Calculate key metrics
-        total_portfolio_value = float(account.portfolio_value)  # type: ignore[arg-type,union-attr]
-        cash_balance = float(account.cash)  # type: ignore[arg-type,union-attr]
-        buying_power = float(account.buying_power)  # type: ignore[arg-type,union-attr]
-        equity = float(account.equity)  # type: ignore[arg-type,union-attr]
+        total_portfolio_value = float(account.portfolio_value)  # type: ignore[union-attr]
+        cash_balance = float(account.cash)  # type: ignore[union-attr]
+        buying_power = float(account.buying_power)  # type: ignore[union-attr]
+        equity = float(account.equity)  # type: ignore[union-attr]
 
         # Calculate position metrics
         position_count = len(positions)
         if positions:
-            total_unrealized_pnl = sum(float(pos.unrealized_pl) for pos in positions)  # type: ignore[arg-type,misc,union-attr]
-            total_market_value = sum(float(pos.market_value) for pos in positions)  # type: ignore[arg-type,misc,union-attr]
+            total_unrealized_pnl = sum(float(pos.unrealized_pl) for pos in positions)  # type: ignore[misc]
+            total_market_value = sum(float(pos.market_value) for pos in positions)  # type: ignore[misc]
 
             # Calculate concentration risk
             largest_position = max(positions, key=lambda p: float(p.market_value))

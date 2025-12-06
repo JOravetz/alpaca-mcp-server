@@ -468,10 +468,7 @@ class HybridTradingService:
 
             # Log position changes for Claude awareness
             position_count = len(self.position_tracker.positions)
-            if (
-                isinstance(self, AlertSystem)
-                and self._last_position_count != position_count
-            ):
+            if isinstance(self, AlertSystem) and self._last_position_count != position_count:
                 if position_count > self._last_position_count:
                     self.logger.warning(
                         f"🔔 NEW POSITIONS DETECTED: {position_count} total positions now active"

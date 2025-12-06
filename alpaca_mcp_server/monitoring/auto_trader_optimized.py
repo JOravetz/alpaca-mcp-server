@@ -20,6 +20,7 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import Any
 
 from ..config.global_config import get_global_config
 from ..tools.account_tools import get_positions
@@ -43,7 +44,9 @@ class PriceCache:
         age = (datetime.now(UTC) - self.timestamp).total_seconds()
         return age < max_age_seconds
 
-    def update(self, bid: float | None = None, ask: float | None = None, last: float | None = None) -> None:
+    def update(
+        self, bid: float | None = None, ask: float | None = None, last: float | None = None
+    ) -> None:
         """Update cache with new prices"""
         if bid is not None:
             self.bid = bid

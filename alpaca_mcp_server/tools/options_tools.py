@@ -3,9 +3,9 @@
 from datetime import date
 
 from alpaca.data.enums import OptionsFeed
+from alpaca.data.models import Quote
 from alpaca.data.requests import OptionChainRequest, OptionLatestQuoteRequest, OptionSnapshotRequest
 from alpaca.trading.enums import AssetStatus, ContractType
-from alpaca.data.models import Quote
 
 
 async def test_option_client_basic(underlying_symbol: str) -> str:
@@ -89,7 +89,7 @@ async def get_option_contracts(
 
             # Extract info from symbol if contract_data doesn't have direct attributes
             if hasattr(contract_data, "strike_price"):
-                strike_price = f"${contract_data.strike_price}"  # type: ignore[attr-defined]
+                strike_price = f"${contract_data.strike_price}"
 
             # Force symbol parsing to always run
             if len(symbol) >= 15:  # Standard option symbol format
@@ -107,7 +107,7 @@ async def get_option_contracts(
                 strike_price = f"Symbol too short: {len(symbol)}"
 
             if hasattr(contract_data, "expiration_date"):
-                expiration = str(contract_data.expiration_date)  # type: ignore[attr-defined]
+                expiration = str(contract_data.expiration_date)
 
             # Force expiration parsing to always run
             if len(symbol) >= 15:
@@ -122,7 +122,7 @@ async def get_option_contracts(
                     expiration = f"Parse error: {str(e)}"
 
             if hasattr(contract_data, "type"):
-                contract_type = str(contract_data.type)  # type: ignore[attr-defined]
+                contract_type = str(contract_data.type)
 
             result += f"""
 Contract: {symbol}

@@ -10,6 +10,7 @@ import threading
 import time
 from collections import defaultdict
 from datetime import datetime
+from typing import cast
 
 from alpaca.data.enums import DataFeed
 from alpaca.data.live import StockDataStream
@@ -143,7 +144,7 @@ async def handle_stock_status(status):
 
 async def start_global_stock_stream(
     symbols: list[str],
-    data_types: list[str] = None,  # type: ignore[assignment]
+    data_types: list[str] | None = None,
     feed: str = "sip",
     duration_seconds: int | None = None,
     buffer_size_per_symbol: int | None = None,
@@ -619,7 +620,7 @@ async def stream_aware_price_monitor(symbol: str, analysis_seconds: int = 10) ->
             result += (
                 f"  └── Spread: {spread_pct:.3f}% {'(Tight)' if spread_pct < 0.5 else '(Wide)'}\n"
             )
-            trade_count = int(volume_analysis.get("trade_count", 0))  # type: ignore[call-overload]
+            trade_count = cast(int, volume_analysis.get("trade_count", 0))
             result += f"  └── Liquidity: {'Good' if isinstance(trade_count, int) and trade_count > 5 else 'Limited'}\n"
 
         return result

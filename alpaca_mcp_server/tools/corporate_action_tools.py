@@ -3,6 +3,7 @@
 from datetime import date, timedelta
 
 from alpaca.trading.enums import CorporateActionDateType, CorporateActionType
+from alpaca.trading.models import CorporateActionAnnouncement
 from alpaca.trading.requests import GetCorporateAnnouncementsRequest
 
 from ..config.settings import get_trading_client

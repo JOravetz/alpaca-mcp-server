@@ -1,7 +1,7 @@
 """Watchlist management tools."""
 
-from alpaca.trading.requests import CreateWatchlistRequest, UpdateWatchlistRequest
 from alpaca.trading.models import Watchlist
+from alpaca.trading.requests import CreateWatchlistRequest, UpdateWatchlistRequest
 
 from ..config.settings import get_trading_client
 

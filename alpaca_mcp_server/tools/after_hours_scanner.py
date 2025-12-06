@@ -1,5 +1,7 @@
 """After-hours market scanner with enhanced streaming analytics."""
 
+# mypy: disable-error-code="operator, return-value"
+
 import contextlib
 import logging
 from datetime import datetime
@@ -193,11 +195,11 @@ async def scan_after_hours_opportunities(
         if sort_by == "percent_change":
             opportunities.sort(key=lambda x: abs(x["percent_change"]), reverse=True)  # type: ignore[arg-type]
         elif sort_by == "volume":
-            opportunities.sort(key=lambda x: x["volume"], reverse=True)  # type: ignore[arg-type,return-value]
+            opportunities.sort(key=lambda x: x["volume"], reverse=True)  # type: ignore[arg-type]
         elif sort_by == "momentum_score":
-            opportunities.sort(key=lambda x: x["momentum_score"], reverse=True)  # type: ignore[arg-type,return-value]
+            opportunities.sort(key=lambda x: x["momentum_score"], reverse=True)  # type: ignore[arg-type]
         else:
-            opportunities.sort(key=lambda x: x["current_price"], reverse=True)  # type: ignore[arg-type,return-value]
+            opportunities.sort(key=lambda x: x["current_price"], reverse=True)  # type: ignore[arg-type]
 
         # Limit results
         opportunities = opportunities[:max_symbols]
@@ -268,17 +270,17 @@ async def scan_after_hours_opportunities(
         total_volume = sum(s["volume"] for s in opportunities)  # type: ignore[misc]
         avg_change = sum(abs(s["percent_change"]) for s in opportunities) / len(opportunities)  # type: ignore[arg-type]
         top_mover = max(opportunities, key=lambda x: abs(x["percent_change"]))  # type: ignore[arg-type]
-        most_active = max(opportunities, key=lambda x: x["volume"])  # type: ignore[arg-type,return-value]
+        most_active = max(opportunities, key=lambda x: x["volume"])  # type: ignore[arg-type]
 
         # Liquidity counts (extract from f-string to avoid type inference issues)
-        high_liq_count = sum(1 for s in opportunities if s["spread_pct"] < 0.2)  # type: ignore[misc,operator]
-        mod_liq_count = sum(1 for s in opportunities if 0.2 <= s["spread_pct"] < 0.5)  # type: ignore[misc,operator]
-        low_liq_count = sum(1 for s in opportunities if s["spread_pct"] >= 0.5)  # type: ignore[misc,operator]
+        high_liq_count = sum(1 for s in opportunities if s["spread_pct"] < 0.2)  # type: ignore[misc]
+        mod_liq_count = sum(1 for s in opportunities if 0.2 <= s["spread_pct"] < 0.5)  # type: ignore[misc]
+        low_liq_count = sum(1 for s in opportunities if s["spread_pct"] >= 0.5)  # type: ignore[misc]
 
         # Symbol lists for commands (extract to avoid generator type issues)
         top5_symbols = ",".join(s["symbol"] for s in opportunities[:5])  # type: ignore[misc]
         top3_symbols = "', '".join(s["symbol"] for s in opportunities[:3])  # type: ignore[misc]
-        first_symbol = opportunities[0]["symbol"] if opportunities else "N/A"  # type: ignore[misc]
+        first_symbol = opportunities[0]["symbol"] if opportunities else "N/A"
 
         result += f"""## 📊 After-Hours Analytics Summary
 

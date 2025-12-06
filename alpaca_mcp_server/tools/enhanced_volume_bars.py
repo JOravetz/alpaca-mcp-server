@@ -18,6 +18,8 @@ Key advantages over time bars:
 - Better suited for machine learning models
 """
 
+# mypy: disable-error-code="operator, misc"
+
 import logging
 from collections import deque
 from collections.abc import Callable
@@ -350,8 +352,8 @@ class UniversalBarAggregator:
         buy_ratio = (1 + direction) / 2  # Convert [-1, 1] to [0, 1]
         sell_ratio = 1 - buy_ratio
 
-        self.buy_ticks += trade_count * buy_ratio  # type: ignore[assignment,operator]
-        self.sell_ticks += trade_count * sell_ratio  # type: ignore[assignment,operator]
+        self.buy_ticks += trade_count * buy_ratio  # type: ignore[assignment]
+        self.sell_ticks += trade_count * sell_ratio  # type: ignore[assignment]
         self.buy_volume += bar.volume * buy_ratio
         self.sell_volume += bar.volume * sell_ratio
         self.buy_dollars += bar_value * buy_ratio
@@ -489,7 +491,7 @@ class UniversalBarAggregator:
         if total_volume > 0:
             vwap = (
                 sum(
-                    bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume  # type: ignore[misc,operator]
+                    bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume  # type: ignore[operator]
                     for bar in self.current_bars
                 )
                 / total_volume
@@ -669,10 +671,14 @@ class UniversalBarAggregator:
 
         if buy_signals > sell_signals:
             signal = "BUY"
-            confidence = np.mean([c for s, c in zip(signals, confidence_scores, strict=False) if s == "BUY"])
+            confidence = np.mean(
+                [c for s, c in zip(signals, confidence_scores, strict=False) if s == "BUY"]
+            )
         elif sell_signals > buy_signals:
             signal = "SELL"
-            confidence = np.mean([c for s, c in zip(signals, confidence_scores, strict=False) if s == "SELL"])
+            confidence = np.mean(
+                [c for s, c in zip(signals, confidence_scores, strict=False) if s == "SELL"]
+            )
         else:
             signal = "NEUTRAL"
             confidence = 0.0

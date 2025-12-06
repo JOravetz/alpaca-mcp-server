@@ -70,30 +70,31 @@ class AlertSystem:
         """
         try:
             # Create alert object
-            alert = {
+            channels_sent_list: list[str] = []
+            alert: dict[str, Any] = {
                 "id": f"alert_{int(datetime.now(UTC).timestamp())}",
                 "timestamp": datetime.now(UTC).isoformat(),
                 "title": title,
                 "message": message,
                 "priority": priority,
                 "metadata": metadata or {},
-                "channels_sent": [],
+                "channels_sent": channels_sent_list,
             }
 
             # Send through each configured channel
-            tasks = []
-            channels_used = []
+            tasks: list[Any] = []
+            channels_used: list[str] = []
 
             if "file" in self.channels:
                 tasks.append(self._send_file_alert(alert))
                 channels_used.append("file")
 
             if "console" in self.channels:
-                tasks.append(self._send_console_alert(alert))  # type: ignore[arg-type]
+                tasks.append(self._send_console_alert(alert))
                 channels_used.append("console")
 
             if "desktop" in self.channels:
-                tasks.append(self._send_desktop_alert(alert))  # type: ignore[arg-type]
+                tasks.append(self._send_desktop_alert(alert))
                 channels_used.append("desktop")
 
             if "discord" in self.channels and self.discord_webhook:
@@ -106,7 +107,7 @@ class AlertSystem:
             # Track which channels succeeded
             for i, result in enumerate(results):
                 if not isinstance(result, Exception):
-                    alert["channels_sent"].append(channels_used[i])  # type: ignore[attr-defined]
+                    channels_sent_list.append(channels_used[i])
 
             # Add to history
             self.alert_history.append(alert)
@@ -144,7 +145,7 @@ class AlertSystem:
             self.logger.error(f"Error sending file alert: {e}")
             return False
 
-    async def _send_console_alert(self, alert: dict) -> None:
+    async def _send_console_alert(self, alert: dict) -> bool:
         """Send alert to console/terminal"""
         try:
             priority = alert["priority"]
@@ -171,13 +172,13 @@ class AlertSystem:
             )
 
             print(console_msg)
-            return True  # type: ignore[return-value]
+            return True
 
         except Exception as e:
             self.logger.error(f"Error sending console alert: {e}")
-            return False  # type: ignore[return-value]
+            return False
 
-    async def _send_desktop_alert(self, alert: dict) -> None:
+    async def _send_desktop_alert(self, alert: dict) -> bool:
         """Send desktop notification (Linux notify-send)"""
         try:
             title = alert["title"]
@@ -210,17 +211,17 @@ class AlertSystem:
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode == 0:
-                return True  # type: ignore[return-value]
+                return True
             else:
                 self.logger.warning(f"Desktop notification failed: {result.stderr}")
-                return False  # type: ignore[return-value]
+                return False
 
         except FileNotFoundError:
             # notify-send not available (not Linux or not installed)
-            return False  # type: ignore[return-value]
+            return False
         except Exception as e:
             self.logger.error(f"Error sending desktop alert: {e}")
-            return False  # type: ignore[return-value]
+            return False
 
     async def _send_discord_alert(self, alert: dict) -> bool:
         """Send alert to Discord webhook"""

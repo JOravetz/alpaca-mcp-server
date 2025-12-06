@@ -2,16 +2,16 @@
 
 from datetime import datetime, time
 from typing import Any
-import pytz
 
+import pytz
 from alpaca.trading.enums import QueryOrderStatus
-from alpaca.trading.requests import GetOrdersRequest
 from alpaca.trading.models import Order
+from alpaca.trading.requests import GetOrdersRequest
 
 from ..config.settings import get_trading_client
 
 # NYC timezone for proper market time display
-NYC_TZ = pytz.timezone('America/New_York')
+NYC_TZ = pytz.timezone("America/New_York")
 
 
 def format_currency(value: float) -> str:
@@ -52,57 +52,67 @@ async def get_single_day_pnl(
             limit=10000,
         )
 
-        orders = client.get_orders(orders_request)
+        all_orders = client.get_orders(orders_request)
+
+        # Filter to only Order objects (not error strings)
+        orders: list[Order] = [o for o in all_orders if isinstance(o, Order)]
 
         # Filter by symbol if specified
-        if symbol_filter:
+        if symbol_filter is not None:
             orders = [
                 order
                 for order in orders
-                if isinstance(order, Order) and order.symbol.upper() == symbol_filter.upper()  # type: ignore[union-attr]
+                if order.symbol and order.symbol.upper() == symbol_filter.upper()
             ]
 
         # Process trades for this day only
         trades_by_symbol: dict[str, dict[str, Any]] = {}
-        total_volume = 0
+        total_volume = 0.0
         trade_count = 0
 
         for order in orders:
             # STRICT date filtering - only trades filled on the target date
-            if not order.filled_at or order.filled_at.date() != target_date:  # type: ignore[union-attr]
+            if not order.filled_at or order.filled_at.date() != target_date:
                 continue
 
-            if not order.filled_avg_price or not order.filled_qty:  # type: ignore[union-attr]
+            if not order.filled_avg_price or not order.filled_qty:
                 continue
 
-            trade_value = float(order.filled_avg_price) * float(order.filled_qty)  # type: ignore[union-attr]
+            trade_value = float(order.filled_avg_price) * float(order.filled_qty)
 
             # Apply minimum trade value filter
             if trade_value < min_trade_value:
                 continue
 
-            symbol = order.symbol  # type: ignore[union-attr]
+            # Skip if no symbol
+            if not order.symbol:
+                continue
+
+            symbol = order.symbol
             if symbol not in trades_by_symbol:
-                trades_by_symbol[symbol] = {  # type: ignore[index]
+                trades_by_symbol[symbol] = {
                     "trades": [],
                     "realized_pnl": 0,
                     "volume": 0,
                     "trade_count": 0,
                 }
 
+            # Safely access attributes after null checks
+            side_value = order.side.value if order.side else "unknown"
+
             trade_data = {
-                "side": order.side.value,  # type: ignore[union-attr]
-                "qty": float(order.filled_qty),  # type: ignore[union-attr]
-                "price": float(order.filled_avg_price),  # type: ignore[union-attr]
+                "side": side_value,
+                "qty": float(order.filled_qty),
+                "price": float(order.filled_avg_price),
                 "value": trade_value,
-                "time": order.filled_at.astimezone(NYC_TZ).strftime("%H:%M:%S EDT"),  # type: ignore[union-attr]
-                "order_id": order.id,  # type: ignore[union-attr]
+                "time": order.filled_at.astimezone(NYC_TZ).strftime("%H:%M:%S EDT"),
+                "order_id": order.id,
             }
 
-            trades_by_symbol[symbol]["trades"].append(trade_data)  # type: ignore[index]
-            trades_by_symbol[symbol]["volume"] += trade_value  # type: ignore[index]
-            trades_by_symbol[symbol]["trade_count"] += 1  # type: ignore[index]
-            total_volume += trade_value  # type: ignore[assignment]
+            trades_by_symbol[symbol]["trades"].append(trade_data)
+            trades_by_symbol[symbol]["volume"] += trade_value
+            trades_by_symbol[symbol]["trade_count"] += 1
+            total_volume += trade_value
             trade_count += 1
 
         # Calculate P&L for each symbol

@@ -54,7 +54,9 @@ def create_headless_plot(results, plot_dir, dpi=100):
 
         # Convert timestamps to datetime objects for plotting
         try:
-            from peak_trough_detection_plot import convert_to_nyc_timezone  # type: ignore[import-not-found]
+            from peak_trough_detection_plot import (
+                convert_to_nyc_timezone,  # type: ignore[import-not-found]
+            )
 
             timestamps_dt = [convert_to_nyc_timezone(ts) for ts in timestamps]
             use_datetime = True

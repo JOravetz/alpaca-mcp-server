@@ -12,6 +12,7 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Any
 
 # Import existing MCP tools for position data
 from ..tools.account_tools import get_positions

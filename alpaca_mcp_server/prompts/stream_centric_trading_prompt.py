@@ -113,9 +113,7 @@ async def stream_centric_trading_cycle(symbols: str = "AUTO") -> str:
         result += f"✅ Peak/Trough Analysis: {'Available' if 'BUY' in peak_trough_analysis or 'SELL' in peak_trough_analysis else 'No signals'}\n"  # type: ignore[operator]
         result += f"✅ Account Status: {'Ready' if '$' in account_info else 'Issues detected'}\n"  # type: ignore[operator]
         result += f"✅ Existing Positions: {'None' if 'No positions' in positions else 'Positions found'}\n"  # type: ignore[operator]
-        result += (
-            f"✅ Open Orders: {'None' if 'No open orders' in open_orders else 'Orders pending'}\n\n"  # type: ignore[operator]
-        )
+        result += f"✅ Open Orders: {'None' if 'No open orders' in open_orders else 'Orders pending'}\n\n"  # type: ignore[operator]
 
         # PHASE 3: STREAM-FED QUALIFICATION
         result += "💡 Phase 3: Stream-Fed Real-Time Qualification\n"
@@ -249,7 +247,9 @@ async def stream_concurrent_monitoring_cycle(symbols: str = "AUTO") -> str:
     """
     try:
         # Import monitoring tools
-        from alpaca_mcp_server.tools.account_portfolio_tools import get_positions  # type: ignore[import-not-found]
+        from alpaca_mcp_server.tools.account_portfolio_tools import (
+            get_positions,  # type: ignore[import-not-found]
+        )
         from alpaca_mcp_server.tools.peak_trough_analysis_tool import analyze_peaks_and_troughs
         from alpaca_mcp_server.tools.streaming_tools import stream_aware_price_monitor
 

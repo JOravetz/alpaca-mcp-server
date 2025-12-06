@@ -933,7 +933,9 @@ async def execute_tool(tool_name: str, request: ToolExecutionRequest) -> Executi
 
 
 @app.get("/api/execute/resource/{resource_uri:path}", response_model=ExecutionResponse)
-async def get_resource(resource_uri: str, request: ResourceRequest | None = None) -> ExecutionResponse:
+async def get_resource(
+    resource_uri: str, request: ResourceRequest | None = None
+) -> ExecutionResponse:
     """Get data from a specific MCP resource."""
 
     # Resource function mapping

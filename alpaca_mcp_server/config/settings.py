@@ -22,7 +22,7 @@ load_dotenv()
 class Settings:
     """Configuration settings for Alpaca MCP Server."""
 
-    def __init__(self) -> None:
+    def __init__(self, require_credentials: bool = True) -> None:
         # API credentials - support both naming conventions
         self.api_key = os.getenv("APCA_API_KEY_ID") or os.getenv("ALPACA_API_KEY")
         self.api_secret = os.getenv("APCA_API_SECRET_KEY") or os.getenv("ALPACA_SECRET_KEY")
@@ -41,8 +41,20 @@ class Settings:
         self.server_name = "alpaca-trading"
         self.version = "2.0.0"
 
-        # Validate required credentials
-        if not self.api_key or not self.api_secret:
+        # Track if credentials are available
+        self.credentials_available = bool(self.api_key and self.api_secret)
+
+        # Validate required credentials (can be disabled for testing/CI)
+        # Check CI_MODE or TESTING environment variables to allow running without credentials
+        ci_mode = os.getenv("CI", "").lower() in ["true", "1", "yes"]
+        testing_mode = os.getenv("TESTING", "").lower() in ["true", "1", "yes"]
+
+        if (
+            require_credentials
+            and not self.credentials_available
+            and not ci_mode
+            and not testing_mode
+        ):
             raise ValueError("Alpaca API credentials not found in environment variables.")
 
 

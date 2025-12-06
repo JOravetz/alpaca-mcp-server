@@ -46,6 +46,10 @@ dependencies = [
     "playwright>=1.54.0",
     "onnxruntime>=1.22.1",
     "soundfile>=0.13.1",
+    "playwright-stealth>=2.0.0",
+    "selenium-wire>=5.1.0",
+    "nodriver>=0.38.post1",
+    "drissionpage>=4.1.1.2",
 ]
 
 [project.scripts]
@@ -121,11 +125,15 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
     "ARG001", # unused function argument
+    "F841",  # local variable is assigned but never used (dev convenience)
+    "SIM108",  # use ternary operator (style preference)
+    "B904",  # raise with 'from' in except clause (minor)
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**/*.py" = ["S101"]
+"tests/**/*.py" = ["S101", "F841"]
+"**/tools/*.py" = ["E402"]  # module level import not at top (some tools have setup at top)
 
 [tool.mypy]
 python_version = "3.12"

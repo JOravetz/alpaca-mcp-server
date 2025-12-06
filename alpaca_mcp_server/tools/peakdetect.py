@@ -922,20 +922,28 @@ def peakdetect_savgol(y_axis, x_axis=None, window_length=5, polyorder=3, delta=1
     max_peaks = []
     for idx in peak_indices:
         # Verify this is a true peak by checking derivative sign change
-        if idx > 0 and idx < len(first_derivative) - 1 and (
-            first_derivative[idx - 1] > 0
-            and first_derivative[idx + 1] < 0
-            or abs(first_derivative[idx]) < np.std(first_derivative) * 0.1
+        if (
+            idx > 0
+            and idx < len(first_derivative) - 1
+            and (
+                first_derivative[idx - 1] > 0
+                and first_derivative[idx + 1] < 0
+                or abs(first_derivative[idx]) < np.std(first_derivative) * 0.1
+            )
         ):
             max_peaks.append((x_axis[idx], y_axis[idx]))
 
     min_peaks = []
     for idx in trough_indices:
         # Verify this is a true trough by checking derivative sign change
-        if idx > 0 and idx < len(first_derivative) - 1 and (
-            first_derivative[idx - 1] < 0
-            and first_derivative[idx + 1] > 0
-            or abs(first_derivative[idx]) < np.std(first_derivative) * 0.1
+        if (
+            idx > 0
+            and idx < len(first_derivative) - 1
+            and (
+                first_derivative[idx - 1] < 0
+                and first_derivative[idx + 1] > 0
+                or abs(first_derivative[idx]) < np.std(first_derivative) * 0.1
+            )
         ):
             min_peaks.append((x_axis[idx], y_axis[idx]))
 

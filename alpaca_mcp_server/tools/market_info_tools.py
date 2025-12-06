@@ -1,4 +1,3 @@
-from alpaca.trading.models import Clock
 """Market information and calendar tools."""
 
 from datetime import datetime

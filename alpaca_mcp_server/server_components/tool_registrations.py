@@ -11,6 +11,7 @@ from ..tools import (
     monitoring_tools,
     options_tools,
     order_tools,
+    perplexity_tools,
     position_tools,
     price_trigger_tools,
     streaming_tools,
@@ -20,7 +21,6 @@ from ..tools import (
 from ..tools.c_peak_trough_wrapper import analyze_peaks_troughs_fast as c_peak_trough_fast
 from ..tools.c_peak_trough_wrapper import compare_implementations as c_compare_implementations
 from ..tools.cleanup_tool import cleanup_server
-from ..tools import perplexity_tools
 from ..tools.peak_trough_analysis_tool import (
     analyze_peaks_and_troughs_with_plot_py as peak_trough_analysis,
 )
@@ -47,7 +47,9 @@ def register_account_tools(mcp):
         return await account_tools.get_open_position(symbol)
 
     @mcp.tool()
-    async def close_position(symbol: str, qty: str | None = None, percentage: str | None = None) -> str:
+    async def close_position(
+        symbol: str, qty: str | None = None, percentage: str | None = None
+    ) -> str:
         """Close a specific position."""
         return await position_tools.close_position(symbol, qty, percentage)
 
@@ -306,7 +308,10 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
 
     @mcp.tool()
     async def compare_bar_types(
-        symbol: str, days: int = 1, time_bars_minutes: int = 5, volume_threshold: float | None = None
+        symbol: str,
+        days: int = 1,
+        time_bars_minutes: int = 5,
+        volume_threshold: float | None = None,
     ) -> str:
         """
         Compare statistical properties of time bars vs volume bars.
@@ -405,7 +410,7 @@ def register_scanner_tools(mcp):
         symbols_to_scan = symbols
         if symbol_file:
             try:
-                with open(symbol_file, 'r') as f:
+                with open(symbol_file) as f:
                     file_symbols = [line.strip().upper() for line in f if line.strip()]
                 symbols_to_scan = ",".join(file_symbols)
             except Exception as e:
@@ -615,7 +620,9 @@ def register_watchlist_tools(mcp):
         return await watchlist_tools.get_watchlists()
 
     @mcp.tool()
-    async def update_watchlist(watchlist_id: str, name: str | None = None, symbols: list | None = None) -> str:
+    async def update_watchlist(
+        watchlist_id: str, name: str | None = None, symbols: list | None = None
+    ) -> str:
         """Update an existing watchlist."""
         return await watchlist_tools.update_watchlist(watchlist_id, name, symbols)
 

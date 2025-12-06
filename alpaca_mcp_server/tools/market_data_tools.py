@@ -1,12 +1,14 @@
 """Market data tools for Alpaca MCP Server."""
 
 from datetime import datetime, timedelta
+from typing import cast
 
 import pytz
 from alpaca.common.enums import SupportedCurrencies
 from alpaca.data.enums import Adjustment, DataFeed
 
 # Alpaca imports for market data
+from alpaca.data.models import BarSet
 from alpaca.data.requests import (
     StockBarsRequest,
     StockLatestBarRequest,
@@ -177,8 +179,10 @@ async def get_stock_bars(symbol: str, days: int = 5) -> str:
 
         bars_data = client.get_stock_bars(request_params)
 
-        if symbol in bars_data and bars_data[symbol]:
-            bars = bars_data[symbol]
+        # BarSet stores data in .data attribute, not directly accessible via 'in'
+        bars_dict = bars_data.data if hasattr(bars_data, "data") else bars_data
+        if symbol in bars_dict and bars_dict[symbol]:
+            bars = bars_dict[symbol]
             result = f"Historical Price Bars for {symbol} (Last {len(bars)} trading days):\n"
             result += "=" * 60 + "\n"
 
@@ -363,8 +367,12 @@ async def get_stock_bars_intraday(
 
         bars_data = client.get_stock_bars(request_params)
 
+        # Type narrowing: ensure we have a BarSet object
+        if not isinstance(bars_data, BarSet):
+            return f"Error: Unexpected response type from get_stock_bars: {type(bars_data)}"
+
         # Check if we have any data at all
-        if not bars_data.data:  # type: ignore[union-attr]
+        if not bars_data.data:
             return f"""No intraday data found for symbols {", ".join(symbol_list)} in timeframe {timeframe}.
 
 Possible reasons:
@@ -382,7 +390,7 @@ Suggestions:
         # For single symbol, provide detailed analysis
         if len(symbol_list) == 1:
             symbol = symbol_list[0]
-            if symbol not in bars_data.data or not bars_data.data[symbol]:  # type: ignore[union-attr]
+            if symbol not in bars_data.data or not bars_data.data[symbol]:
                 return f"""No intraday data found for {symbol} in timeframe {timeframe}.
 
 Possible reasons:
@@ -397,7 +405,7 @@ Suggestions:
 • Verify {symbol} is valid and actively traded
 • Check if market was open during specified time range"""
 
-            bars = list(bars_data.data[symbol])  # type: ignore[union-attr]
+            bars = list(bars_data.data[symbol])
 
             # Professional analysis starts here
             result = f"""# Professional Intraday Analysis: {symbol}
@@ -515,11 +523,11 @@ Data Feed: {feed.upper()}
 
             # Analyze each symbol
             for symbol in symbol_list:
-                if symbol not in bars_data.data or not bars_data.data[symbol]:  # type: ignore[union-attr]
+                if symbol not in bars_data.data or not bars_data.data[symbol]:
                     result += f"\n## {symbol} - No Data Available\n"
                     continue
 
-                bars = list(bars_data.data[symbol])  # type: ignore[union-attr]
+                bars = list(bars_data.data[symbol])
                 if len(bars) < 2:
                     result += f"\n## {symbol} - Insufficient Data\n"
                     continue
@@ -575,8 +583,8 @@ Data Feed: {feed.upper()}
             # Collect metrics for ranking
             symbol_metrics = []
             for symbol in symbol_list:
-                if symbol in bars_data.data and bars_data.data[symbol]:  # type: ignore[union-attr]
-                    bars = list(bars_data.data[symbol])  # type: ignore[union-attr]
+                if symbol in bars_data.data and bars_data.data[symbol]:
+                    bars = list(bars_data.data[symbol])
                     if len(bars) >= 2:
                         first_bar = bars[0]
                         last_bar = bars[-1]
@@ -603,22 +611,22 @@ Data Feed: {feed.upper()}
                             }
                         )
 
-            # Sort by return
-            symbol_metrics.sort(key=lambda x: x["return"], reverse=True)
+            # Sort by return (cast to float for type safety)
+            symbol_metrics.sort(key=lambda x: cast(float, x["return"]), reverse=True)
 
             result += "### By Performance\n"
             for i, m in enumerate(symbol_metrics[:10], 1):
                 result += f"{i}. {m['symbol']}: {m['return']:+.2f}% (${m['last_price']:.2f})\n"
 
-            # Sort by volume
-            symbol_metrics.sort(key=lambda x: x["volume"], reverse=True)
+            # Sort by volume (cast to int for type safety)
+            symbol_metrics.sort(key=lambda x: cast(int, x["volume"]), reverse=True)
 
             result += "\n### By Volume\n"
             for i, m in enumerate(symbol_metrics[:10], 1):
                 result += f"{i}. {m['symbol']}: {m['volume']:,} shares\n"
 
-            # Sort by volatility
-            symbol_metrics.sort(key=lambda x: x["volatility"], reverse=True)
+            # Sort by volatility (cast to float for type safety)
+            symbol_metrics.sort(key=lambda x: cast(float, x["volatility"]), reverse=True)
 
             result += "\n### By Volatility\n"
             for i, m in enumerate(symbol_metrics[:10], 1):
@@ -727,10 +735,11 @@ async def get_stock_snapshots(symbols: str | list[str]) -> str:
                         eastern = pytz.timezone("America/New_York")
                         minute_time_nyc = minute_bar.timestamp.astimezone(eastern)
 
-                        # Get trade count
+                        # Get trade count (if available)
                         trades = (
                             int(float(minute_bar.trade_count))
-                            if isinstance(minute_bar, BarSet)  # type: ignore[name-defined]
+                            if hasattr(minute_bar, "trade_count")
+                            and minute_bar.trade_count is not None
                             else 0
                         )
 

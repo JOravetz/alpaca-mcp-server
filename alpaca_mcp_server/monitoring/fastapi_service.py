@@ -1,9 +1,10 @@
-from alpaca.trading.models import Position
 """FastAPI-based Hybrid Trading Service
 
 Production-ready monitoring service with REST API, WebSocket streaming,
 and persistent background monitoring for automated trading signals.
 """
+
+# mypy: disable-error-code="union-attr, attr-defined"
 
 import asyncio
 import json
@@ -17,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 import uvicorn
+from alpaca.trading.models import Position
 from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
@@ -172,9 +174,7 @@ class MonitoringServiceAPI:
             self.logger.warning(f"Some services failed to initialize: {e}")
             # Initialize with minimal fallback services to ensure API responses work
             self.position_tracker = (
-                PositionTracker()
-                if not isinstance(self, Position)
-                else self.position_tracker
+                PositionTracker() if not isinstance(self, Position) else self.position_tracker
             )
             self.signal_detector = (
                 SignalDetector() if not isinstance(self, Position) else self.signal_detector
@@ -1538,7 +1538,7 @@ class MonitoringServiceAPI:
                 float(p.market_value) for p in self.position_tracker.positions.values()
             ),
             "total_unrealized_pl": sum(
-                float(p.unrealized_pl) for p in self.position_tracker.positions.values()  # type: ignore[attr-defined,misc]
+                float(p.unrealized_pl) for p in self.position_tracker.positions.values()  # type: ignore[misc]
             ),
         }
 
@@ -2386,7 +2386,9 @@ class MonitoringServiceAPI:
         except Exception as e:
             self.logger.error(f"Error in position monitoring: {e}")
 
-    async def _execute_profit_sell(self, symbol: str, quantity: float, reason: str, details: str) -> None:
+    async def _execute_profit_sell(
+        self, symbol: str, quantity: float, reason: str, details: str
+    ) -> None:
         """Execute immediate profit-taking sell order"""
         try:
             from ..tools.market_data_tools import get_stock_quote
@@ -3033,10 +3035,7 @@ class MonitoringServiceAPI:
 
             # Log position changes
             position_count = len(self.position_tracker.positions)
-            if (
-                isinstance(self, Position)
-                and self._last_position_count != position_count
-            ):
+            if isinstance(self, Position) and self._last_position_count != position_count:
                 change_data = {
                     "type": "position_change",
                     "previous_count": getattr(self, "_last_position_count", 0),
@@ -3689,8 +3688,8 @@ async def get_status():
                 positions_data = {
                     "count": len(positions),
                     "symbols": [p.symbol for p in positions],  # type: ignore[union-attr]
-                    "total_value": sum(float(p.market_value or 0) for p in positions),  # type: ignore[misc,union-attr]
-                    "total_pnl": sum(float(p.unrealized_pl or 0) for p in positions),  # type: ignore[misc,union-attr]
+                    "total_value": sum(float(p.market_value or 0) for p in positions),  # type: ignore[misc]
+                    "total_pnl": sum(float(p.unrealized_pl or 0) for p in positions),  # type: ignore[misc]
                 }
         except Exception as e:
             print(f"Position error: {e}")

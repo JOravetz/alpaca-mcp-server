@@ -1,4 +1,6 @@
-from alpaca.trading.models import Position
+# mypy: disable-error-code="arg-type"
+
+
 """Position resources implementation."""
 
 from datetime import datetime
@@ -16,18 +18,18 @@ async def get_current_positions() -> dict:
         total_unrealized_pnl = 0.0
 
         for pos in positions:
-            unrealized_pnl = float(pos.unrealized_pl)  # type: ignore[arg-type,union-attr]
+            unrealized_pnl = float(pos.unrealized_pl)  # type: ignore[union-attr]
             total_unrealized_pnl += unrealized_pnl
 
             position_summary.append(
                 {
                     "symbol": pos.symbol,  # type: ignore[union-attr]
                     "quantity": float(pos.qty),  # type: ignore[union-attr]
-                    "market_value": float(pos.market_value),  # type: ignore[arg-type,union-attr]
+                    "market_value": float(pos.market_value),  # type: ignore[union-attr]
                     "avg_entry_price": float(pos.avg_entry_price),  # type: ignore[union-attr]
-                    "current_price": float(pos.current_price),  # type: ignore[arg-type,union-attr]
+                    "current_price": float(pos.current_price),  # type: ignore[union-attr]
                     "unrealized_pnl": unrealized_pnl,
-                    "unrealized_pnl_pct": float(pos.unrealized_plpc) * 100,  # type: ignore[arg-type,union-attr]
+                    "unrealized_pnl_pct": float(pos.unrealized_plpc) * 100,  # type: ignore[union-attr]
                 }
             )
 

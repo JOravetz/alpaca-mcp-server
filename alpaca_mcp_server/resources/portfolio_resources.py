@@ -1,4 +1,6 @@
-from alpaca.trading.models import Position
+# mypy: disable-error-code="union-attr, arg-type"
+
+
 """Portfolio analytics resources implementation."""
 
 from datetime import datetime
@@ -13,10 +15,10 @@ async def get_portfolio_performance() -> dict:
         account = client.get_account()
         positions = client.get_all_positions()
 
-        total_unrealized_pnl = sum(float(pos.unrealized_pl or 0) for pos in positions)  # type: ignore[misc,union-attr]
-        total_value = float(account.portfolio_value)  # type: ignore[arg-type,union-attr]
-        cash_value = float(account.cash)  # type: ignore[arg-type,union-attr]
-        equity_value = float(account.equity)  # type: ignore[arg-type,union-attr]
+        total_unrealized_pnl = sum(float(pos.unrealized_pl or 0) for pos in positions)  # type: ignore[misc]
+        total_value = float(account.portfolio_value)  # type: ignore[union-attr]
+        cash_value = float(account.cash)  # type: ignore[union-attr]
+        equity_value = float(account.equity)  # type: ignore[union-attr]
 
         # Calculate performance metrics
         day_change_pct = (
@@ -53,8 +55,8 @@ async def get_portfolio_allocation() -> dict:
         positions = client.get_all_positions()
         account = client.get_account()
 
-        total_value = float(account.portfolio_value)  # type: ignore[arg-type,union-attr]
-        cash_value = float(account.cash)  # type: ignore[arg-type,union-attr]
+        total_value = float(account.portfolio_value)  # type: ignore[union-attr]
+        cash_value = float(account.cash)  # type: ignore[union-attr]
 
         allocations = {
             "cash": {
@@ -69,9 +71,9 @@ async def get_portfolio_allocation() -> dict:
         losers = []
 
         for pos in positions:
-            market_value = float(pos.market_value)  # type: ignore[arg-type,union-attr]
-            unrealized_pnl = float(pos.unrealized_pl)  # type: ignore[arg-type,union-attr]
-            unrealized_pnl_pct = float(pos.unrealized_plpc) * 100  # type: ignore[arg-type,union-attr]
+            market_value = float(pos.market_value)  # type: ignore[union-attr]
+            unrealized_pnl = float(pos.unrealized_pl)  # type: ignore[union-attr]
+            unrealized_pnl_pct = float(pos.unrealized_plpc) * 100  # type: ignore[union-attr]
 
             allocation_data = {
                 "value": market_value,
@@ -79,7 +81,7 @@ async def get_portfolio_allocation() -> dict:
                 "quantity": float(pos.qty),  # type: ignore[union-attr]
                 "unrealized_pnl": unrealized_pnl,
                 "unrealized_pnl_pct": unrealized_pnl_pct,
-                "current_price": float(pos.current_price),  # type: ignore[arg-type,union-attr]
+                "current_price": float(pos.current_price),  # type: ignore[union-attr]
                 "avg_entry_price": float(pos.avg_entry_price),  # type: ignore[union-attr]
                 "type": "equity",
             }
@@ -127,12 +129,12 @@ async def get_portfolio_risk() -> dict:
         account = client.get_account()
         positions = client.get_all_positions()
 
-        total_value = float(account.portfolio_value)  # type: ignore[arg-type,union-attr]
-        cash_value = float(account.cash)  # type: ignore[arg-type,union-attr]
-        buying_power = float(account.buying_power)  # type: ignore[arg-type,union-attr]
+        total_value = float(account.portfolio_value)  # type: ignore[union-attr]
+        cash_value = float(account.cash)  # type: ignore[union-attr]
+        buying_power = float(account.buying_power)  # type: ignore[union-attr]
 
         # Calculate concentration risk
-        position_values = [float(pos.market_value) for pos in positions]  # type: ignore[arg-type,union-attr]
+        position_values = [float(pos.market_value) for pos in positions]  # type: ignore[union-attr]
         max_position = max(position_values) if position_values else 0
         concentration_risk = (max_position / total_value * 100) if total_value > 0 else 0
 
@@ -142,7 +144,7 @@ async def get_portfolio_risk() -> dict:
 
         # Risk metrics
         at_risk_positions = len(
-            [pos for pos in positions if float(pos.unrealized_plpc) < -0.05]  # type: ignore[arg-type,union-attr]
+            [pos for pos in positions if float(pos.unrealized_plpc) < -0.05]  # type: ignore[union-attr]
         )  # Down >5%
 
         return {

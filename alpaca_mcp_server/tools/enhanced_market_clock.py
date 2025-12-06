@@ -1,4 +1,3 @@
-from alpaca.trading.models import Clock
 """Enhanced market clock with extended hours awareness."""
 
 from datetime import time, timedelta

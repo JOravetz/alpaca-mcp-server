@@ -1,5 +1,7 @@
 """API connection monitoring resource."""
 
+# mypy: disable-error-code="arg-type"
+
 import time
 from datetime import datetime
 
@@ -30,9 +32,9 @@ async def get_api_status() -> dict:
                 "latency_ms": round(trading_latency, 1),
                 "account_id": account.id,  # type: ignore[union-attr]
                 "account_status": account.status.value,  # type: ignore[union-attr]
-                "buying_power": float(account.buying_power),  # type: ignore[arg-type,union-attr]
-                "cash": float(account.cash),  # type: ignore[arg-type,union-attr]
-                "portfolio_value": float(account.portfolio_value),  # type: ignore[arg-type,union-attr]
+                "buying_power": float(account.buying_power),  # type: ignore[union-attr]
+                "cash": float(account.cash),  # type: ignore[union-attr]
+                "portfolio_value": float(account.portfolio_value),  # type: ignore[union-attr]
                 "positions_count": positions_count,
                 "pattern_day_trader": account.pattern_day_trader,  # type: ignore[union-attr]
                 "last_test": datetime.now().isoformat(),

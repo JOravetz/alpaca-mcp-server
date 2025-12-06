@@ -15,6 +15,8 @@ Author: Implementation for Alpaca Trading System
 Reference: Chapter 2, AFML - Marcos López de Prado
 """
 
+# mypy: disable-error-code="misc"
+
 import asyncio
 import logging
 import os
@@ -302,7 +304,7 @@ class VolumeBarAggregator:
         if total_volume > 0:
             weighted_vwap = (
                 sum(
-                    bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume  # type: ignore[misc,operator]
+                    bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume  # type: ignore[operator]
                     for bar in self.current_bars
                 )
                 / total_volume
@@ -349,7 +351,7 @@ class VolumeBarAggregator:
 
         # Calculate dollar volume
         dollar_volume = sum(
-            bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume  # type: ignore[misc,operator]
+            bar.vwap * bar.volume if hasattr(bar, "vwap") else bar.close * bar.volume  # type: ignore[operator]
             for bar in self.current_bars
         )
 

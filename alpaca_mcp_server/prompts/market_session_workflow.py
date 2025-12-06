@@ -34,7 +34,7 @@ async def market_session_workflow(session_type: str = "full_day") -> str:
         session_results.append("- Analyzing current market session and optimal trading windows...")
 
         try:
-            from ..tools.market_info_tools import get_extended_market_clock  # type: ignore[attr-defined]
+            from ..tools.enhanced_market_clock import get_extended_market_clock
 
             market_clock = await get_extended_market_clock()
             session_results.append(f"✅ Market Clock Analysis:\n{market_clock}")
