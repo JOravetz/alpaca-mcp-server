@@ -1,0 +1,306 @@
+#!/bin/bash
+# Finviz Pre-Market Scanner
+# Usage: finviz-premarket [--json] [--gainers|--losers|--volatile|--active|--quote TICKER]
+# Fetches screener data for day-trading research - FAST single-page implementation
+#
+# NOTE: Free tier has 15-20 min delayed quotes. Elite ($24.96/mo) required for real-time.
+# Pre-market data is Elite-only. This scraper still useful for:
+# - News and sentiment analysis
+# - Screener filters (sector, technicals, analyst ratings)
+# - End-of-day analysis and watchlist building
+#
+# Speed: ~2-3 seconds per request (single page fetch)
+#
+# Examples:
+#   finviz-premarket                       # Top gainers (default)
+#   finviz-premarket --losers              # Top losers (potential shorts)
+#   finviz-premarket --volatile            # Most volatile stocks
+#   finviz-premarket --active              # Most active by volume
+#   finviz-premarket --quote NVDA          # Individual stock quote + news
+#   finviz-premarket --json                # Raw JSON output
+
+set -e
+
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+FORMAT="pretty"
+SCAN_TYPE="gainers"
+TICKER=""
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --json)
+            FORMAT="json"
+            shift
+            ;;
+        --gainers)
+            SCAN_TYPE="gainers"
+            shift
+            ;;
+        --losers)
+            SCAN_TYPE="losers"
+            shift
+            ;;
+        --volatile)
+            SCAN_TYPE="volatile"
+            shift
+            ;;
+        --active)
+            SCAN_TYPE="active"
+            shift
+            ;;
+        --quote)
+            SCAN_TYPE="quote"
+            TICKER="$2"
+            shift 2
+            ;;
+        --help|-h)
+            echo "Finviz Pre-Market Scanner"
+            echo ""
+            echo "Usage: finviz-premarket [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --gainers      Top gainers by % change (default)"
+            echo "  --losers       Top losers by % change"
+            echo "  --volatile     Most volatile stocks"
+            echo "  --active       Most active by volume"
+            echo "  --quote TICKER Individual stock quote and news"
+            echo "  --json         Output raw JSON"
+            echo "  --help         Show this help"
+            echo ""
+            echo "Examples:"
+            echo "  finviz-premarket --gainers --json"
+            echo "  finviz-premarket --quote NVDA"
+            echo ""
+            echo "Speed: ~2-3 seconds (single page fetch)"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Create temp Python script - fast single-page parsing
+TMPSCRIPT=$(mktemp /tmp/finviz_scanner.XXXXXX.py)
+
+cat > "$TMPSCRIPT" << 'PYEOF'
+import sys
+import json
+import re
+from datetime import datetime
+
+try:
+    import requests
+    from bs4 import BeautifulSoup
+except ImportError:
+    print(json.dumps({"error": "Missing dependencies. Run: pip install requests beautifulsoup4"}))
+    sys.exit(1)
+
+scan_type = sys.argv[1] if len(sys.argv) > 1 else "gainers"
+ticker = sys.argv[2] if len(sys.argv) > 2 else ""
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+}
+
+base_url = "https://finviz.com"
+
+def get_stock_quote(ticker):
+    """Get detailed quote for a single stock - scrapes quote page directly."""
+    url = f"{base_url}/quote.ashx?t={ticker}&p=d"
+    response = requests.get(url, headers=headers, timeout=15)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    result = {"ticker": ticker.upper()}
+
+    # Get company name from title
+    title = soup.find('title')
+    if title:
+        # Title is like "NVIDIA Corporation (NVDA) Stock ..."
+        match = re.match(r'([^(]+)\s*\(', title.text)
+        if match:
+            result['company'] = match.group(1).strip()
+
+    # Parse the snapshot table (key fundamentals)
+    snapshot_table = soup.find('table', class_='snapshot-table2')
+    if snapshot_table:
+        rows = snapshot_table.find_all('tr')
+        for row in rows:
+            cells = row.find_all('td')
+            # Cells come in pairs: label, value, label, value, ...
+            for i in range(0, len(cells) - 1, 2):
+                label = cells[i].text.strip()
+                value_elem = cells[i + 1]
+                value = value_elem.text.strip()
+
+                # Clean key for JSON
+                key = label.lower().replace(' ', '_').replace('/', '_').replace('.', '').replace('%', 'pct')
+                result[key] = value
+
+    # Get news
+    news = []
+    news_table = soup.find('table', id='news-table')
+    if news_table:
+        current_date = ""
+        for row in news_table.find_all('tr')[:15]:
+            cells = row.find_all('td')
+            if len(cells) >= 2:
+                time_cell = cells[0].text.strip()
+                # Time cell might be date + time or just time
+                if len(time_cell) > 10:  # Has date
+                    current_date = time_cell[:9]
+                    time_only = time_cell[9:].strip()
+                else:
+                    time_only = time_cell
+
+                link = cells[1].find('a')
+                if link:
+                    news.append({
+                        "date": current_date,
+                        "time": time_only,
+                        "headline": link.text.strip(),
+                        "source": cells[1].find('span').text.strip() if cells[1].find('span') else "",
+                        "url": link.get('href', '')
+                    })
+    result['news'] = news
+
+    # Get analyst ratings
+    ratings = []
+    ratings_outer = soup.find('table', class_='fullview-ratings-outer')
+    if ratings_outer:
+        for row in ratings_outer.find_all('tr')[:5]:
+            cells = row.find_all('td')
+            if len(cells) >= 5:
+                ratings.append({
+                    "date": cells[0].text.strip(),
+                    "action": cells[1].text.strip(),
+                    "analyst": cells[2].text.strip(),
+                    "rating": cells[3].text.strip(),
+                    "price_target": cells[4].text.strip()
+                })
+    result['analyst_ratings'] = ratings
+
+    # Get insider trading
+    insiders = []
+    insider_table = soup.find('table', class_='body-table')
+    if insider_table:
+        for row in insider_table.find_all('tr')[1:6]:  # Skip header, get 5 rows
+            cells = row.find_all('td')
+            if len(cells) >= 6:
+                insiders.append({
+                    "insider": cells[0].text.strip(),
+                    "relationship": cells[1].text.strip(),
+                    "date": cells[2].text.strip(),
+                    "transaction": cells[3].text.strip(),
+                    "shares": cells[4].text.strip(),
+                    "value": cells[5].text.strip() if len(cells) > 5 else ""
+                })
+    result['insider_trading'] = insiders
+
+    result['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    result['note'] = "Data may be 15-20 min delayed (free tier)"
+    return result
+
+
+def run_screener(scan_type):
+    """Run screener using predefined signal URLs - FAST single page fetch."""
+
+    # Use predefined signal URLs for instant results
+    signal_urls = {
+        "gainers": f"{base_url}/screener.ashx?v=111&s=ta_topgainers",
+        "losers": f"{base_url}/screener.ashx?v=111&s=ta_toplosers",
+        "volatile": f"{base_url}/screener.ashx?v=111&s=ta_mostvolatile",
+        "active": f"{base_url}/screener.ashx?v=111&s=ta_mostactive",
+    }
+
+    url = signal_urls.get(scan_type, signal_urls["gainers"])
+    response = requests.get(url, headers=headers, timeout=15)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    stocks = []
+    seen_tickers = set()
+
+    # Find ticker links with tab-link class - this is the reliable selector
+    ticker_links = soup.find_all('a', class_='tab-link')
+
+    for link in ticker_links:
+        href = link.get('href', '')
+        ticker_match = re.search(r't=([A-Z]+)', href)
+        if ticker_match:
+            ticker = ticker_match.group(1)
+            if ticker in seen_tickers:
+                continue
+            seen_tickers.add(ticker)
+
+            # Get the parent row
+            row = link.find_parent('tr')
+            if row:
+                cells = row.find_all('td')
+                if len(cells) >= 10:
+                    stock = {
+                        "ticker": ticker,
+                        "company": cells[2].text.strip() if len(cells) > 2 else "",
+                        "sector": cells[3].text.strip() if len(cells) > 3 else "",
+                        "industry": cells[4].text.strip() if len(cells) > 4 else "",
+                        "country": cells[5].text.strip() if len(cells) > 5 else "",
+                        "market_cap": cells[6].text.strip() if len(cells) > 6 else "",
+                        "pe": cells[7].text.strip() if len(cells) > 7 else "",
+                        "price": cells[8].text.strip() if len(cells) > 8 else "",
+                        "change": cells[9].text.strip() if len(cells) > 9 else "",
+                        "volume": cells[10].text.strip() if len(cells) > 10 else ""
+                    }
+                    stocks.append(stock)
+
+    # Get total count
+    total_count = len(stocks)
+    total_elem = soup.find(string=re.compile(r'Total:\s*\d+'))
+    if total_elem:
+        match = re.search(r'Total:\s*(\d+)', total_elem)
+        if match:
+            total_count = int(match.group(1))
+
+    return {
+        "scan_type": scan_type,
+        "url": url,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "total_found": total_count,
+        "returned": len(stocks),
+        "stocks": stocks[:30],  # Limit to 30 for readability
+        "note": "Data is 15-20 min delayed (free tier). Elite subscription required for real-time."
+    }
+
+
+# Main execution
+try:
+    if scan_type == "quote" and ticker:
+        result = get_stock_quote(ticker)
+    else:
+        result = run_screener(scan_type)
+
+    print(json.dumps(result, indent=2, default=str))
+
+except requests.exceptions.RequestException as e:
+    print(json.dumps({"error": f"Network error: {str(e)}"}))
+    sys.exit(1)
+except Exception as e:
+    print(json.dumps({"error": str(e)}))
+    sys.exit(1)
+PYEOF
+
+# Run the scraper
+OUTPUT=$(uv run --with requests --with beautifulsoup4 python3 "$TMPSCRIPT" "$SCAN_TYPE" "$TICKER" 2>/dev/null)
+
+# Cleanup
+rm -f "$TMPSCRIPT"
+
+# Output
+if [ "$FORMAT" = "json" ]; then
+    echo "$OUTPUT"
+else
+    echo "$OUTPUT" | python3 "$SCRIPT_DIR/finviz-format.py"
+fi
