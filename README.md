@@ -106,6 +106,40 @@ alpaca-mcp-server-enhanced/
 - `mcp__sec-edgar__get_financials` - SEC financial statements
 - `mcp__sec-edgar__get_insider_transactions` - Insider trading data
 
+## Slash Commands
+
+Custom Claude Code slash commands for rapid trading workflows:
+
+| Command | Description | Use Case |
+|---------|-------------|----------|
+| `/morning_scanner` | Full scanner suite with analysis | Pre-market & market open |
+| `/scan` | Quick explosive stock scan | Fast checks throughout day |
+| `/gaps` | Pre-market gap detection | Catch massive gap-ups early |
+| `/pplx SYMBOL` | Perplexity Finance AI analysis | Deep dive on specific stock |
+| `/peak_trough_trading` | Technical analysis workflow | Support/resistance entries |
+| `/auto_trade_setup SYMBOL` | Automated trade setup | Quick order preparation |
+
+### Morning Workflow Example
+
+```bash
+# 7:00 AM - Check pre-market gaps
+/gaps
+
+# 9:30 AM - Quick scan at open
+/scan
+
+# 9:35 AM - Full analysis of top movers
+/morning_scanner
+
+# See explosive stock (e.g., BBGI +49% gap)
+/pplx BBGI
+
+# Execute trade at support level
+/peak_trough_trading BBGI
+```
+
+**Real Example:** On Dec 10, 2025, `/gaps` would have flagged BBGI's +49% pre-market gap. The stock ran to +380% by EOD. These scanners catch explosive momentum early.
+
 ## External Tools
 
 ### Perplexity Finance Scrapers

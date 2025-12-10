@@ -133,6 +133,7 @@ desktop.ini
 # ============================================
 # MCP/Claude specific
 .claude/
+!.claude/commands/
 .mcp.json
 !.mcp.json.example
 
