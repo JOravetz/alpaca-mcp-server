@@ -6,6 +6,7 @@ from .list_trading_capabilities import list_trading_capabilities
 from .market_analysis_prompt import market_analysis
 from .position_management_prompt import position_management
 from .scan_prompt import scan
+from .sr_prompt import sr
 from .startup_prompt import startup
 
 __all__ = [
@@ -13,6 +14,7 @@ __all__ = [
     "account_analysis",
     "position_management",
     "market_analysis",
+    "sr",
     "startup",
     "scan",
 ]

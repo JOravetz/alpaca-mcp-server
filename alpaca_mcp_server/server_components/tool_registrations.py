@@ -14,6 +14,7 @@ from ..tools import (
     perplexity_tools,
     position_tools,
     price_trigger_tools,
+    sr_tools,
     streaming_tools,
     volume_bars_tool,
     watchlist_tools,
@@ -1553,6 +1554,198 @@ def register_perplexity_tools(mcp):
         return await perplexity_tools.get_perplexity_comprehensive(symbol, json_output)
 
 
+def register_sr_tools(mcp):
+    """Register Support & Resistance analysis tools."""
+
+    @mcp.tool()
+    async def get_support_resistance(
+        symbol: str,
+        timeframe: str = "5Min",
+        days: int = 30,
+        clusters: int = 5,
+        method: str = "peak",
+        fractals: bool = False,
+        volume_profile: bool = False,
+        vwap: bool = False,
+        samples: int = 10000,
+        verbose: bool = False,
+    ) -> str:
+        """
+        Get professional support and resistance levels for a stock.
+
+        Uses high-performance C implementation with multiple analysis methods:
+        - Scipy-style peak detection (EXACT Python match)
+        - Williams Fractals (classic 5-bar pattern)
+        - Volume Profile / POC (institutional-grade)
+        - VWAP-based S/R detection
+
+        Args:
+            symbol: Stock ticker symbol (e.g., "AAPL", "TSLA", "RKLB")
+            timeframe: Bar timeframe - 1Min, 5Min, 15Min, 30Min, 1Hour, 2Hour, 4Hour, 1Day, 1Week, 1Month
+            days: Number of trading days to analyze (default: 30)
+            clusters: Number of S/R level clusters (default: 5)
+            method: Peak detection method - "peak" (scipy-style) or "hanning"
+            fractals: Enable Williams Fractals detection
+            volume_profile: Enable Volume Profile / POC analysis
+            vwap: Enable VWAP-based S/R detection
+            samples: Maximum bars to fetch (default: 10000)
+            verbose: Show detailed debug output
+
+        Returns:
+            Formatted S/R analysis with support levels, resistance levels, and current price context
+
+        Examples:
+            get_support_resistance("AAPL")
+            get_support_resistance("TSLA", timeframe="1Hour", days=60)
+            get_support_resistance("SPY", volume_profile=True, vwap=True)
+        """
+        return await sr_tools.get_support_resistance(
+            symbol=symbol,
+            timeframe=timeframe,
+            days=days,
+            clusters=clusters,
+            method=method,
+            fractals=fractals,
+            volume_profile=volume_profile,
+            vwap=vwap,
+            samples=samples,
+            verbose=verbose,
+        )
+
+    @mcp.tool()
+    async def get_support_resistance_comprehensive(
+        symbol: str,
+        timeframe: str = "5Min",
+        days: int = 30,
+        clusters: int = 5,
+    ) -> str:
+        """
+        Get comprehensive S/R analysis with ALL features enabled.
+
+        Combines peak detection, Williams Fractals, Volume Profile, and VWAP
+        for maximum trading intelligence.
+
+        Args:
+            symbol: Stock ticker symbol
+            timeframe: Bar timeframe (default: 5Min)
+            days: Number of trading days (default: 30)
+            clusters: Number of S/R clusters (default: 5)
+
+        Returns:
+            Full S/R analysis with all detection methods
+        """
+        return await sr_tools.get_support_resistance_comprehensive(
+            symbol=symbol,
+            timeframe=timeframe,
+            days=days,
+            clusters=clusters,
+        )
+
+    @mcp.tool()
+    async def get_volume_profile(
+        symbol: str,
+        timeframe: str = "5Min",
+        days: int = 30,
+    ) -> str:
+        """
+        Get Volume Profile analysis with POC (Point of Control) and Value Area.
+
+        Identifies price levels with highest trading activity - key for
+        institutional-grade support/resistance detection.
+
+        Args:
+            symbol: Stock ticker symbol
+            timeframe: Bar timeframe (default: 5Min)
+            days: Number of trading days (default: 30)
+
+        Returns:
+            Volume Profile analysis with POC and Value Area
+        """
+        return await sr_tools.get_volume_profile(
+            symbol=symbol,
+            timeframe=timeframe,
+            days=days,
+        )
+
+    @mcp.tool()
+    async def get_intraday_sr_levels(
+        symbol: str,
+        days: int = 5,
+        clusters: int = 8,
+    ) -> str:
+        """
+        Get intraday S/R levels optimized for day trading.
+
+        Uses 5-minute bars with more clusters for granular level detection.
+        Includes Volume Profile and VWAP for institutional-grade analysis.
+
+        Args:
+            symbol: Stock ticker symbol
+            days: Number of trading days (default: 5)
+            clusters: Number of S/R clusters (default: 8 for intraday)
+
+        Returns:
+            Intraday S/R levels for day trading
+        """
+        return await sr_tools.get_intraday_sr_levels(
+            symbol=symbol,
+            days=days,
+            clusters=clusters,
+        )
+
+    @mcp.tool()
+    async def get_swing_sr_levels(
+        symbol: str,
+        days: int = 60,
+        clusters: int = 5,
+    ) -> str:
+        """
+        Get S/R levels optimized for swing trading.
+
+        Uses hourly bars over 60 days for medium-term level detection.
+        Includes Williams Fractals for classic pattern recognition.
+
+        Args:
+            symbol: Stock ticker symbol
+            days: Number of trading days (default: 60)
+            clusters: Number of S/R clusters (default: 5)
+
+        Returns:
+            Swing trading S/R levels
+        """
+        return await sr_tools.get_swing_sr_levels(
+            symbol=symbol,
+            days=days,
+            clusters=clusters,
+        )
+
+    @mcp.tool()
+    async def get_daily_sr_levels(
+        symbol: str,
+        days: int = 252,
+        clusters: int = 5,
+    ) -> str:
+        """
+        Get S/R levels from daily bars for position trading.
+
+        Uses daily bars over 1 year (252 trading days) for major level detection.
+        Includes all analysis features for comprehensive view.
+
+        Args:
+            symbol: Stock ticker symbol
+            days: Number of trading days (default: 252 = 1 year)
+            clusters: Number of S/R clusters (default: 5)
+
+        Returns:
+            Daily S/R levels for position trading
+        """
+        return await sr_tools.get_daily_sr_levels(
+            symbol=symbol,
+            days=days,
+            clusters=clusters,
+        )
+
+
 def register_all_tools(mcp, DEFAULT_WINDOW_LEN):
     """Register all tools with the MCP server."""
     register_account_tools(mcp)
@@ -1575,3 +1768,4 @@ def register_all_tools(mcp, DEFAULT_WINDOW_LEN):
     register_debug_tools(mcp)
     register_cleanup_tools(mcp)
     register_perplexity_tools(mcp)
+    register_sr_tools(mcp)

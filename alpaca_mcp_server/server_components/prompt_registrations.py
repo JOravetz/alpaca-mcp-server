@@ -4,9 +4,10 @@ from ..prompts import (
     account_analysis_prompt,
     market_analysis_prompt,
     pnl_bling_prompt,
-    pplx_finance_prompt,
     position_management_prompt,
+    pplx_finance_prompt,
     scan_prompt,
+    sr_prompt,
     startup_prompt,
     stock_news_prompt,
     tools_reference_prompt,
@@ -100,6 +101,30 @@ def register_core_prompts(mcp):
             /pplx-finance NVDA
         """
         return await pplx_finance_prompt.pplx_finance(symbol)
+
+    @mcp.prompt()
+    async def sr(symbol: str, mode: str = "intraday") -> str:
+        """Get professional support and resistance levels using sr_alpaca C binary.
+
+        High-performance S/R analysis with:
+        - Scipy-style peak detection (EXACT Python match)
+        - Williams Fractals (classic 5-bar pattern)
+        - Volume Profile / POC (institutional-grade)
+        - VWAP-based S/R detection
+        - Agglomerative clustering for level grouping
+
+        Args:
+            symbol: Stock ticker symbol (e.g., 'RKLB', 'ASTS', 'NVDA')
+            mode: Analysis mode - 'intraday' (5Min/5d), 'swing' (1Hr/60d),
+                  'daily' (1Day/252d), or 'comprehensive' (all features)
+
+        Examples:
+            /sr RKLB              # Intraday S/R levels
+            /sr ASTS swing        # Swing trading levels
+            /sr SPY daily         # Position trading levels
+            /sr NVDA comprehensive # Full analysis
+        """
+        return await sr_prompt.sr(symbol, mode)
 
     @mcp.prompt()
     async def pnl_bling(date: str | None = None) -> str:
