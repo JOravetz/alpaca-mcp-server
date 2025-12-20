@@ -34,7 +34,7 @@ finnhub-realtime quote -s NVDA            # Real-time quote
 finnhub-realtime news -s NVDA             # Latest news
 stocktwits-sentiment -s NVDA              # Social sentiment
 barchart-options -s NVDA                  # Options flow
-pplx-stock-fast NVDA                      # AI-powered analysis
+pplx-cf NVDA                              # COMPREHENSIVE Perplexity analysis (RECOMMENDED)
 
 # Multi-symbol watchlist scan
 finnhub-realtime multi -s NVDA,AAPL,TSLA,GME,AMD
@@ -46,6 +46,7 @@ finnhub-realtime multi -s NVDA,AAPL,TSLA,GME,AMD
 
 | Script | Technology | Speed | Description |
 |--------|-----------|-------|-------------|
+| `pplx-cf` | **Camoufox** | ~15s | **RECOMMENDED** - Bypasses Cloudflare, fetches ALL data |
 | `pplx-stock` | undetected-chromedriver | ~18s | Full HTML with AI summaries, news |
 | `pplx-stock-fast` | DrissionPage + REST API | ~8s | Quick structured JSON quotes |
 | `pplx-stock-drission` | DrissionPage | ~17s | Alternative to pplx-stock |
@@ -96,6 +97,9 @@ sudo apt install xvfb html2text
 
 # Python packages (via uv in project root)
 uv add DrissionPage undetected-chromedriver requests beautifulsoup4
+
+# Camoufox (for pplx-cf - RECOMMENDED Perplexity scraper)
+uv add camoufox rich
 ```
 
 ### Setup
@@ -103,6 +107,7 @@ uv add DrissionPage undetected-chromedriver requests beautifulsoup4
 Option 1: Symlink to ~/bin (recommended):
 ```bash
 mkdir -p ~/bin
+ln -sf $(pwd)/pplx-cf ~/bin/
 ln -sf $(pwd)/pplx-stock ~/bin/
 ln -sf $(pwd)/pplx-stock-fast ~/bin/
 ln -sf $(pwd)/pplx-stock-drission ~/bin/
@@ -135,6 +140,65 @@ export PATH="$PATH:/path/to/alpaca-mcp-server-enhanced/external_tools/scrapers"
 ---
 
 ## Perplexity Finance Scrapers
+
+### Comprehensive Analysis with Camoufox (pplx-cf) - RECOMMENDED
+
+```bash
+# Get comprehensive AI-powered analysis (bypasses Cloudflare)
+pplx-cf NVDA
+
+# JSON output for programmatic use
+pplx-cf NVDA --json
+```
+
+**Output includes ALL Perplexity Finance data:**
+- Real-time quote with after-hours pricing
+- **Latest price movement summaries** (THE GOLD for day trading)
+- Recent developments and headlines
+- Bullish vs Bearish key issues analysis
+- Sector peers with prices and changes
+- Earnings history with beat/miss indicators
+- Prediction markets data (Polymarket)
+- Research reports with analyst sentiment
+
+**Sample output:**
+```
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ PERPLEXITY FINANCE - RKLB                                                    │
+│ Rocket Lab USA, Inc. - Industrials | Aerospace & Defense                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+💰 QUOTE
+┌────────────────────────────────────────────────────────────────────────────┐
+│ Price: $29.22                                                              │
+│ Change: -$0.75 (-2.51%)                                                    │
+│ After Hours: $29.40 (+0.62%)                                               │
+│ Volume: 24.93M (Volume Ratio: 1.0x)                                        │
+│ Day Range: $28.83 - $30.37                                                 │
+│ 52W Range: $4.37 - $31.39                                                  │
+└────────────────────────────────────────────────────────────────────────────┘
+
+📈 LATEST PRICE MOVEMENT (THE GOLD)
+┌────────────────────────────────────────────────────────────────────────────┐
+│ Rocket Lab's stock opened lower and fell 2.6%, despite positive news...   │
+│ The decline is part of a broader market pullback following the Fed...     │
+└────────────────────────────────────────────────────────────────────────────┘
+
+🔥 BULLS VS BEARS
+┌─────────────────────────────────────┬──────────────────────────────────────┐
+│ BULLISH VIEWS                       │ BEARISH VIEWS                        │
+├─────────────────────────────────────┼──────────────────────────────────────┤
+│ Strong growth trajectory with...    │ Current valuation concerns as...     │
+│ Neutron rocket development on...    │ Competition from SpaceX and...       │
+│ Space Systems segment growing...    │ Supply chain risks in satellite...   │
+└─────────────────────────────────────┴──────────────────────────────────────┘
+```
+
+**Why Camoufox?**
+- **Bypasses Cloudflare** - Firefox-based anti-detect browser with deep C++ hooks
+- **Fetches ALL APIs** - 12 different REST endpoints in single session
+- **More reliable** - Won't get blocked like Chrome-based scrapers
+- **~15-20 seconds** - Slightly slower but gets EVERYTHING
 
 ### Full Analysis (pplx-stock)
 
@@ -1017,6 +1081,7 @@ updates to the scraper.
 | `finviz-premarket` | **~2s** | ★★★☆☆ | Delayed | ✅ |
 | `barchart-options` | **~2s** | ★★★★☆ | Delayed | ✅ |
 | `pplx-stock-fast` | ~8s | ★★★★☆ | Real-time | ❌ |
+| `pplx-cf` | ~15s | ★★★★★ | Real-time | ❌ (Camoufox) |
 | `pplx-stock` | ~18s | ★★★★★ | Real-time | ❌ |
 
 **Recommendation:**
@@ -1026,7 +1091,8 @@ updates to the scraper.
 - Use `finviz-premarket` for fast screener scans and fundamentals
 - Use `barchart-options` for options flow and smart money tracking
 - Use `pplx-stock-fast` for quick AI-powered quotes
-- Use `pplx-stock` for comprehensive research with AI analysis
+- **Use `pplx-cf` for comprehensive Perplexity data with all 12 APIs (RECOMMENDED)**
+- Use `pplx-stock` for comprehensive research with AI analysis (fallback if Camoufox fails)
 
 **Day-Trading Flow:**
 1. `shortsqueeze-scanner --min-si 30` → Weekly squeeze watchlist
@@ -1038,7 +1104,7 @@ updates to the scraper.
 7. `stocktwits-sentiment -s TICKER` → Check sentiment before entry
 8. `finnhub-realtime news -s TICKER` → Latest news for the stock
 9. `barchart-options -s TICKER` → Options flow for specific stock
-10. `pplx-stock-fast TICKER` → AI analysis for conviction
+10. `pplx-cf TICKER` → **COMPREHENSIVE** analysis with all Perplexity data (bulls/bears, earnings, peers)
 
 ---
 
@@ -1233,6 +1299,13 @@ All scrapers tested at 07:30 AM ET (pre-market):
 ### Perplexity Finance Scrapers
 
 ```
+✅ pplx-cf NVDA (RECOMMENDED - Camoufox)
+   - Bypasses Cloudflare with Firefox anti-detect browser
+   - Fetches ALL 12 Perplexity REST APIs in single session
+   - Quote, price movements, bulls/bears, peers, earnings, prediction markets
+   - Response time: ~15-20 seconds
+   - Tested: RKLB, MIMI, NVDA - all successful
+
 ✅ pplx-stock-fast NVDA
    - Real-time quote: $182.35
    - After-hours: $182.50 (+0.08%)
