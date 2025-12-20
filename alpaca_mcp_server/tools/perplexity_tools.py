@@ -5,6 +5,8 @@ Fast REST API access to Perplexity Finance for real-time stock data.
 For full AI analysis, use the /pplx slash command instead.
 """
 
+import asyncio
+import json
 import sys
 from pathlib import Path
 
@@ -188,3 +190,130 @@ async def get_perplexity_movers() -> str:
 
     lines.append("")
     return "\n".join(lines)
+
+
+# Path to the Camoufox scraper script
+PPLX_CAMOUFOX_SCRIPT = Path(__file__).parent.parent.parent / "external_tools" / "scrapers" / "pplx-camoufox.py"
+
+
+async def get_perplexity_comprehensive(symbol: str, json_output: bool = False) -> str:
+    """
+    Get comprehensive stock analysis from Perplexity Finance using Camoufox.
+
+    Bypasses Cloudflare to fetch ALL available data including:
+    - Real-time quote with after-hours pricing
+    - Latest price movement summaries (THE GOLD for day trading)
+    - Recent developments and headlines
+    - Bullish vs Bearish key issues analysis
+    - Sector peers with prices and changes
+    - Earnings history with beat/miss indicators
+    - Prediction markets data
+    - Research reports with analyst sentiment
+
+    This tool takes ~15-20 seconds but provides maximum trading intelligence.
+
+    Args:
+        symbol: Stock ticker symbol (e.g., "RKLB", "NVDA", "MIMI")
+        json_output: If True, returns raw JSON data instead of formatted output
+
+    Returns:
+        Comprehensive stock analysis with all Perplexity Finance data
+
+    Examples:
+        get_perplexity_comprehensive("RKLB")
+        get_perplexity_comprehensive("NVDA", json_output=True)
+    """
+    symbol = symbol.strip().upper()
+
+    if not PPLX_CAMOUFOX_SCRIPT.exists():
+        return f"Error: pplx-camoufox.py script not found at {PPLX_CAMOUFOX_SCRIPT}"
+
+    try:
+        # Build command
+        cmd = ["uv", "run", "python3", str(PPLX_CAMOUFOX_SCRIPT), symbol]
+        if json_output:
+            cmd.append("--json")
+
+        # Run the scraper script
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=str(PPLX_CAMOUFOX_SCRIPT.parent),
+        )
+
+        stdout, stderr = await asyncio.wait_for(
+            process.communicate(),
+            timeout=120  # 2 minute timeout
+        )
+
+        output = stdout.decode("utf-8")
+
+        if process.returncode != 0:
+            error_msg = stderr.decode("utf-8") if stderr else "Unknown error"
+            return f"Error running pplx-camoufox: {error_msg}"
+
+        if json_output:
+            # Parse and return formatted JSON
+            try:
+                data = json.loads(output)
+                return json.dumps(data, indent=2)
+            except json.JSONDecodeError:
+                return output
+
+        return output
+
+    except asyncio.TimeoutError:
+        return f"Error: Timeout fetching data for {symbol} (exceeded 120 seconds)"
+    except FileNotFoundError:
+        return "Error: 'uv' command not found. Make sure uv is installed."
+    except Exception as e:
+        return f"Error fetching Perplexity data: {str(e)}"
+
+
+async def get_perplexity_comprehensive_json(symbol: str) -> dict:
+    """
+    Get comprehensive stock data from Perplexity Finance as JSON dict.
+
+    Same as get_perplexity_comprehensive but returns parsed JSON dict
+    for programmatic access to all data fields.
+
+    Args:
+        symbol: Stock ticker symbol
+
+    Returns:
+        Dict containing all Perplexity Finance data fields
+    """
+    symbol = symbol.strip().upper()
+
+    if not PPLX_CAMOUFOX_SCRIPT.exists():
+        return {"error": f"Script not found: {PPLX_CAMOUFOX_SCRIPT}"}
+
+    try:
+        cmd = ["uv", "run", "python3", str(PPLX_CAMOUFOX_SCRIPT), symbol, "--json"]
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=str(PPLX_CAMOUFOX_SCRIPT.parent),
+        )
+
+        stdout, stderr = await asyncio.wait_for(
+            process.communicate(),
+            timeout=120
+        )
+
+        if process.returncode != 0:
+            error_msg = stderr.decode("utf-8") if stderr else "Unknown error"
+            return {"error": error_msg}
+
+        output = stdout.decode("utf-8")
+        return json.loads(output)  # type: ignore[no-any-return]
+
+    except asyncio.TimeoutError:
+        return {"error": f"Timeout fetching {symbol}"}
+    except json.JSONDecodeError as e:
+        return {"error": f"JSON parse error: {str(e)}"}
+    except Exception as e:
+        return {"error": str(e)}

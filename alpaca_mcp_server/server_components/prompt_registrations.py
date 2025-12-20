@@ -4,6 +4,7 @@ from ..prompts import (
     account_analysis_prompt,
     market_analysis_prompt,
     pnl_bling_prompt,
+    pplx_finance_prompt,
     position_management_prompt,
     scan_prompt,
     startup_prompt,
@@ -76,6 +77,29 @@ def register_core_prompts(mcp):
             /stock-news TTD
         """
         return await stock_news_prompt.stock_news(ticker)
+
+    @mcp.prompt()
+    async def pplx_finance(symbol: str) -> str:
+        """Get comprehensive stock analysis from Perplexity Finance using Camoufox.
+
+        Bypasses Cloudflare to fetch ALL available data including:
+        - Real-time quote with after-hours pricing
+        - Latest price movement summaries (THE GOLD for day trading)
+        - Recent developments and headlines
+        - Bullish vs Bearish key issues analysis
+        - Sector peers with prices and changes
+        - Earnings history with beat/miss indicators
+        - Prediction markets data
+        - Research reports with analyst sentiment
+
+        Args:
+            symbol: Stock ticker symbol (e.g., 'RKLB', 'NVDA', 'MIMI')
+
+        Examples:
+            /pplx-finance RKLB
+            /pplx-finance NVDA
+        """
+        return await pplx_finance_prompt.pplx_finance(symbol)
 
     @mcp.prompt()
     async def pnl_bling(date: str | None = None) -> str:

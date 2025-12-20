@@ -1,0 +1,14 @@
+#!/bin/bash
+# Perplexity Finance via Camoufox - Bypasses Cloudflare
+# Usage: pplx-cf SYMBOL [--json]
+
+SCRIPT_DIR="$(dirname "$0")"
+cd "$SCRIPT_DIR" || exit 1
+
+if [ -z "$1" ]; then
+    echo "Usage: pplx-cf SYMBOL [--json]"
+    echo "Example: pplx-cf RKLB"
+    exit 1
+fi
+
+uv run python3 pplx-camoufox.py "$@"

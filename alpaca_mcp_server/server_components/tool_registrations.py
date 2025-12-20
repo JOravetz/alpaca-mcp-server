@@ -1526,6 +1526,32 @@ def register_perplexity_tools(mcp):
         """
         return await perplexity_tools.get_perplexity_movers()
 
+    @mcp.tool()
+    async def get_perplexity_comprehensive(symbol: str, json_output: bool = False) -> str:
+        """
+        Get comprehensive stock analysis from Perplexity Finance using Camoufox.
+
+        Bypasses Cloudflare to fetch ALL available data including:
+        - Real-time quote with after-hours pricing
+        - Latest price movement summaries (THE GOLD for day trading)
+        - Recent developments and headlines
+        - Bullish vs Bearish key issues analysis
+        - Sector peers with prices and changes
+        - Earnings history with beat/miss indicators
+        - Prediction markets data
+        - Research reports with analyst sentiment
+
+        This tool takes ~15-20 seconds but provides maximum trading intelligence.
+
+        Args:
+            symbol: Stock ticker symbol (e.g., "RKLB", "NVDA", "MIMI")
+            json_output: If True, returns raw JSON data instead of formatted output
+
+        Returns:
+            Comprehensive stock analysis with all Perplexity Finance data
+        """
+        return await perplexity_tools.get_perplexity_comprehensive(symbol, json_output)
+
 
 def register_all_tools(mcp, DEFAULT_WINDOW_LEN):
     """Register all tools with the MCP server."""
