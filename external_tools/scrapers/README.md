@@ -149,9 +149,17 @@ pplx-cf NVDA
 
 # JSON output for programmatic use
 pplx-cf NVDA --json
+
+# Market overview (main finance page)
+pplx-cf --market
+
+# Finance Discover page (trends, news, topics)
+pplx-cf --discover                    # 200 articles (default)
+pplx-cf --discover --articles 50      # 50 articles
+pplx-cf --discover --articles 500     # 500 articles (max)
 ```
 
-**Output includes ALL Perplexity Finance data:**
+**Stock Analysis Output includes ALL Perplexity Finance data:**
 - Real-time quote with after-hours pricing
 - **Latest price movement summaries** (THE GOLD for day trading)
 - Recent developments and headlines
@@ -160,6 +168,23 @@ pplx-cf NVDA --json
 - Earnings history with beat/miss indicators
 - Prediction markets data (Polymarket)
 - Research reports with analyst sentiment
+
+**Market Overview (`--market`) includes:**
+- Market indices (S&P, NASDAQ, Dow futures + VIX)
+- Market sentiment (bullish/bearish/upbeat indicator)
+- AI-generated market summary
+- Top movers (gainers, losers, most active)
+- 11 equity sectors with ETF performance
+- Prediction markets from Polymarket
+- Popular cryptocurrencies
+- Standout stocks with z-scores
+
+**Discover Page (`--discover`) includes:**
+- Market indices with % changes
+- Finance news & analysis (up to 500 articles)
+- Trending content and topics
+- Trending companies with real-time quotes
+- Topic categories
 
 **Sample output:**
 ```
@@ -1331,6 +1356,60 @@ All scrapers tested at 07:30 AM ET (pre-market):
 - Would require login credentials or paid API access
 
 **Decision:** Deprioritized - other sources provide similar data for free.
+
+---
+
+## MCP Server Integration - Slash Commands
+
+The Perplexity Finance scrapers are integrated into the Alpaca MCP Server as slash commands:
+
+### Available Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `/pplx-finance SYMBOL` | Comprehensive stock analysis | `/pplx-finance NVDA` |
+| `/market` | Market overview (indices, movers, sectors) | `/market` |
+| `/discover [articles]` | Finance trends and news | `/discover 200` |
+
+### Usage Examples
+
+```bash
+# In Claude Code or MCP client:
+
+/pplx-finance RKLB          # Deep-dive on Rocket Lab
+/pplx-finance MU            # Micron analysis with bulls/bears
+
+/market                      # Full market overview
+
+/discover                    # 200 articles (default)
+/discover 50                 # Quick scan (50 articles)
+/discover 500                # Comprehensive (500 articles max)
+```
+
+### What Each Command Returns
+
+**`/pplx-finance SYMBOL`:**
+- Real-time quote with after-hours
+- Latest price movement summaries
+- Bulls vs Bears analysis
+- Sector peers with prices
+- Earnings history
+- Research reports
+
+**`/market`:**
+- Market indices (S&P, NASDAQ, Dow, VIX)
+- Market sentiment indicator
+- Top movers (gainers/losers)
+- 11 sector performance
+- Cryptocurrencies
+- Prediction markets
+
+**`/discover [articles]`:**
+- Market indices
+- Finance news & analysis
+- Trending content
+- Trending companies with quotes
+- Topic categories
 
 ---
 
