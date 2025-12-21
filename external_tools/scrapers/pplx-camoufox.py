@@ -6,14 +6,15 @@ Bypasses Cloudflare bot detection to fetch ALL real-time stock data.
 Usage:
     uv run pplx-camoufox.py SYMBOL [--json]
     uv run pplx-camoufox.py --market [--json]
-    uv run pplx-camoufox.py --discover [--json]
+    uv run pplx-camoufox.py --discover [--articles N] [--json]
 
 Examples:
     uv run pplx-camoufox.py RKLB              # Stock-specific data
     uv run pplx-camoufox.py NVDA --json       # Stock data as JSON
     uv run pplx-camoufox.py --market          # Main finance page overview
     uv run pplx-camoufox.py --market --json   # Market overview as JSON
-    uv run pplx-camoufox.py --discover        # Finance discover page (trends, topics)
+    uv run pplx-camoufox.py --discover        # Finance discover page (200 articles)
+    uv run pplx-camoufox.py --discover --articles 500  # Fetch up to 500 articles
     uv run pplx-camoufox.py --discover --json # Discover data as JSON
 """
 
@@ -360,7 +361,7 @@ def fetch_market_overview() -> dict:
     return data
 
 
-def fetch_discover(debug: bool = False) -> dict:
+def fetch_discover(max_articles: int = 200, debug: bool = False) -> dict:
     """Fetch Perplexity Finance Discover page data (trends, topics, news)."""
     data = {
         "discover_feed": None,
@@ -410,30 +411,36 @@ def fetch_discover(debug: bool = False) -> dict:
 
             # Fetch discover feed for finance topic with pagination
             # Finance topic UUID: e46915e3-9d25-4f85-9e43-e8a9d834729f
-            data["discover_feed"] = page.evaluate('''async () => {
-                try {
+            # Calculate pages needed for requested article count
+            page_size = 50
+            max_pages = (max_articles + page_size - 1) // page_size  # Ceiling division
+
+            data["discover_feed"] = page.evaluate(f'''async () => {{
+                try {{
                     // Fetch multiple pages to get more articles
                     const allItems = [];
-                    const pageSize = 50;
-                    const maxPages = 4;  // 4 pages x 50 = up to 200 articles
+                    const pageSize = {page_size};
+                    const maxPages = {max_pages};
+                    const maxArticles = {max_articles};
 
-                    for (let page = 0; page < maxPages; page++) {
-                        const offset = page * pageSize;
-                        const resp = await fetch(`/rest/discover/feed?limit=${pageSize}&offset=${offset}&topic=e46915e3-9d25-4f85-9e43-e8a9d834729f&version=2.18&source=default`);
+                    for (let pg = 0; pg < maxPages; pg++) {{
+                        const offset = pg * pageSize;
+                        const resp = await fetch(`/rest/discover/feed?limit=${{pageSize}}&offset=${{offset}}&topic=e46915e3-9d25-4f85-9e43-e8a9d834729f&version=2.18&source=default`);
                         const data = await resp.json();
 
-                        if (data.items && data.items.length > 0) {
+                        if (data.items && data.items.length > 0) {{
                             allItems.push(...data.items);
-                        } else {
+                            if (allItems.length >= maxArticles) break;
+                        }} else {{
                             break;  // No more items
-                        }
-                    }
+                        }}
+                    }}
 
-                    return { status: "success", items: allItems, total_fetched: allItems.length };
-                } catch(e) {
-                    return {"error": e.toString()};
-                }
-            }''')
+                    return {{ status: "success", items: allItems.slice(0, maxArticles), total_fetched: Math.min(allItems.length, maxArticles) }};
+                }} catch(e) {{
+                    return {{"error": e.toString()}};
+                }}
+            }}''')
 
             # Fetch all discover topics (categories)
             data["topics"] = page.evaluate('''async () => {
@@ -1299,15 +1306,22 @@ def main():
     parser.add_argument("symbol", type=str, nargs="?", help="Stock ticker symbol (e.g., RKLB, NVDA)")
     parser.add_argument("--market", action="store_true", help="Fetch main finance page market overview")
     parser.add_argument("--discover", action="store_true", help="Fetch discover/finance page (trends, topics, news)")
+    parser.add_argument("--articles", type=int, default=200, help="Max articles to fetch with --discover (default: 200, max: 500)")
     parser.add_argument("--json", action="store_true", help="Output raw JSON data")
     args = parser.parse_args()
+
+    # Enforce max articles limit
+    if args.articles > 500:
+        args.articles = 500
+    elif args.articles < 1:
+        args.articles = 200
 
     # Discover mode
     if args.discover:
         if not args.json:
-            console.print("[dim]Fetching discover page from Perplexity Finance via Camoufox...[/dim]")
+            console.print(f"[dim]Fetching discover page from Perplexity Finance via Camoufox (up to {args.articles} articles)...[/dim]")
 
-        data = fetch_discover()
+        data = fetch_discover(max_articles=args.articles)
 
         if args.json:
             print(json.dumps(data, indent=2, default=str))
