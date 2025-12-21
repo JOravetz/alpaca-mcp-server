@@ -2,6 +2,7 @@
 
 from ..prompts import (
     account_analysis_prompt,
+    discover_prompt,
     finance_prompt,
     market_analysis_prompt,
     market_overview_prompt,
@@ -145,6 +146,25 @@ def register_core_prompts(mcp):
             /finance 500       # Fetch 500 articles (max)
         """
         return await finance_prompt.finance(articles)
+
+    @mcp.prompt()
+    async def discover(articles: int = 500) -> str:
+        """Get comprehensive research data from Perplexity Discover pages.
+
+        Scrapes three discover pages for comprehensive research:
+        - /discover/you - Personalized recommendations
+        - /discover/top - Trending/popular content
+        - /discover/tech - Technology news and articles
+
+        Args:
+            articles: Total articles across all 3 pages (default: 500, max: 1000)
+
+        Examples:
+            /discover           # Fetch 500 articles (default)
+            /discover 100       # Fetch 100 articles
+            /discover 1000      # Fetch 1000 articles (max)
+        """
+        return await discover_prompt.discover(articles)
 
     @mcp.prompt()
     async def sr(symbol: str, mode: str = "intraday") -> str:
