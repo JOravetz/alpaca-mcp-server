@@ -6,16 +6,16 @@ Bypasses Cloudflare bot detection to fetch ALL real-time stock data.
 Usage:
     uv run pplx-camoufox.py SYMBOL [--json]
     uv run pplx-camoufox.py --market [--json]
-    uv run pplx-camoufox.py --discover [--articles N] [--json]
+    uv run pplx-camoufox.py --finance [--articles N] [--json]
 
 Examples:
     uv run pplx-camoufox.py RKLB              # Stock-specific data
     uv run pplx-camoufox.py NVDA --json       # Stock data as JSON
     uv run pplx-camoufox.py --market          # Main finance page overview
     uv run pplx-camoufox.py --market --json   # Market overview as JSON
-    uv run pplx-camoufox.py --discover        # Finance discover page (200 articles)
-    uv run pplx-camoufox.py --discover --articles 500  # Fetch up to 500 articles
-    uv run pplx-camoufox.py --discover --json # Discover data as JSON
+    uv run pplx-camoufox.py --finance         # Finance discover page (200 articles)
+    uv run pplx-camoufox.py --finance --articles 500  # Fetch up to 500 articles
+    uv run pplx-camoufox.py --finance --json  # Finance data as JSON
 """
 
 import sys
@@ -1305,8 +1305,8 @@ def main():
     )
     parser.add_argument("symbol", type=str, nargs="?", help="Stock ticker symbol (e.g., RKLB, NVDA)")
     parser.add_argument("--market", action="store_true", help="Fetch main finance page market overview")
-    parser.add_argument("--discover", action="store_true", help="Fetch discover/finance page (trends, topics, news)")
-    parser.add_argument("--articles", type=int, default=200, help="Max articles to fetch with --discover (default: 200, max: 500)")
+    parser.add_argument("--finance", action="store_true", help="Fetch discover/finance page (trends, topics, news)")
+    parser.add_argument("--articles", type=int, default=200, help="Max articles to fetch with --finance (default: 200, max: 500)")
     parser.add_argument("--json", action="store_true", help="Output raw JSON data")
     args = parser.parse_args()
 
@@ -1316,10 +1316,10 @@ def main():
     elif args.articles < 1:
         args.articles = 200
 
-    # Discover mode
-    if args.discover:
+    # Finance mode (discover page)
+    if args.finance:
         if not args.json:
-            console.print(f"[dim]Fetching discover page from Perplexity Finance via Camoufox (up to {args.articles} articles)...[/dim]")
+            console.print(f"[dim]Fetching finance page from Perplexity Finance via Camoufox (up to {args.articles} articles)...[/dim]")
 
         data = fetch_discover(max_articles=args.articles)
 
@@ -1344,7 +1344,7 @@ def main():
 
     # Stock-specific mode (requires symbol)
     if not args.symbol:
-        parser.error("Either provide a SYMBOL, or use --market or --discover flag")
+        parser.error("Either provide a SYMBOL, or use --market or --finance flag")
 
     ticker = args.symbol.upper()
 

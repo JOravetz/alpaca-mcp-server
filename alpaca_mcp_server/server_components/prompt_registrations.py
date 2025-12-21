@@ -2,7 +2,7 @@
 
 from ..prompts import (
     account_analysis_prompt,
-    discover_prompt,
+    finance_prompt,
     market_analysis_prompt,
     market_overview_prompt,
     pnl_bling_prompt,
@@ -126,10 +126,10 @@ def register_core_prompts(mcp):
         return await market_overview_prompt.market_overview()
 
     @mcp.prompt()
-    async def discover(articles: int = 200) -> str:
+    async def finance(articles: int = 200) -> str:
         """Get finance trends, news, and topics from Perplexity Finance discover page.
 
-        Bypasses Cloudflare to fetch ALL discover data including:
+        Bypasses Cloudflare to fetch ALL finance data including:
         - Market indices (S&P, NASDAQ, Dow with % changes)
         - Finance news & analysis articles (configurable count)
         - Trending content and topics
@@ -140,11 +140,11 @@ def register_core_prompts(mcp):
             articles: Number of articles to fetch (default: 200, max: 500)
 
         Examples:
-            /discover           # Fetch 200 articles (default)
-            /discover 50        # Fetch 50 articles
-            /discover 500       # Fetch 500 articles (max)
+            /finance           # Fetch 200 articles (default)
+            /finance 50        # Fetch 50 articles
+            /finance 500       # Fetch 500 articles (max)
         """
-        return await discover_prompt.discover(articles)
+        return await finance_prompt.finance(articles)
 
     @mcp.prompt()
     async def sr(symbol: str, mode: str = "intraday") -> str:

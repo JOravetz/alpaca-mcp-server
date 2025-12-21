@@ -153,10 +153,10 @@ pplx-cf NVDA --json
 # Market overview (main finance page)
 pplx-cf --market
 
-# Finance Discover page (trends, news, topics)
-pplx-cf --discover                    # 200 articles (default)
-pplx-cf --discover --articles 50      # 50 articles
-pplx-cf --discover --articles 500     # 500 articles (max)
+# Finance page (trends, news, topics)
+pplx-cf --finance                     # 200 articles (default)
+pplx-cf --finance --articles 50       # 50 articles
+pplx-cf --finance --articles 500      # 500 articles (max)
 ```
 
 **Stock Analysis Output includes ALL Perplexity Finance data:**
@@ -179,7 +179,7 @@ pplx-cf --discover --articles 500     # 500 articles (max)
 - Popular cryptocurrencies
 - Standout stocks with z-scores
 
-**Discover Page (`--discover`) includes:**
+**Finance Page (`--finance`) includes:**
 - Market indices with % changes
 - Finance news & analysis (up to 500 articles)
 - Trending content and topics
@@ -1369,7 +1369,7 @@ The Perplexity Finance scrapers are integrated into the Alpaca MCP Server as sla
 |---------|-------------|---------|
 | `/pplx-finance SYMBOL` | Comprehensive stock analysis | `/pplx-finance NVDA` |
 | `/market` | Market overview (indices, movers, sectors) | `/market` |
-| `/discover [articles]` | Finance trends and news | `/discover 200` |
+| `/finance [articles]` | Finance trends and news | `/finance 200` |
 
 ### Usage Examples
 
@@ -1381,9 +1381,9 @@ The Perplexity Finance scrapers are integrated into the Alpaca MCP Server as sla
 
 /market                      # Full market overview
 
-/discover                    # 200 articles (default)
-/discover 50                 # Quick scan (50 articles)
-/discover 500                # Comprehensive (500 articles max)
+/finance                     # 200 articles (default)
+/finance 50                  # Quick scan (50 articles)
+/finance 500                 # Comprehensive (500 articles max)
 ```
 
 ### What Each Command Returns
@@ -1404,7 +1404,7 @@ The Perplexity Finance scrapers are integrated into the Alpaca MCP Server as sla
 - Cryptocurrencies
 - Prediction markets
 
-**`/discover [articles]`:**
+**`/finance [articles]`:**
 - Market indices
 - Finance news & analysis
 - Trending content
