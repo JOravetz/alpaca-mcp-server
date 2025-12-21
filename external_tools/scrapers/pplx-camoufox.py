@@ -408,12 +408,28 @@ def fetch_discover(debug: bool = False) -> dict:
                 }
             }''')
 
-            # Fetch discover feed for finance topic (UUID for Finance category)
+            # Fetch discover feed for finance topic with pagination
             # Finance topic UUID: e46915e3-9d25-4f85-9e43-e8a9d834729f
             data["discover_feed"] = page.evaluate('''async () => {
                 try {
-                    const resp = await fetch('/rest/discover/feed?limit=30&offset=0&topic=e46915e3-9d25-4f85-9e43-e8a9d834729f&version=2.18&source=default');
-                    return await resp.json();
+                    // Fetch multiple pages to get more articles
+                    const allItems = [];
+                    const pageSize = 50;
+                    const maxPages = 4;  // 4 pages x 50 = up to 200 articles
+
+                    for (let page = 0; page < maxPages; page++) {
+                        const offset = page * pageSize;
+                        const resp = await fetch(`/rest/discover/feed?limit=${pageSize}&offset=${offset}&topic=e46915e3-9d25-4f85-9e43-e8a9d834729f&version=2.18&source=default`);
+                        const data = await resp.json();
+
+                        if (data.items && data.items.length > 0) {
+                            allItems.push(...data.items);
+                        } else {
+                            break;  // No more items
+                        }
+                    }
+
+                    return { status: "success", items: allItems, total_fetched: allItems.length };
                 } catch(e) {
                     return {"error": e.toString()};
                 }
@@ -552,10 +568,11 @@ def display_discover(data: dict):
     # FINANCE FEED (main content)
     feed = data.get("discover_feed", {}) or {}
     if feed and "error" not in feed and "detail" not in feed:
-        console.print(Panel("[bold green]Finance News & Analysis[/bold green]", box=box.ROUNDED))
-
         items = feed.get("items", []) if isinstance(feed, dict) else []
-        for item in items[:12]:
+        total = feed.get("total_fetched", len(items))
+        console.print(Panel(f"[bold green]Finance News & Analysis ({total} articles)[/bold green]", box=box.ROUNDED))
+
+        for item in items[:50]:  # Show up to 50 articles
             title = item.get("title", item.get("short_title", ""))
             summary = item.get("summary", "")
             description = item.get("description", "")
