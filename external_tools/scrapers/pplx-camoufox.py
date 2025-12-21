@@ -7,6 +7,7 @@ Usage:
     uv run pplx-camoufox.py SYMBOL [--json]
     uv run pplx-camoufox.py --market [--json]
     uv run pplx-camoufox.py --finance [--articles N] [--json]
+    uv run pplx-camoufox.py --discover [--articles N] [--json]
 
 Examples:
     uv run pplx-camoufox.py RKLB              # Stock-specific data
@@ -16,6 +17,9 @@ Examples:
     uv run pplx-camoufox.py --finance         # Finance discover page (200 articles)
     uv run pplx-camoufox.py --finance --articles 500  # Fetch up to 500 articles
     uv run pplx-camoufox.py --finance --json  # Finance data as JSON
+    uv run pplx-camoufox.py --discover        # General discover page (200 articles)
+    uv run pplx-camoufox.py --discover --articles 500  # Fetch up to 500 articles
+    uv run pplx-camoufox.py --discover --json # Discover data as JSON
 """
 
 import sys
@@ -533,6 +537,232 @@ def fetch_discover(max_articles: int = 200, debug: bool = False) -> dict:
         data["error"] = str(e)
 
     return data
+
+
+def fetch_general_discover(max_articles: int = 200, debug: bool = False) -> dict:
+    """Fetch general Perplexity Discover page data (all topics, trends, news)."""
+    data = {
+        "discover_feed": None,
+        "topics": None,
+        "trending": None,
+        "popular_threads": None,
+        "intercepted_urls": [],
+        "error": None,
+    }
+
+    try:
+        with Camoufox(headless=True) as browser:
+            page = browser.new_page()
+
+            # Intercept network requests to discover API endpoints
+            captured_requests = []
+
+            def capture_request(request):
+                url = request.url
+                if '/rest/' in url or '/api/' in url:
+                    captured_requests.append(url)
+
+            page.on("request", capture_request)
+
+            # Navigate to general discover page (not finance-specific)
+            page.goto('https://www.perplexity.ai/discover', timeout=60000)
+            try:
+                page.wait_for_load_state("networkidle", timeout=45000)
+            except Exception:
+                # Fallback to domcontentloaded if networkidle times out
+                page.wait_for_load_state("domcontentloaded", timeout=20000)
+            time.sleep(5)
+
+            # Store intercepted URLs for debugging
+            data["intercepted_urls"] = captured_requests
+
+            # Fetch all discover topics (categories)
+            data["topics"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/discover/topics?version=2.18&source=default');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch discover feed with pagination (no topic filter = all topics)
+            page_size = 50
+            max_pages = (max_articles + page_size - 1) // page_size  # Ceiling division
+
+            data["discover_feed"] = page.evaluate(f'''async () => {{
+                try {{
+                    // Fetch multiple pages to get more articles
+                    const allItems = [];
+                    const pageSize = {page_size};
+                    const maxPages = {max_pages};
+                    const maxArticles = {max_articles};
+
+                    for (let pg = 0; pg < maxPages; pg++) {{
+                        const offset = pg * pageSize;
+                        // No topic filter - fetches from all topics
+                        const resp = await fetch(`/rest/discover/feed?limit=${{pageSize}}&offset=${{offset}}&version=2.18&source=default`);
+                        const data = await resp.json();
+
+                        if (data.items && data.items.length > 0) {{
+                            allItems.push(...data.items);
+                            if (allItems.length >= maxArticles) break;
+                        }} else {{
+                            break;  // No more items
+                        }}
+                    }}
+
+                    return {{ status: "success", items: allItems.slice(0, maxArticles), total_fetched: Math.min(allItems.length, maxArticles) }};
+                }} catch(e) {{
+                    return {{"error": e.toString()}};
+                }}
+            }}''')
+
+            # Fetch top/trending content
+            data["trending"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/discover/feed?limit=20&offset=0&topic=top&version=2.18&source=default');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch popular threads/discussions
+            data["popular_threads"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/discover/popular-threads?limit=20&version=2.18&source=default');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+    except Exception as e:
+        data["error"] = str(e)
+
+    return data
+
+
+def display_general_discover(data: dict):
+    """Display general discover data with Rich formatting."""
+    if data.get("error"):
+        console.print(f"[red]Error: {data['error']}[/red]")
+        return
+
+    console.print()
+    console.rule("[bold cyan]PERPLEXITY DISCOVER - ALL TOPICS[/bold cyan]", style="cyan")
+    console.print()
+
+    # DISCOVER FEED (main content - all topics)
+    feed = data.get("discover_feed", {}) or {}
+    if feed and "error" not in feed and "detail" not in feed:
+        items = feed.get("items", []) if isinstance(feed, dict) else []
+        total = feed.get("total_fetched", len(items))
+        console.print(Panel(f"[bold green]Discover Feed ({total} articles)[/bold green]", box=box.ROUNDED))
+
+        for item in items[:50]:  # Show up to 50 articles
+            title = item.get("title", item.get("short_title", ""))
+            summary = item.get("summary", "")
+            description = item.get("description", "")
+            updated = item.get("updated_datetime", "")
+            topic = item.get("topic", {})
+            topic_name = topic.get("name", topic.get("translated_name", "")) if isinstance(topic, dict) else ""
+
+            # Get sources from bullet_summary
+            bullets = item.get("bullet_summary_web_results_preload", [])
+            sources = []
+            for b in bullets[:3]:
+                meta = b.get("meta_data", {})
+                domain = meta.get("domain_name", "")
+                if domain and domain not in sources:
+                    sources.append(domain)
+
+            if title:
+                console.print(f"  [bold cyan]{title}[/bold cyan]")
+
+                # Show metadata
+                meta_parts = []
+                if topic_name:
+                    meta_parts.append(f"[magenta]{topic_name}[/magenta]")
+                if updated:
+                    meta_parts.append(str(updated)[:10])
+                if sources:
+                    meta_parts.append(" | ".join(sources[:3]))
+                if meta_parts:
+                    console.print(f"    [dim]{' - '.join(meta_parts)}[/dim]")
+
+                # Show summary (prefer summary over description)
+                text = summary or description
+                if text:
+                    if len(text) > 250:
+                        text = text[:250] + "..."
+                    console.print(f"    {text}")
+                console.print()
+
+    # TRENDING (top stories)
+    trending = data.get("trending", {}) or {}
+    if trending and "error" not in trending and "detail" not in trending:
+        console.print(Panel("[bold yellow]Trending Now[/bold yellow]", box=box.ROUNDED))
+
+        items = trending.get("items", []) if isinstance(trending, dict) else []
+        for item in items[:10]:
+            title = item.get("title", item.get("short_title", ""))
+            summary = item.get("summary", "")
+            updated = item.get("updated_datetime", "")
+            topic = item.get("topic", {})
+            topic_name = topic.get("name", topic.get("translated_name", "")) if isinstance(topic, dict) else ""
+
+            if title:
+                topic_str = f"[magenta][{topic_name}][/magenta] " if topic_name else ""
+                console.print(f"  [cyan]•[/cyan] {topic_str}[bold]{title}[/bold]")
+                if updated:
+                    console.print(f"    [dim]{str(updated)[:10]}[/dim]")
+                if summary:
+                    if len(summary) > 150:
+                        summary = summary[:150] + "..."
+                    console.print(f"    {summary}")
+                console.print()
+
+    # POPULAR THREADS
+    threads = data.get("popular_threads", {}) or {}
+    if threads and "error" not in threads and "detail" not in threads:
+        thread_list = threads.get("threads", threads.get("items", [])) if isinstance(threads, dict) else []
+        if thread_list:
+            console.print(Panel("[bold blue]Popular Threads[/bold blue]", box=box.ROUNDED))
+
+            for thread in thread_list[:8]:
+                title = thread.get("title", thread.get("query", ""))
+                answer = thread.get("answer_text", thread.get("summary", ""))
+                upvotes = thread.get("upvotes", thread.get("likes", 0))
+
+                if title:
+                    console.print(f"  [bold]{title}[/bold]")
+                    if upvotes:
+                        console.print(f"    [dim]👍 {upvotes} upvotes[/dim]")
+                    if answer:
+                        if len(answer) > 200:
+                            answer = answer[:200] + "..."
+                        console.print(f"    {answer}")
+                    console.print()
+
+    # TOPICS/CATEGORIES
+    topics = data.get("topics", {}) or {}
+    if topics and "error" not in topics and "detail" not in topics:
+        all_topics = topics.get("all_topics", [])
+        if all_topics:
+            t = Table(title="Discover Categories", box=box.ROUNDED, title_style="bold blue")
+            t.add_column("Category", style="cyan bold")
+            t.add_column("Slug")
+
+            for topic in all_topics:
+                name = topic.get("name", topic.get("translated_name", ""))
+                slug = topic.get("slug", "")
+                if name:
+                    t.add_row(name, slug)
+
+            console.print(t)
+            console.print()
 
 
 def display_discover(data: dict):
@@ -1306,7 +1536,8 @@ def main():
     parser.add_argument("symbol", type=str, nargs="?", help="Stock ticker symbol (e.g., RKLB, NVDA)")
     parser.add_argument("--market", action="store_true", help="Fetch main finance page market overview")
     parser.add_argument("--finance", action="store_true", help="Fetch discover/finance page (trends, topics, news)")
-    parser.add_argument("--articles", type=int, default=200, help="Max articles to fetch with --finance (default: 200, max: 500)")
+    parser.add_argument("--discover", action="store_true", help="Fetch general discover page (all topics, trends, news)")
+    parser.add_argument("--articles", type=int, default=200, help="Max articles to fetch with --finance or --discover (default: 200, max: 500)")
     parser.add_argument("--json", action="store_true", help="Output raw JSON data")
     args = parser.parse_args()
 
@@ -1316,7 +1547,7 @@ def main():
     elif args.articles < 1:
         args.articles = 200
 
-    # Finance mode (discover page)
+    # Finance mode (discover/finance page)
     if args.finance:
         if not args.json:
             console.print(f"[dim]Fetching finance page from Perplexity Finance via Camoufox (up to {args.articles} articles)...[/dim]")
@@ -1327,6 +1558,19 @@ def main():
             print(json.dumps(data, indent=2, default=str))
         else:
             display_discover(data)
+        return
+
+    # Discover mode (general discover page - all topics)
+    if args.discover:
+        if not args.json:
+            console.print(f"[dim]Fetching general discover page from Perplexity via Camoufox (up to {args.articles} articles)...[/dim]")
+
+        data = fetch_general_discover(max_articles=args.articles)
+
+        if args.json:
+            print(json.dumps(data, indent=2, default=str))
+        else:
+            display_general_discover(data)
         return
 
     # Market overview mode
@@ -1344,7 +1588,7 @@ def main():
 
     # Stock-specific mode (requires symbol)
     if not args.symbol:
-        parser.error("Either provide a SYMBOL, or use --market or --finance flag")
+        parser.error("Either provide a SYMBOL, or use --market, --finance, or --discover flag")
 
     ticker = args.symbol.upper()
 
