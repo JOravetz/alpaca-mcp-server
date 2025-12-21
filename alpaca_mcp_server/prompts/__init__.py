@@ -2,6 +2,7 @@
 
 # Import all prompt modules
 from .account_analysis_prompt import account_analysis
+from .discover_prompt import discover
 from .list_trading_capabilities import list_trading_capabilities
 from .market_analysis_prompt import market_analysis
 from .market_overview_prompt import market_overview
@@ -16,6 +17,7 @@ __all__ = [
     "position_management",
     "market_analysis",
     "market_overview",
+    "discover",
     "sr",
     "startup",
     "scan",
