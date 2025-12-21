@@ -3,6 +3,7 @@
 from ..prompts import (
     account_analysis_prompt,
     market_analysis_prompt,
+    market_overview_prompt,
     pnl_bling_prompt,
     position_management_prompt,
     pplx_finance_prompt,
@@ -101,6 +102,27 @@ def register_core_prompts(mcp):
             /pplx-finance NVDA
         """
         return await pplx_finance_prompt.pplx_finance(symbol)
+
+    @mcp.prompt()
+    async def market() -> str:
+        """Get comprehensive market overview from Perplexity Finance main page.
+
+        Bypasses Cloudflare to fetch ALL market data including:
+        - Market indices (S&P, NASDAQ, Dow futures + VIX)
+        - Market sentiment (bullish/bearish/upbeat indicator)
+        - AI-generated market summary (top stories)
+        - Top movers (gainers, losers, most active)
+        - 11 equity sectors with ETF performance
+        - Prediction markets from Polymarket
+        - Popular cryptocurrencies (BTC, ETH, SOL, XRP)
+        - Fixed income ETFs
+        - Standout stocks with z-scores and explanations
+        - Recent developments and latest headlines
+
+        Example:
+            /market
+        """
+        return await market_overview_prompt.market_overview()
 
     @mcp.prompt()
     async def sr(symbol: str, mode: str = "intraday") -> str:
