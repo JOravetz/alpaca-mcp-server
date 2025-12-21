@@ -762,8 +762,6 @@ def display_general_discover(data: dict):
                 # Show summary (prefer summary over description)
                 text = summary or description
                 if text:
-                    if len(text) > 250:
-                        text = text[:250] + "..."
                     console.print(f"    {text}")
                 console.print()
 
@@ -784,8 +782,6 @@ def display_general_discover(data: dict):
                     if upvotes:
                         console.print(f"    [dim]👍 {upvotes} upvotes[/dim]")
                     if answer:
-                        if len(answer) > 200:
-                            answer = answer[:200] + "..."
                         console.print(f"    {answer}")
                     console.print()
 
@@ -883,8 +879,6 @@ def display_discover(data: dict):
                 # Show summary (prefer summary over description)
                 text = summary or description
                 if text:
-                    if len(text) > 250:
-                        text = text[:250] + "..."
                     console.print(f"    {text}")
                 console.print()
 
@@ -904,8 +898,6 @@ def display_discover(data: dict):
                 if updated:
                     console.print(f"    [dim]{str(updated)[:10]}[/dim]")
                 if summary:
-                    if len(summary) > 150:
-                        summary = summary[:150] + "..."
                     console.print(f"    {summary}")
                 console.print()
 
@@ -1018,8 +1010,6 @@ def display_market_overview(data: dict):
             if header:
                 console.print(f"  [bold]{header}[/bold]")
             if detail:
-                if len(detail) > 300:
-                    detail = detail[:300] + "..."
                 console.print(f"  {detail}")
             console.print()
 
@@ -1106,8 +1096,6 @@ def display_market_overview(data: dict):
             if timestamp:
                 console.print(f"  [dim]{timestamp}[/dim]")
             if text:
-                if len(text) > 250:
-                    text = text[:250] + "..."
                 console.print(f"  {text}")
             console.print()
 
@@ -1210,8 +1198,6 @@ def display_market_overview(data: dict):
                 else:
                     console.print(f"  Z-Score: [{z_style}]{z_score:+.2f}[/{z_style}]")
                 if summary:
-                    if len(summary) > 250:
-                        summary = summary[:250] + "..."
                     console.print(f"  [dim]{summary}[/dim]")
                 console.print()
 
@@ -1233,8 +1219,6 @@ def display_market_overview(data: dict):
                 if timestamp:
                     console.print(f"  [dim]{timestamp}[/dim]")
                 if text:
-                    if len(text) > 200:
-                        text = text[:200] + "..."
                     console.print(f"  {text}")
                 console.print()
 
