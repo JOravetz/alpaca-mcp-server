@@ -14,11 +14,11 @@ Examples:
     uv run pplx-camoufox.py NVDA --json       # Stock data as JSON
     uv run pplx-camoufox.py --market          # Main finance page overview
     uv run pplx-camoufox.py --market --json   # Market overview as JSON
-    uv run pplx-camoufox.py --finance         # Finance discover page (200 articles)
-    uv run pplx-camoufox.py --finance --articles 500  # Fetch up to 500 articles
+    uv run pplx-camoufox.py --finance         # Finance discover page (default: 200 articles)
+    uv run pplx-camoufox.py --finance --articles 500  # Fetch up to 500 articles (max)
     uv run pplx-camoufox.py --finance --json  # Finance data as JSON
-    uv run pplx-camoufox.py --discover        # General discover page (200 articles)
-    uv run pplx-camoufox.py --discover --articles 500  # Fetch up to 500 articles
+    uv run pplx-camoufox.py --discover        # Scrape /you + /top + /tech (default: 500 articles)
+    uv run pplx-camoufox.py --discover --articles 1000  # Fetch up to 1000 articles (max)
     uv run pplx-camoufox.py --discover --json # Discover data as JSON
 """
 
@@ -539,16 +539,34 @@ def fetch_discover(max_articles: int = 200, debug: bool = False) -> dict:
     return data
 
 
-def fetch_general_discover(max_articles: int = 200, debug: bool = False) -> dict:
-    """Fetch general Perplexity Discover page data (all topics, trends, news)."""
+def fetch_general_discover(max_articles: int = 500, debug: bool = False) -> dict:
+    """Fetch Perplexity Discover pages: /you, /top, /tech (combined feed).
+
+    Scrapes three discover pages for comprehensive research:
+    - /discover/you - Personalized recommendations
+    - /discover/top - Trending/popular content
+    - /discover/tech - Technology news and articles
+
+    Args:
+        max_articles: Maximum total articles across all 3 pages (default: 500, max: 1000)
+        debug: Enable debug output
+
+    Returns:
+        Combined data from all three discover pages
+    """
     data = {
         "discover_feed": None,
+        "you_feed": None,
+        "top_feed": None,
+        "tech_feed": None,
         "topics": None,
-        "trending": None,
         "popular_threads": None,
         "intercepted_urls": [],
         "error": None,
     }
+
+    # Calculate articles per page (distribute evenly across 3 pages)
+    articles_per_page = (max_articles + 2) // 3  # Ceiling division by 3
 
     try:
         with Camoufox(headless=True) as browser:
@@ -564,64 +582,92 @@ def fetch_general_discover(max_articles: int = 200, debug: bool = False) -> dict
 
             page.on("request", capture_request)
 
-            # Navigate to general discover page (not finance-specific)
-            page.goto('https://www.perplexity.ai/discover', timeout=60000)
-            try:
-                page.wait_for_load_state("networkidle", timeout=45000)
-            except Exception:
-                # Fallback to domcontentloaded if networkidle times out
-                page.wait_for_load_state("domcontentloaded", timeout=20000)
-            time.sleep(5)
+            # Define the three discover pages to scrape
+            discover_pages = [
+                ("you", "https://www.perplexity.ai/discover/you"),
+                ("top", "https://www.perplexity.ai/discover/top"),
+                ("tech", "https://www.perplexity.ai/discover/tech"),
+            ]
+
+            all_items = []
+            page_size = 50
+
+            # Map page names to actual API topic slugs
+            # "you" -> no topic filter (personalized/default)
+            # "top" -> "top" (trending)
+            # "tech" -> no topic filter (page context handles it)
+            topic_map = {
+                "you": None,  # Default feed without topic filter
+                "top": "top",  # Trending
+                "tech": None,  # Default feed on tech page
+            }
+
+            for page_name, page_url in discover_pages:
+                # Navigate to discover page
+                page.goto(page_url, timeout=60000)
+                try:
+                    page.wait_for_load_state("networkidle", timeout=45000)
+                except Exception:
+                    page.wait_for_load_state("domcontentloaded", timeout=20000)
+                time.sleep(3)
+
+                # Fetch feed with pagination for this page
+                max_pages_per_section = (articles_per_page + page_size - 1) // page_size
+                topic_slug = topic_map.get(page_name)
+                topic_param = f"&topic={topic_slug}" if topic_slug else ""
+
+                feed_result = page.evaluate(f'''async () => {{
+                    try {{
+                        const allItems = [];
+                        const pageSize = {page_size};
+                        const maxPages = {max_pages_per_section};
+                        const maxArticles = {articles_per_page};
+                        const topicParam = "{topic_param}";
+
+                        for (let pg = 0; pg < maxPages; pg++) {{
+                            const offset = pg * pageSize;
+                            const resp = await fetch(`/rest/discover/feed?limit=${{pageSize}}&offset=${{offset}}${{topicParam}}&version=2.18&source=default`);
+                            const data = await resp.json();
+
+                            if (data.items && data.items.length > 0) {{
+                                // Tag each item with source page
+                                data.items.forEach(item => item._source_page = "{page_name}");
+                                allItems.push(...data.items);
+                                if (allItems.length >= maxArticles) break;
+                            }} else {{
+                                break;
+                            }}
+                        }}
+
+                        return {{ status: "success", items: allItems.slice(0, maxArticles), total_fetched: Math.min(allItems.length, maxArticles), source: "{page_name}" }};
+                    }} catch(e) {{
+                        return {{"error": e.toString(), "source": "{page_name}"}};
+                    }}
+                }}''')
+
+                # Store individual page results
+                data[f"{page_name}_feed"] = feed_result
+
+                # Add to combined feed
+                if feed_result and "error" not in feed_result:
+                    items = feed_result.get("items", [])
+                    all_items.extend(items)
 
             # Store intercepted URLs for debugging
             data["intercepted_urls"] = captured_requests
 
-            # Fetch all discover topics (categories)
+            # Create combined feed from all pages
+            data["discover_feed"] = {
+                "status": "success",
+                "items": all_items[:max_articles],
+                "total_fetched": min(len(all_items), max_articles),
+                "sources": ["you", "top", "tech"],
+            }
+
+            # Fetch all discover topics (from last page context)
             data["topics"] = page.evaluate('''async () => {
                 try {
                     const resp = await fetch('/rest/discover/topics?version=2.18&source=default');
-                    return await resp.json();
-                } catch(e) {
-                    return {"error": e.toString()};
-                }
-            }''')
-
-            # Fetch discover feed with pagination (no topic filter = all topics)
-            page_size = 50
-            max_pages = (max_articles + page_size - 1) // page_size  # Ceiling division
-
-            data["discover_feed"] = page.evaluate(f'''async () => {{
-                try {{
-                    // Fetch multiple pages to get more articles
-                    const allItems = [];
-                    const pageSize = {page_size};
-                    const maxPages = {max_pages};
-                    const maxArticles = {max_articles};
-
-                    for (let pg = 0; pg < maxPages; pg++) {{
-                        const offset = pg * pageSize;
-                        // No topic filter - fetches from all topics
-                        const resp = await fetch(`/rest/discover/feed?limit=${{pageSize}}&offset=${{offset}}&version=2.18&source=default`);
-                        const data = await resp.json();
-
-                        if (data.items && data.items.length > 0) {{
-                            allItems.push(...data.items);
-                            if (allItems.length >= maxArticles) break;
-                        }} else {{
-                            break;  // No more items
-                        }}
-                    }}
-
-                    return {{ status: "success", items: allItems.slice(0, maxArticles), total_fetched: Math.min(allItems.length, maxArticles) }};
-                }} catch(e) {{
-                    return {{"error": e.toString()}};
-                }}
-            }}''')
-
-            # Fetch top/trending content
-            data["trending"] = page.evaluate('''async () => {
-                try {
-                    const resp = await fetch('/rest/discover/feed?limit=20&offset=0&topic=top&version=2.18&source=default');
                     return await resp.json();
                 } catch(e) {
                     return {"error": e.toString()};
@@ -651,21 +697,37 @@ def display_general_discover(data: dict):
         return
 
     console.print()
-    console.rule("[bold cyan]PERPLEXITY DISCOVER - ALL TOPICS[/bold cyan]", style="cyan")
+    console.rule("[bold cyan]PERPLEXITY DISCOVER - /you + /top + /tech[/bold cyan]", style="cyan")
     console.print()
 
-    # DISCOVER FEED (main content - all topics)
+    # Show per-page stats
+    you_feed = data.get("you_feed", {}) or {}
+    top_feed = data.get("top_feed", {}) or {}
+    tech_feed = data.get("tech_feed", {}) or {}
+
+    you_count = you_feed.get("total_fetched", 0) if isinstance(you_feed, dict) else 0
+    top_count = top_feed.get("total_fetched", 0) if isinstance(top_feed, dict) else 0
+    tech_count = tech_feed.get("total_fetched", 0) if isinstance(tech_feed, dict) else 0
+
+    console.print(f"[dim]Sources: /you ({you_count}) + /top ({top_count}) + /tech ({tech_count})[/dim]")
+    console.print()
+
+    # DISCOVER FEED (combined from all 3 pages)
     feed = data.get("discover_feed", {}) or {}
     if feed and "error" not in feed and "detail" not in feed:
         items = feed.get("items", []) if isinstance(feed, dict) else []
         total = feed.get("total_fetched", len(items))
-        console.print(Panel(f"[bold green]Discover Feed ({total} articles)[/bold green]", box=box.ROUNDED))
+        console.print(Panel(f"[bold green]Combined Discover Feed ({total} articles)[/bold green]", box=box.ROUNDED))
 
-        for item in items[:50]:  # Show up to 50 articles
+        # Source page color mapping
+        source_colors = {"you": "yellow", "top": "green", "tech": "blue"}
+
+        for item in items[:75]:  # Show up to 75 articles
             title = item.get("title", item.get("short_title", ""))
             summary = item.get("summary", "")
             description = item.get("description", "")
             updated = item.get("updated_datetime", "")
+            source_page = item.get("_source_page", "")
             topic = item.get("topic", {})
             topic_name = topic.get("name", topic.get("translated_name", "")) if isinstance(topic, dict) else ""
 
@@ -679,7 +741,10 @@ def display_general_discover(data: dict):
                     sources.append(domain)
 
             if title:
-                console.print(f"  [bold cyan]{title}[/bold cyan]")
+                # Show source page tag (escape / to avoid Rich markup issues)
+                source_color = source_colors.get(source_page, "white")
+                source_tag = f"[{source_color}]\\[{source_page}][/{source_color}] " if source_page else ""
+                console.print(f"  {source_tag}[bold cyan]{title}[/bold cyan]")
 
                 # Show metadata
                 meta_parts = []
@@ -698,30 +763,6 @@ def display_general_discover(data: dict):
                     if len(text) > 250:
                         text = text[:250] + "..."
                     console.print(f"    {text}")
-                console.print()
-
-    # TRENDING (top stories)
-    trending = data.get("trending", {}) or {}
-    if trending and "error" not in trending and "detail" not in trending:
-        console.print(Panel("[bold yellow]Trending Now[/bold yellow]", box=box.ROUNDED))
-
-        items = trending.get("items", []) if isinstance(trending, dict) else []
-        for item in items[:10]:
-            title = item.get("title", item.get("short_title", ""))
-            summary = item.get("summary", "")
-            updated = item.get("updated_datetime", "")
-            topic = item.get("topic", {})
-            topic_name = topic.get("name", topic.get("translated_name", "")) if isinstance(topic, dict) else ""
-
-            if title:
-                topic_str = f"[magenta][{topic_name}][/magenta] " if topic_name else ""
-                console.print(f"  [cyan]•[/cyan] {topic_str}[bold]{title}[/bold]")
-                if updated:
-                    console.print(f"    [dim]{str(updated)[:10]}[/dim]")
-                if summary:
-                    if len(summary) > 150:
-                        summary = summary[:150] + "..."
-                    console.print(f"    {summary}")
                 console.print()
 
     # POPULAR THREADS
@@ -1536,16 +1577,28 @@ def main():
     parser.add_argument("symbol", type=str, nargs="?", help="Stock ticker symbol (e.g., RKLB, NVDA)")
     parser.add_argument("--market", action="store_true", help="Fetch main finance page market overview")
     parser.add_argument("--finance", action="store_true", help="Fetch discover/finance page (trends, topics, news)")
-    parser.add_argument("--discover", action="store_true", help="Fetch general discover page (all topics, trends, news)")
-    parser.add_argument("--articles", type=int, default=200, help="Max articles to fetch with --finance or --discover (default: 200, max: 500)")
+    parser.add_argument("--discover", action="store_true", help="Scrape /you + /top + /tech discover pages (default: 500, max: 1000)")
+    parser.add_argument("--articles", type=int, default=None, help="Max articles: --finance (default 200, max 500), --discover (default 500, max 1000)")
     parser.add_argument("--json", action="store_true", help="Output raw JSON data")
     args = parser.parse_args()
 
-    # Enforce max articles limit
-    if args.articles > 500:
-        args.articles = 500
-    elif args.articles < 1:
-        args.articles = 200
+    # Apply different defaults/limits based on mode
+    if args.discover:
+        # --discover: default 500, max 1000
+        if args.articles is None:
+            args.articles = 500
+        elif args.articles > 1000:
+            args.articles = 1000
+        elif args.articles < 1:
+            args.articles = 500
+    else:
+        # --finance and others: default 200, max 500
+        if args.articles is None:
+            args.articles = 200
+        elif args.articles > 500:
+            args.articles = 500
+        elif args.articles < 1:
+            args.articles = 200
 
     # Finance mode (discover/finance page)
     if args.finance:
@@ -1560,10 +1613,10 @@ def main():
             display_discover(data)
         return
 
-    # Discover mode (general discover page - all topics)
+    # Discover mode (scrapes /you, /top, /tech pages)
     if args.discover:
         if not args.json:
-            console.print(f"[dim]Fetching general discover page from Perplexity via Camoufox (up to {args.articles} articles)...[/dim]")
+            console.print(f"[dim]Fetching /you + /top + /tech discover pages via Camoufox (up to {args.articles} articles)...[/dim]")
 
         data = fetch_general_discover(max_articles=args.articles)
 
