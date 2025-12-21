@@ -157,6 +157,11 @@ pplx-cf --market
 pplx-cf --finance                     # 200 articles (default)
 pplx-cf --finance --articles 50       # 50 articles
 pplx-cf --finance --articles 500      # 500 articles (max)
+
+# Discover pages (/you + /top + /tech combined)
+pplx-cf --discover                    # 500 articles (default)
+pplx-cf --discover --articles 100     # 100 articles
+pplx-cf --discover --articles 1000    # 1000 articles (max)
 ```
 
 **Stock Analysis Output includes ALL Perplexity Finance data:**
@@ -185,6 +190,14 @@ pplx-cf --finance --articles 500      # 500 articles (max)
 - Trending content and topics
 - Trending companies with real-time quotes
 - Topic categories
+
+**Discover Pages (`--discover`) includes:**
+- Combined feed from 3 pages: `/you`, `/top`, `/tech`
+- Source tags `[you]`, `[top]`, `[tech]` for each article
+- Up to 1000 articles (distributed across all 3 pages)
+- Popular threads and discussions
+- Topic categories
+- Per-page article counts
 
 **Sample output:**
 ```
@@ -1370,6 +1383,7 @@ The Perplexity Finance scrapers are integrated into the Alpaca MCP Server as sla
 | `/pplx-finance SYMBOL` | Comprehensive stock analysis | `/pplx-finance NVDA` |
 | `/market` | Market overview (indices, movers, sectors) | `/market` |
 | `/finance [articles]` | Finance trends and news | `/finance 200` |
+| `/discover [articles]` | Research from /you + /top + /tech pages | `/discover 500` |
 
 ### Usage Examples
 
@@ -1384,6 +1398,10 @@ The Perplexity Finance scrapers are integrated into the Alpaca MCP Server as sla
 /finance                     # 200 articles (default)
 /finance 50                  # Quick scan (50 articles)
 /finance 500                 # Comprehensive (500 articles max)
+
+/discover                    # 500 articles (default)
+/discover 100                # Quick scan (100 articles)
+/discover 1000               # Maximum (1000 articles from 3 pages)
 ```
 
 ### What Each Command Returns
@@ -1410,6 +1428,14 @@ The Perplexity Finance scrapers are integrated into the Alpaca MCP Server as sla
 - Trending content
 - Trending companies with quotes
 - Topic categories
+
+**`/discover [articles]`:**
+- Combined feed from 3 Perplexity discover pages
+- `/you` - Personalized recommendations
+- `/top` - Trending/popular content
+- `/tech` - Technology news and articles
+- Source tags for each article
+- Per-page article counts
 
 ---
 
