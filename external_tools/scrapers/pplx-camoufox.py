@@ -1337,9 +1337,6 @@ def display_data(data: dict):
                 console.print(f"  [{style}]{icon} {price_movement:+.2f}%[/{style}] @ ${price:.2f} ({timestamp})")
 
             if desc:
-                # Truncate long descriptions
-                if len(desc) > 400:
-                    desc = desc[:400] + "..."
                 console.print(f"  [white]{desc}[/white]")
             console.print()
 
@@ -1360,8 +1357,6 @@ def display_data(data: dict):
                 source_str = " | ".join(source_names) if source_names else ""
                 console.print(f"  [dim]{timestamp} - {source_str}[/dim]")
             if text:
-                if len(text) > 300:
-                    text = text[:300] + "..."
                 console.print(f"  {text}")
             console.print()
 
@@ -1381,12 +1376,8 @@ def display_data(data: dict):
             neg_desc = negative.get("description", "") if negative else ""
 
             if pos_desc:
-                if len(pos_desc) > 200:
-                    pos_desc = pos_desc[:200] + "..."
                 console.print(f"    [green]BULL:[/green] {pos_desc}")
             if neg_desc:
-                if len(neg_desc) > 200:
-                    neg_desc = neg_desc[:200] + "..."
                 console.print(f"    [red]BEAR:[/red] {neg_desc}")
             console.print()
 
@@ -1549,9 +1540,6 @@ def display_data(data: dict):
             console.print(f"  {outlook_text} [bold]{title}[/bold]")
             console.print(f"    [dim]{provider} | {date}[/dim]")
             if summary:
-                # Truncate long summaries
-                if len(summary) > 300:
-                    summary = summary[:300] + "..."
                 console.print(f"    {summary}")
             console.print()
 
@@ -1566,8 +1554,6 @@ def display_data(data: dict):
             if content and section_type not in ["price_movement"]:  # Skip if already shown from timeline
                 if section_type == "developments" or "development" in title.lower():
                     console.print(Panel(f"[bold yellow]{title}[/bold yellow]", box=box.ROUNDED))
-                    if len(content) > 500:
-                        content = content[:500] + "..."
                     console.print(f"  {content}")
                     console.print()
 
