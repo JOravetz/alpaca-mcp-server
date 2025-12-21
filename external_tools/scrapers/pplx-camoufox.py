@@ -1251,8 +1251,8 @@ def display_data(data: dict):
         console.print(f"[red]Error: {data['error']}[/red]")
         return
 
-    # Header
-    name = profile.get("name", "") or quote.get("name", ticker)
+    # Header - profile uses "companyName", quote uses "name"
+    name = profile.get("companyName", "") or profile.get("name", "") or quote.get("name", ticker)
     console.print(f"\n[bold cyan]{'=' * 20} {ticker} - {name} {'=' * 20}[/bold cyan]\n", justify="center")
 
     # Quote Summary
