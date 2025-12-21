@@ -367,6 +367,7 @@ def fetch_discover(debug: bool = False) -> dict:
         "indices": None,
         "topics": None,
         "trending": None,
+        "trending_companies": None,
         "intercepted_urls": [],
         "error": None,
     }
@@ -437,6 +438,73 @@ def fetch_discover(debug: bool = False) -> dict:
                     return {"error": e.toString()};
                 }
             }''')
+
+            # Scroll down to trigger lazy-loaded sidebar content
+            page.evaluate('window.scrollTo(0, 500)')
+            time.sleep(1)
+            page.evaluate('window.scrollTo(0, 1000)')
+            time.sleep(1)
+
+            # Extract trending companies - just get symbols and names
+            # (Prices from DOM extraction are unreliable due to complex layout)
+            trending_symbols = page.evaluate('''() => {
+                const companies = [];
+                const allLinks = document.querySelectorAll('a[href*="/finance/"]');
+
+                for (const link of allLinks) {
+                    const href = link.getAttribute('href') || '';
+                    // Match /finance/TICKER (1-5 uppercase letters)
+                    const match = href.match(/\\/finance\\/([A-Z]{1,5})(?:\\?|$)/);
+                    if (match) {
+                        const symbol = match[1];
+                        // Skip indices
+                        if (symbol.endsWith('USD') || symbol === 'VIX') continue;
+
+                        const text = link.innerText || link.textContent || '';
+                        let name = text.trim().split('\\n')[0] || symbol;
+                        if (name === symbol || name.length > 50) name = symbol;
+
+                        companies.push({ symbol, name });
+                    }
+                }
+
+                // Deduplicate
+                const seen = new Set();
+                return companies.filter(c => {
+                    if (seen.has(c.symbol)) return false;
+                    seen.add(c.symbol);
+                    return true;
+                });
+            }''')
+
+            # Fetch real-time quotes for trending companies via individual API calls
+            if trending_symbols and len(trending_symbols) > 0:
+                symbols_list = [c['symbol'] for c in trending_symbols[:8]]
+                quotes_js = '''async () => {
+                    const symbols = ''' + json.dumps(symbols_list) + ''';
+                    const results = {};
+                    for (const symbol of symbols) {
+                        try {
+                            const resp = await fetch(`/rest/finance/quote/${symbol}?with_history=false&with_ui_hints=true`);
+                            const data = await resp.json();
+                            if (!data.detail) {
+                                results[symbol] = data;
+                            }
+                        } catch(e) {}
+                    }
+                    return results;
+                }'''
+                quotes = page.evaluate(quotes_js)
+
+                # Merge quotes with company names
+                if quotes and isinstance(quotes, dict):
+                    for company in trending_symbols:
+                        q = quotes.get(company['symbol'], {})
+                        if q:
+                            company['price'] = q.get('price', q.get('regularMarketPrice'))
+                            company['changesPercentage'] = q.get('changesPercentage', q.get('percentChange'))
+
+            data["trending_companies"] = trending_symbols if trending_symbols else {"error": "No trending companies found"}
 
     except Exception as e:
         data["error"] = str(e)
@@ -543,6 +611,33 @@ def display_discover(data: dict):
                         summary = summary[:150] + "..."
                     console.print(f"    {summary}")
                 console.print()
+
+    # TRENDING COMPANIES (sidebar)
+    trending_companies = data.get("trending_companies", []) or []
+    if trending_companies and isinstance(trending_companies, list):
+        t = Table(title="Trending Companies", box=box.ROUNDED, title_style="bold magenta")
+        t.add_column("Symbol", style="cyan bold")
+        t.add_column("Company")
+        t.add_column("Price", justify="right")
+        t.add_column("Change", justify="right")
+
+        for company in trending_companies[:8]:
+            symbol = company.get("symbol", "")
+            name = company.get("name", "")[:25]
+            price = company.get("price")
+            change = company.get("changesPercentage")
+
+            price_str = f"${price:.2f}" if price else "-"
+            if change is not None:
+                style = "green" if change >= 0 else "red"
+                change_str = f"[{style}]{change:+.2f}%[/{style}]"
+            else:
+                change_str = "-"
+
+            t.add_row(symbol, name, price_str, change_str)
+
+        console.print(t)
+        console.print()
 
     # TOPICS/CATEGORIES
     topics = data.get("topics", {}) or {}
