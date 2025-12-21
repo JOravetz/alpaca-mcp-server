@@ -61,8 +61,11 @@ def fetch_perplexity_data(ticker: str) -> dict:
 
             # Navigate to finance page
             page.goto(f'https://www.perplexity.ai/finance/{ticker}', timeout=60000)
-            page.wait_for_load_state("networkidle", timeout=30000)
-            time.sleep(3)
+            try:
+                page.wait_for_load_state("networkidle", timeout=45000)
+            except Exception:
+                page.wait_for_load_state("domcontentloaded", timeout=20000)
+            time.sleep(2)
 
             # Fetch quote API
             data["quote"] = page.evaluate(f'''async () => {{
@@ -213,8 +216,11 @@ def fetch_market_overview() -> dict:
 
             # Navigate to main finance page
             page.goto('https://www.perplexity.ai/finance', timeout=60000)
-            page.wait_for_load_state("networkidle", timeout=30000)
-            time.sleep(3)
+            try:
+                page.wait_for_load_state("networkidle", timeout=45000)
+            except Exception:
+                page.wait_for_load_state("domcontentloaded", timeout=20000)
+            time.sleep(2)
 
             # Fetch market indices (futures, VIX)
             data["indices"] = page.evaluate('''async () => {
