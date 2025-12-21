@@ -5,10 +5,13 @@ Bypasses Cloudflare bot detection to fetch ALL real-time stock data.
 
 Usage:
     uv run pplx-camoufox.py SYMBOL [--json]
+    uv run pplx-camoufox.py --market [--json]
 
 Examples:
-    uv run pplx-camoufox.py RKLB
-    uv run pplx-camoufox.py NVDA --json
+    uv run pplx-camoufox.py RKLB              # Stock-specific data
+    uv run pplx-camoufox.py NVDA --json       # Stock data as JSON
+    uv run pplx-camoufox.py --market          # Main finance page overview
+    uv run pplx-camoufox.py --market --json   # Market overview as JSON
 """
 
 import sys
@@ -177,6 +180,465 @@ def fetch_perplexity_data(ticker: str) -> dict:
         data["error"] = str(e)
 
     return data
+
+
+def fetch_market_overview() -> dict:
+    """Fetch main Perplexity Finance page data (market overview)."""
+    data = {
+        "indices": None,
+        "market_summary": None,
+        "market_sentiment": None,
+        "top_movers": None,
+        "sectors": None,
+        "prediction_markets": None,
+        "crypto": None,
+        "fixed_income": None,
+        "headlines": None,
+        "standouts": None,
+        "recent_developments": None,
+        "error": None,
+    }
+
+    try:
+        with Camoufox(headless=True) as browser:
+            page = browser.new_page()
+
+            # Navigate to main finance page
+            page.goto('https://www.perplexity.ai/finance', timeout=60000)
+            page.wait_for_load_state("networkidle", timeout=30000)
+            time.sleep(3)
+
+            # Fetch market indices (futures, VIX)
+            data["indices"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/finance/top-indices/market?with_history=true&history_period=1d&country=US');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch market summary (AI-generated overview)
+            data["market_summary"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/finance/market-summary/market?country=US');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch market sentiment
+            data["market_sentiment"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/finance/market-sentiment/market?country=US');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch top movers (gainers, losers, active)
+            data["top_movers"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/finance/top-movers/market?country=US');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch equity sectors
+            data["sectors"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/finance/equity-sectors');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch prediction markets
+            data["prediction_markets"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/finance/prediction-markets/tag/finance?with_commentary=false&page=0&limit=10&version=2.18&source=default');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch crypto prices
+            data["crypto"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/finance/top-indices/crypto_sidebar?with_history=true&history_period=1d&country=US');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch fixed income
+            data["fixed_income"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/finance/fixed-income');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch latest headlines (general news)
+            data["headlines"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/finance/general-news/market?country=US');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch standouts / significant movers (z-scores) with full details
+            data["standouts"] = page.evaluate('''async () => {
+                try {
+                    // Get z-score symbols first
+                    const zResp = await fetch('/rest/finance/top-z-scores/market?country=US');
+                    const zScores = await zResp.json();
+
+                    if (!Array.isArray(zScores) || zScores.length === 0) {
+                        return zScores;
+                    }
+
+                    // Fetch quote and summary for each standout
+                    const enriched = await Promise.all(zScores.slice(0, 6).map(async (item) => {
+                        const symbol = item.symbol;
+                        try {
+                            // Get quote data
+                            const quoteResp = await fetch(`/rest/finance/quote/${symbol}?with_history=false&with_ui_hints=true`);
+                            const quote = await quoteResp.json();
+
+                            // Get significant movement summary
+                            const summaryResp = await fetch(`/rest/finance/significant-movement-summary/${symbol}?version=2.18&source=default`);
+                            const summary = await summaryResp.json();
+
+                            return {
+                                symbol: symbol,
+                                z_score: item.z_score,
+                                name: quote.name || symbol,
+                                price: quote.price || quote.regularMarketPrice || 0,
+                                change: quote.change || quote.regularMarketChange || 0,
+                                changesPercentage: quote.percentChange || quote.changesPercentage || 0,
+                                summary: summary.explanation || summary.summary || summary.text || ""
+                            };
+                        } catch(e) {
+                            return item;
+                        }
+                    }));
+
+                    return enriched;
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch recent developments (market news)
+            data["recent_developments"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/finance/news/market');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+    except Exception as e:
+        data["error"] = str(e)
+
+    return data
+
+
+def display_market_overview(data: dict):
+    """Display market overview data with Rich formatting."""
+    if data.get("error"):
+        console.print(f"[red]Error: {data['error']}[/red]")
+        return
+
+    console.print()
+    console.rule("[bold cyan]PERPLEXITY FINANCE - MARKET OVERVIEW[/bold cyan]", style="cyan")
+    console.print()
+
+    # MARKET INDICES (Futures & VIX)
+    indices = data.get("indices", {}) or {}
+    if indices and "error" not in indices:
+        t = Table(title="Market Indices & Futures", box=box.ROUNDED, title_style="bold cyan")
+        t.add_column("Index", style="cyan bold")
+        t.add_column("Price", justify="right")
+        t.add_column("Change", justify="right")
+        t.add_column("% Change", justify="right")
+
+        # Handle list of indices
+        index_list = indices if isinstance(indices, list) else indices.get("indices", [])
+        for idx in (index_list if isinstance(index_list, list) else []):
+            symbol = idx.get("symbol", "")
+            name = idx.get("name", symbol)
+            price = idx.get("price", idx.get("regularMarketPrice", 0))
+            change = idx.get("change", idx.get("regularMarketChange", 0))
+            pct_change = idx.get("changesPercentage", idx.get("percentChange", idx.get("regularMarketChangePercent", 0)))
+
+            style = "green" if change >= 0 else "red"
+            t.add_row(
+                name[:20],
+                f"{price:,.2f}",
+                f"[{style}]{change:+,.2f}[/{style}]",
+                f"[{style}]{pct_change:+.2f}%[/{style}]"
+            )
+
+        console.print(t)
+        console.print()
+
+    # MARKET SENTIMENT
+    sentiment = data.get("market_sentiment", {}) or {}
+    if sentiment and "error" not in sentiment and "detail" not in sentiment:
+        sentiment_val = sentiment.get("sentiment", "neutral")
+        market_status = sentiment.get("market_status", "")
+        style = "green" if sentiment_val in ("bullish", "upbeat") else "red" if sentiment_val in ("bearish", "fearful") else "yellow"
+        console.print(f"[{style}]Market Sentiment: {sentiment_val.upper()}[/{style}] | Status: {market_status}")
+        console.print()
+
+    # MARKET SUMMARY
+    market_summary = data.get("market_summary", {}) or {}
+    if market_summary and "error" not in market_summary and "detail" not in market_summary:
+        console.print(Panel("[bold green]Market Summary[/bold green]", box=box.ROUNDED))
+
+        # Handle new structure: data.summary array
+        summary_data = market_summary.get("data", {})
+        summaries = summary_data.get("summary", []) if isinstance(summary_data, dict) else []
+        for item in (summaries if isinstance(summaries, list) else [])[:6]:
+            header = item.get("header", item.get("headline", item.get("title", "")))
+            detail = item.get("detail", item.get("content", item.get("text", "")))
+
+            if header:
+                console.print(f"  [bold]{header}[/bold]")
+            if detail:
+                if len(detail) > 300:
+                    detail = detail[:300] + "..."
+                console.print(f"  {detail}")
+            console.print()
+
+    # TOP MOVERS
+    top_movers = data.get("top_movers", {}) or {}
+    if top_movers and "error" not in top_movers:
+        # Gainers
+        gainers = top_movers.get("gainers", []) if isinstance(top_movers, dict) else []
+        if gainers:
+            t = Table(title="Top Gainers", box=box.ROUNDED, title_style="bold green")
+            t.add_column("Symbol", style="cyan bold")
+            t.add_column("Name")
+            t.add_column("Price", justify="right")
+            t.add_column("Change", justify="right")
+
+            for stock in gainers[:8]:
+                symbol = stock.get("symbol", stock.get("ticker", ""))
+                name = stock.get("name", "")[:25]
+                price = stock.get("price", 0)
+                pct = stock.get("changesPercentage", stock.get("percentChange", 0))
+
+                t.add_row(symbol, name, f"${price:.2f}", f"[green]+{pct:.2f}%[/green]")
+
+            console.print(t)
+            console.print()
+
+        # Losers
+        losers = top_movers.get("losers", []) if isinstance(top_movers, dict) else []
+        if losers:
+            t = Table(title="Top Losers", box=box.ROUNDED, title_style="bold red")
+            t.add_column("Symbol", style="cyan bold")
+            t.add_column("Name")
+            t.add_column("Price", justify="right")
+            t.add_column("Change", justify="right")
+
+            for stock in losers[:5]:
+                symbol = stock.get("symbol", stock.get("ticker", ""))
+                name = stock.get("name", "")[:25]
+                price = stock.get("price", 0)
+                pct = stock.get("changesPercentage", stock.get("percentChange", 0))
+
+                t.add_row(symbol, name, f"${price:.2f}", f"[red]{pct:.2f}%[/red]")
+
+            console.print(t)
+            console.print()
+
+    # EQUITY SECTORS
+    sectors = data.get("sectors", {}) or {}
+    if sectors and "error" not in sectors and "detail" not in sectors:
+        t = Table(title="Equity Sectors", box=box.ROUNDED, title_style="bold yellow")
+        t.add_column("Sector", style="cyan")
+        t.add_column("Symbol", style="dim")
+        t.add_column("Price", justify="right")
+        t.add_column("Change", justify="right")
+
+        sector_list = sectors if isinstance(sectors, list) else sectors.get("sectors", [])
+        for sector in (sector_list if isinstance(sector_list, list) else [])[:11]:
+            symbol = sector.get("symbol", "")
+            name = sector.get("name", sector.get("sector", ""))
+            price = sector.get("price", 0)
+            pct = sector.get("changesPercentage", sector.get("percentChange", 0))
+
+            style = "green" if pct >= 0 else "red"
+            t.add_row(name, symbol, f"${price:.2f}" if price else "-", f"[{style}]{pct:+.2f}%[/{style}]")
+
+        console.print(t)
+        console.print()
+
+    # RECENT DEVELOPMENTS
+    recent_dev = data.get("recent_developments", {}) or {}
+    if recent_dev and "error" not in recent_dev and "detail" not in recent_dev:
+        console.print(Panel("[bold yellow]Recent Developments[/bold yellow]", box=box.ROUNDED))
+
+        developments = recent_dev.get("posts", []) if isinstance(recent_dev, dict) else recent_dev
+        for dev in (developments if isinstance(developments, list) else [])[:5]:
+            headline = dev.get("headline", dev.get("title", ""))
+            text = dev.get("text", dev.get("summary", dev.get("content", "")))
+            timestamp = dev.get("timestamp", dev.get("date", ""))
+            if timestamp:
+                timestamp = str(timestamp)[:10]
+
+            if headline:
+                console.print(f"  [bold]{headline}[/bold]")
+            if timestamp:
+                console.print(f"  [dim]{timestamp}[/dim]")
+            if text:
+                if len(text) > 250:
+                    text = text[:250] + "..."
+                console.print(f"  {text}")
+            console.print()
+
+    # PREDICTION MARKETS
+    predictions = data.get("prediction_markets", {}) or {}
+    if predictions and "error" not in predictions and "detail" not in predictions:
+        console.print(Panel("[bold blue]Prediction Markets[/bold blue]", box=box.ROUNDED))
+
+        pred_list = predictions if isinstance(predictions, list) else predictions.get("markets", predictions.get("predictions", []))
+        for pred in (pred_list if isinstance(pred_list, list) else [])[:5]:
+            title = pred.get("title", pred.get("question", ""))
+            provider = pred.get("provider", "")
+            volume = pred.get("volume", 0)
+            markets = pred.get("markets", [])
+
+            if title:
+                console.print(f"  [bold]{title}[/bold]")
+                if provider:
+                    console.print(f"    [dim]Source: {provider}[/dim]")
+
+                # Show market outcomes
+                for market in markets[:3]:
+                    question = market.get("question", "")
+                    probability = market.get("probability")
+
+                    if probability is not None:
+                        if isinstance(probability, float) and probability <= 1:
+                            probability = probability * 100
+                        console.print(f"    {question}: [cyan]{probability:.1f}%[/cyan]")
+
+                if volume:
+                    vol_str = f"${volume/1e6:.1f}M" if volume >= 1e6 else f"${volume:,.0f}"
+                    console.print(f"    [dim]Volume: {vol_str}[/dim]")
+                console.print()
+
+    # CRYPTO
+    crypto = data.get("crypto", {}) or {}
+    if crypto and "error" not in crypto and "detail" not in crypto:
+        t = Table(title="Popular Cryptocurrencies", box=box.ROUNDED, title_style="bold magenta")
+        t.add_column("Crypto", style="cyan bold")
+        t.add_column("Price", justify="right")
+        t.add_column("Change", justify="right")
+
+        crypto_list = crypto if isinstance(crypto, list) else crypto.get("quotes", [])
+        for q in (crypto_list if isinstance(crypto_list, list) else []):
+            symbol = q.get("symbol", "")
+            name = q.get("name", symbol)
+            price = q.get("price", q.get("regularMarketPrice", 0))
+            pct = q.get("changesPercentage", q.get("percentChange", q.get("regularMarketChangePercent", 0)))
+
+            style = "green" if pct >= 0 else "red"
+            t.add_row(name, f"${price:,.2f}", f"[{style}]{pct:+.2f}%[/{style}]")
+
+        console.print(t)
+        console.print()
+
+    # FIXED INCOME
+    fixed_income = data.get("fixed_income", {}) or {}
+    if fixed_income and "error" not in fixed_income and "detail" not in fixed_income:
+        t = Table(title="Fixed Income", box=box.ROUNDED, title_style="bold white")
+        t.add_column("Instrument", style="cyan")
+        t.add_column("Symbol", style="dim")
+        t.add_column("Price", justify="right")
+        t.add_column("Change", justify="right")
+
+        fi_list = fixed_income if isinstance(fixed_income, list) else fixed_income.get("instruments", [])
+        for item in (fi_list if isinstance(fi_list, list) else [])[:6]:
+            symbol = item.get("symbol", "")
+            name = item.get("name", item.get("instrument", ""))
+            price = item.get("price", 0)
+            pct = item.get("changesPercentage", item.get("percentChange", 0))
+
+            style = "green" if pct >= 0 else "red"
+            t.add_row(name, symbol, f"${price:.2f}" if price else "-", f"[{style}]{pct:+.2f}%[/{style}]")
+
+        console.print(t)
+        console.print()
+
+    # STANDOUTS (significant z-score movers with details)
+    standouts = data.get("standouts", {}) or {}
+    if standouts and "error" not in standouts and "detail" not in standouts:
+        standout_list = standouts if isinstance(standouts, list) else standouts.get("standouts", standouts.get("stocks", []))
+        if standout_list:
+            console.print(Panel("[bold cyan]Standout Stocks[/bold cyan]", box=box.ROUNDED))
+
+            for stock in (standout_list if isinstance(standout_list, list) else [])[:6]:
+                symbol = stock.get("symbol", stock.get("ticker", ""))
+                name = stock.get("name", "")
+                price = stock.get("price", 0)
+                pct = stock.get("changesPercentage", stock.get("percentChange", 0))
+                z_score = stock.get("z_score", 0)
+                summary = stock.get("summary", "")
+
+                style = "green" if pct >= 0 else "red"
+                z_style = "green" if z_score >= 0 else "red"
+
+                console.print(f"  [bold cyan]{symbol}[/bold cyan] - {name}")
+                if price:
+                    console.print(f"  [{style}]${price:.2f} ({pct:+.2f}%)[/{style}] | Z-Score: [{z_style}]{z_score:+.2f}[/{z_style}]")
+                else:
+                    console.print(f"  Z-Score: [{z_style}]{z_score:+.2f}[/{z_style}]")
+                if summary:
+                    if len(summary) > 250:
+                        summary = summary[:250] + "..."
+                    console.print(f"  [dim]{summary}[/dim]")
+                console.print()
+
+    # LATEST HEADLINES (General News)
+    headlines = data.get("headlines", {}) or {}
+    if headlines and "error" not in headlines and "detail" not in headlines:
+        console.print(Panel("[bold white]Latest Headlines[/bold white]", box=box.ROUNDED))
+
+        headline_list = headlines.get("posts", []) if isinstance(headlines, dict) else headlines
+        for item in (headline_list if isinstance(headline_list, list) else [])[:6]:
+            title = item.get("headline", item.get("title", ""))
+            text = item.get("text", "")
+            timestamp = item.get("timestamp", item.get("date", item.get("time", "")))
+            if timestamp:
+                timestamp = str(timestamp)[:10]
+
+            if title:
+                console.print(f"  [bold]{title}[/bold]")
+                if timestamp:
+                    console.print(f"  [dim]{timestamp}[/dim]")
+                if text:
+                    if len(text) > 200:
+                        text = text[:200] + "..."
+                    console.print(f"  {text}")
+                console.print()
 
 
 def display_data(data: dict):
@@ -516,9 +978,27 @@ def main():
     parser = argparse.ArgumentParser(
         description="Fetch Perplexity Finance data using Camoufox (bypasses Cloudflare)",
     )
-    parser.add_argument("symbol", type=str, help="Stock ticker symbol (e.g., RKLB, NVDA)")
+    parser.add_argument("symbol", type=str, nargs="?", help="Stock ticker symbol (e.g., RKLB, NVDA)")
+    parser.add_argument("--market", action="store_true", help="Fetch main finance page market overview")
     parser.add_argument("--json", action="store_true", help="Output raw JSON data")
     args = parser.parse_args()
+
+    # Market overview mode
+    if args.market:
+        if not args.json:
+            console.print("[dim]Fetching market overview from Perplexity Finance via Camoufox...[/dim]")
+
+        data = fetch_market_overview()
+
+        if args.json:
+            print(json.dumps(data, indent=2, default=str))
+        else:
+            display_market_overview(data)
+        return
+
+    # Stock-specific mode (requires symbol)
+    if not args.symbol:
+        parser.error("Either provide a SYMBOL or use --market flag")
 
     ticker = args.symbol.upper()
 
