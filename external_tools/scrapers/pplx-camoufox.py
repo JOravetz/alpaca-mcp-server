@@ -17,7 +17,7 @@ Examples:
     uv run pplx-camoufox.py --finance         # Finance discover page (default: 200 articles)
     uv run pplx-camoufox.py --finance --articles 500  # Fetch up to 500 articles (max)
     uv run pplx-camoufox.py --finance --json  # Finance data as JSON
-    uv run pplx-camoufox.py --discover        # Scrape /you + /top + /tech (default: 500 articles)
+    uv run pplx-camoufox.py --discover        # Scrape /top + /tech (default: 500 articles)
     uv run pplx-camoufox.py --discover --articles 1000  # Fetch up to 1000 articles (max)
     uv run pplx-camoufox.py --discover --json # Discover data as JSON
 """
@@ -540,23 +540,24 @@ def fetch_discover(max_articles: int = 200, debug: bool = False) -> dict:
 
 
 def fetch_general_discover(max_articles: int = 500, debug: bool = False) -> dict:
-    """Fetch Perplexity Discover pages: /you, /top, /tech (combined feed).
+    """Fetch Perplexity Discover pages: /top + /tech (combined feed).
 
-    Scrapes three discover pages for comprehensive research:
-    - /discover/you - Personalized recommendations
+    Scrapes two discover pages for comprehensive research:
     - /discover/top - Trending/popular content
     - /discover/tech - Technology news and articles
 
+    Note: /discover/you requires authentication for personalized content,
+    so it's excluded from scraping.
+
     Args:
-        max_articles: Maximum total articles across all 3 pages (default: 500, max: 1000)
+        max_articles: Maximum total articles across both pages (default: 500, max: 1000)
         debug: Enable debug output
 
     Returns:
-        Combined data from all three discover pages
+        Combined data from both discover pages
     """
     data = {
         "discover_feed": None,
-        "you_feed": None,
         "top_feed": None,
         "tech_feed": None,
         "topics": None,
@@ -565,8 +566,8 @@ def fetch_general_discover(max_articles: int = 500, debug: bool = False) -> dict
         "error": None,
     }
 
-    # Calculate articles per page (distribute evenly across 3 pages)
-    articles_per_page = (max_articles + 2) // 3  # Ceiling division by 3
+    # Calculate articles per page (distribute evenly across 2 pages)
+    articles_per_page = (max_articles + 1) // 2  # Ceiling division by 2
 
     try:
         with Camoufox(headless=True) as browser:
@@ -582,9 +583,8 @@ def fetch_general_discover(max_articles: int = 500, debug: bool = False) -> dict
 
             page.on("request", capture_request)
 
-            # Define the three discover pages to scrape
+            # Define the two discover pages to scrape (excluding /you which needs auth)
             discover_pages = [
-                ("you", "https://www.perplexity.ai/discover/you"),
                 ("top", "https://www.perplexity.ai/discover/top"),
                 ("tech", "https://www.perplexity.ai/discover/tech"),
             ]
@@ -592,14 +592,12 @@ def fetch_general_discover(max_articles: int = 500, debug: bool = False) -> dict
             all_items = []
             page_size = 50
 
-            # Map page names to actual API topic slugs
-            # "you" -> no topic filter (personalized/default)
-            # "top" -> "top" (trending)
-            # "tech" -> no topic filter (page context handles it)
+            # Map page names to actual API topic UUIDs (from /rest/discover/topics)
+            # "top" -> "top" (trending - special slug, not UUID)
+            # "tech" -> UUID for Tech & Science category
             topic_map = {
-                "you": None,  # Default feed without topic filter
-                "top": "top",  # Trending
-                "tech": None,  # Default feed on tech page
+                "top": "top",  # Trending - uses special "top" slug
+                "tech": "9be812cb-6120-41b7-bc9e-993200db6cfc",  # Tech & Science UUID
             }
 
             for page_name, page_url in discover_pages:
@@ -661,7 +659,7 @@ def fetch_general_discover(max_articles: int = 500, debug: bool = False) -> dict
                 "status": "success",
                 "items": all_items[:max_articles],
                 "total_fetched": min(len(all_items), max_articles),
-                "sources": ["you", "top", "tech"],
+                "sources": ["top", "tech"],
             }
 
             # Fetch all discover topics (from last page context)
@@ -697,22 +695,20 @@ def display_general_discover(data: dict):
         return
 
     console.print()
-    console.rule("[bold cyan]PERPLEXITY DISCOVER - /you + /top + /tech[/bold cyan]", style="cyan")
+    console.rule("[bold cyan]PERPLEXITY DISCOVER - /top + /tech[/bold cyan]", style="cyan")
     console.print()
 
     # Show per-page stats
-    you_feed = data.get("you_feed", {}) or {}
     top_feed = data.get("top_feed", {}) or {}
     tech_feed = data.get("tech_feed", {}) or {}
 
-    you_count = you_feed.get("total_fetched", 0) if isinstance(you_feed, dict) else 0
     top_count = top_feed.get("total_fetched", 0) if isinstance(top_feed, dict) else 0
     tech_count = tech_feed.get("total_fetched", 0) if isinstance(tech_feed, dict) else 0
 
-    console.print(f"[dim]Sources: /you ({you_count}) + /top ({top_count}) + /tech ({tech_count})[/dim]")
+    console.print(f"[dim]Sources: /top ({top_count}) + /tech ({tech_count})[/dim]")
     console.print()
 
-    # DISCOVER FEED (combined from all 3 pages)
+    # DISCOVER FEED (combined from both pages)
     feed = data.get("discover_feed", {}) or {}
     if feed and "error" not in feed and "detail" not in feed:
         items = feed.get("items", []) if isinstance(feed, dict) else []
@@ -720,7 +716,7 @@ def display_general_discover(data: dict):
         console.print(Panel(f"[bold green]Combined Discover Feed ({total} articles)[/bold green]", box=box.ROUNDED))
 
         # Source page color mapping
-        source_colors = {"you": "yellow", "top": "green", "tech": "blue"}
+        source_colors = {"top": "green", "tech": "blue"}
 
         for item in items[:75]:  # Show up to 75 articles
             title = item.get("title", item.get("short_title", ""))
@@ -1577,7 +1573,7 @@ def main():
     parser.add_argument("symbol", type=str, nargs="?", help="Stock ticker symbol (e.g., RKLB, NVDA)")
     parser.add_argument("--market", action="store_true", help="Fetch main finance page market overview")
     parser.add_argument("--finance", action="store_true", help="Fetch discover/finance page (trends, topics, news)")
-    parser.add_argument("--discover", action="store_true", help="Scrape /you + /top + /tech discover pages (default: 500, max: 1000)")
+    parser.add_argument("--discover", action="store_true", help="Scrape /top + /tech discover pages (default: 500, max: 1000)")
     parser.add_argument("--articles", type=int, default=None, help="Max articles: --finance (default 200, max 500), --discover (default 500, max 1000)")
     parser.add_argument("--json", action="store_true", help="Output raw JSON data")
     args = parser.parse_args()
@@ -1613,10 +1609,10 @@ def main():
             display_discover(data)
         return
 
-    # Discover mode (scrapes /you, /top, /tech pages)
+    # Discover mode (scrapes /top, /tech pages)
     if args.discover:
         if not args.json:
-            console.print(f"[dim]Fetching /you + /top + /tech discover pages via Camoufox (up to {args.articles} articles)...[/dim]")
+            console.print(f"[dim]Fetching /top + /tech discover pages via Camoufox (up to {args.articles} articles)...[/dim]")
 
         data = fetch_general_discover(max_articles=args.articles)
 

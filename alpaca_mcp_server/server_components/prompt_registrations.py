@@ -151,13 +151,14 @@ def register_core_prompts(mcp):
     async def discover(articles: int = 500) -> str:
         """Get comprehensive research data from Perplexity Discover pages.
 
-        Scrapes three discover pages for comprehensive research:
-        - /discover/you - Personalized recommendations
+        Scrapes two discover pages for comprehensive research:
         - /discover/top - Trending/popular content
         - /discover/tech - Technology news and articles
 
+        Note: /discover/you requires authentication and is excluded.
+
         Args:
-            articles: Total articles across all 3 pages (default: 500, max: 1000)
+            articles: Total articles across both pages (default: 500, max: 1000)
 
         Examples:
             /discover           # Fetch 500 articles (default)
