@@ -6,12 +6,15 @@ Bypasses Cloudflare bot detection to fetch ALL real-time stock data.
 Usage:
     uv run pplx-camoufox.py SYMBOL [--json]
     uv run pplx-camoufox.py --market [--json]
+    uv run pplx-camoufox.py --discover [--json]
 
 Examples:
     uv run pplx-camoufox.py RKLB              # Stock-specific data
     uv run pplx-camoufox.py NVDA --json       # Stock data as JSON
     uv run pplx-camoufox.py --market          # Main finance page overview
     uv run pplx-camoufox.py --market --json   # Market overview as JSON
+    uv run pplx-camoufox.py --discover        # Finance discover page (trends, topics)
+    uv run pplx-camoufox.py --discover --json # Discover data as JSON
 """
 
 import sys
@@ -355,6 +358,209 @@ def fetch_market_overview() -> dict:
         data["error"] = str(e)
 
     return data
+
+
+def fetch_discover(debug: bool = False) -> dict:
+    """Fetch Perplexity Finance Discover page data (trends, topics, news)."""
+    data = {
+        "discover_feed": None,
+        "indices": None,
+        "topics": None,
+        "trending": None,
+        "intercepted_urls": [],
+        "error": None,
+    }
+
+    try:
+        with Camoufox(headless=True) as browser:
+            page = browser.new_page()
+
+            # Intercept network requests to discover API endpoints
+            captured_requests = []
+
+            def capture_request(request):
+                url = request.url
+                if '/rest/' in url or '/api/' in url:
+                    captured_requests.append(url)
+
+            page.on("request", capture_request)
+
+            # Navigate to discover finance page
+            page.goto('https://www.perplexity.ai/discover/finance', timeout=60000)
+            try:
+                page.wait_for_load_state("networkidle", timeout=45000)
+            except Exception:
+                # Fallback to domcontentloaded if networkidle times out
+                page.wait_for_load_state("domcontentloaded", timeout=20000)
+            time.sleep(5)
+
+            # Store intercepted URLs for debugging
+            data["intercepted_urls"] = captured_requests
+
+            # Fetch market indices for discover page
+            data["indices"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/finance/top-indices/discover?with_history=true&history_period=1d&country=US');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch discover feed for finance topic (UUID for Finance category)
+            # Finance topic UUID: e46915e3-9d25-4f85-9e43-e8a9d834729f
+            data["discover_feed"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/discover/feed?limit=30&offset=0&topic=e46915e3-9d25-4f85-9e43-e8a9d834729f&version=2.18&source=default');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch all discover topics (categories)
+            data["topics"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/discover/topics?version=2.18&source=default');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+            # Fetch top/trending content
+            data["trending"] = page.evaluate('''async () => {
+                try {
+                    const resp = await fetch('/rest/discover/feed?limit=20&offset=0&topic=top&version=2.18&source=default');
+                    return await resp.json();
+                } catch(e) {
+                    return {"error": e.toString()};
+                }
+            }''')
+
+    except Exception as e:
+        data["error"] = str(e)
+
+    return data
+
+
+def display_discover(data: dict):
+    """Display discover data with Rich formatting."""
+    if data.get("error"):
+        console.print(f"[red]Error: {data['error']}[/red]")
+        return
+
+    console.print()
+    console.rule("[bold cyan]PERPLEXITY FINANCE - DISCOVER[/bold cyan]", style="cyan")
+    console.print()
+
+    # MARKET INDICES (from discover page)
+    indices = data.get("indices", []) or []
+    if indices and isinstance(indices, list):
+        t = Table(title="Market Overview", box=box.ROUNDED, title_style="bold cyan")
+        t.add_column("Index", style="cyan bold")
+        t.add_column("Price", justify="right")
+        t.add_column("Change", justify="right")
+        t.add_column("% Change", justify="right")
+
+        for idx in indices[:4]:
+            symbol = idx.get("symbol", "")
+            name = idx.get("name", symbol)
+            price = idx.get("price", 0)
+            change = idx.get("change", 0)
+            pct_change = idx.get("changesPercentage", 0)
+
+            style = "green" if change >= 0 else "red"
+            t.add_row(
+                name[:20],
+                f"{price:,.2f}",
+                f"[{style}]{change:+,.2f}[/{style}]",
+                f"[{style}]{pct_change:+.2f}%[/{style}]"
+            )
+
+        console.print(t)
+        console.print()
+
+    # FINANCE FEED (main content)
+    feed = data.get("discover_feed", {}) or {}
+    if feed and "error" not in feed and "detail" not in feed:
+        console.print(Panel("[bold green]Finance News & Analysis[/bold green]", box=box.ROUNDED))
+
+        items = feed.get("items", []) if isinstance(feed, dict) else []
+        for item in items[:12]:
+            title = item.get("title", item.get("short_title", ""))
+            summary = item.get("summary", "")
+            description = item.get("description", "")
+            updated = item.get("updated_datetime", "")
+            url = item.get("url", "")
+
+            # Get sources from bullet_summary
+            bullets = item.get("bullet_summary_web_results_preload", [])
+            sources = []
+            for b in bullets[:3]:
+                meta = b.get("meta_data", {})
+                domain = meta.get("domain_name", "")
+                if domain and domain not in sources:
+                    sources.append(domain)
+
+            if title:
+                console.print(f"  [bold cyan]{title}[/bold cyan]")
+
+                # Show metadata
+                meta_parts = []
+                if updated:
+                    meta_parts.append(str(updated)[:10])
+                if sources:
+                    meta_parts.append(" | ".join(sources[:3]))
+                if meta_parts:
+                    console.print(f"    [dim]{' - '.join(meta_parts)}[/dim]")
+
+                # Show summary (prefer summary over description)
+                text = summary or description
+                if text:
+                    if len(text) > 250:
+                        text = text[:250] + "..."
+                    console.print(f"    {text}")
+                console.print()
+
+    # TRENDING (top stories across all categories)
+    trending = data.get("trending", {}) or {}
+    if trending and "error" not in trending and "detail" not in trending:
+        console.print(Panel("[bold yellow]Trending Now[/bold yellow]", box=box.ROUNDED))
+
+        items = trending.get("items", []) if isinstance(trending, dict) else []
+        for item in items[:8]:
+            title = item.get("title", item.get("short_title", ""))
+            summary = item.get("summary", "")
+            updated = item.get("updated_datetime", "")
+
+            if title:
+                console.print(f"  [cyan]•[/cyan] [bold]{title}[/bold]")
+                if updated:
+                    console.print(f"    [dim]{str(updated)[:10]}[/dim]")
+                if summary:
+                    if len(summary) > 150:
+                        summary = summary[:150] + "..."
+                    console.print(f"    {summary}")
+                console.print()
+
+    # TOPICS/CATEGORIES
+    topics = data.get("topics", {}) or {}
+    if topics and "error" not in topics and "detail" not in topics:
+        all_topics = topics.get("all_topics", [])
+        if all_topics:
+            t = Table(title="Discover Categories", box=box.ROUNDED, title_style="bold blue")
+            t.add_column("Category", style="cyan bold")
+            t.add_column("Slug")
+
+            for topic in all_topics:
+                name = topic.get("name", topic.get("translated_name", ""))
+                slug = topic.get("slug", "")
+                if name:
+                    t.add_row(name, slug)
+
+            console.print(t)
+            console.print()
 
 
 def display_market_overview(data: dict):
@@ -980,8 +1186,22 @@ def main():
     )
     parser.add_argument("symbol", type=str, nargs="?", help="Stock ticker symbol (e.g., RKLB, NVDA)")
     parser.add_argument("--market", action="store_true", help="Fetch main finance page market overview")
+    parser.add_argument("--discover", action="store_true", help="Fetch discover/finance page (trends, topics, news)")
     parser.add_argument("--json", action="store_true", help="Output raw JSON data")
     args = parser.parse_args()
+
+    # Discover mode
+    if args.discover:
+        if not args.json:
+            console.print("[dim]Fetching discover page from Perplexity Finance via Camoufox...[/dim]")
+
+        data = fetch_discover()
+
+        if args.json:
+            print(json.dumps(data, indent=2, default=str))
+        else:
+            display_discover(data)
+        return
 
     # Market overview mode
     if args.market:
@@ -998,7 +1218,7 @@ def main():
 
     # Stock-specific mode (requires symbol)
     if not args.symbol:
-        parser.error("Either provide a SYMBOL or use --market flag")
+        parser.error("Either provide a SYMBOL, or use --market or --discover flag")
 
     ticker = args.symbol.upper()
 
