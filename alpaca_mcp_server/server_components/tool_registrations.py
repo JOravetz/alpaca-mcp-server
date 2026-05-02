@@ -238,7 +238,8 @@ def register_technical_analysis_tools(mcp, DEFAULT_WINDOW_LEN):
         Args:
             symbols: Comma-separated symbols or "AUTO" for scanner results
             timeframe: Bar timeframe (1Min, 5Min, 15Min, 1Hour, 1Day)
-            days: Number of trading days to analyze (1-30)
+            days: Number of trading days to analyze. Caps are timeframe-aware:
+                intraday (1Min/5Min/15Min/30Min/1Hour) caps at 30; 1Day caps at 2520.
             window_len: Hanning filter window length (3-101, odd, uses global config if None)
             filter_key: Data field to filter (close, open, high, low, vwap)
             feed: Data feed source (sip, iex, otc)

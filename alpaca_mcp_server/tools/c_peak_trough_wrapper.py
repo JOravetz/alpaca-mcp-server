@@ -135,7 +135,7 @@ class CPeakTroughAnalyzer:
                 capture_output=True,
                 text=True,
                 env=env,
-                timeout=30,  # 30 second timeout
+                timeout=120,  # 120s — multi-year daily pulls across many symbols can exceed 30s
                 check=True,
             )
 
@@ -155,7 +155,7 @@ class CPeakTroughAnalyzer:
                 return {"error": "No output from C program", "stderr": result.stderr}
 
         except subprocess.TimeoutExpired:
-            return {"error": "C program timed out after 30 seconds"}
+            return {"error": "C program timed out after 120 seconds"}
         except subprocess.CalledProcessError as e:
             return {
                 "error": f"C program failed with exit code {e.returncode}",
@@ -189,7 +189,9 @@ async def analyze_peaks_troughs_fast(
     Args:
         symbols: Comma-separated symbols or "AUTO" for scanner results
         timeframe: Bar timeframe (1Min, 5Min, 15Min, 1Hour, 1Day)
-        days: Number of trading days to analyze (1-30)
+        days: Number of trading days to analyze. Caps are timeframe-aware:
+            intraday timeframes (1Min/5Min/15Min/30Min/1Hour) cap at 30;
+            1Day caps at 2520 (~10 years).
         window_len: Hanning filter window length (3-101, odd)
         filter_key: Data field to filter (close, open, high, low, vwap)
         feed: Data feed source (sip, iex, otc)
@@ -207,8 +209,10 @@ async def analyze_peaks_troughs_fast(
                 "Run scan_day_trading_opportunities first, then pass symbols directly."
             )
 
-        # Validate parameters
-        days = max(1, min(30, days))
+        # Validate parameters - cap is timeframe-aware. Daily bars are light, so
+        # we allow long lookbacks; intraday data volume is far heavier per day.
+        max_days = 2520 if timeframe == "1Day" else 30
+        days = max(1, min(max_days, days))
 
         if window_len:
             window_len = max(3, min(101, window_len))
@@ -357,7 +361,7 @@ TOOL_METADATA = {
     "parameters": {
         "symbols": "Comma-separated symbols or AUTO for scanner results",
         "timeframe": "Bar timeframe (1Min, 5Min, 15Min, 1Hour, 1Day)",
-        "days": "Number of trading days (1-30)",
+        "days": "Number of trading days (intraday: 1-30; 1Day: 1-2520)",
         "window_len": "Hanning filter window length (3-101, odd)",
         "filter_key": "Data field to filter (close, open, high, low, vwap)",
         "feed": "Data feed source (sip, iex, otc)",

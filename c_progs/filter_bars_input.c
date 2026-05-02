@@ -503,7 +503,7 @@ void print_help(const char *program_name) {
     printf("  -o FILE         Output JSON file (default: stdout)\n");
     printf("  -s SYMBOLS      Comma-separated list of stock symbols (e.g., \"AAPL,MSFT,GOOGL\")\n");
     printf("  -f FILE         File containing symbols, one per line\n");
-    printf("  -n NUM          Number of trading days to fetch (default: 1)\n");
+    printf("  -n NUM          Number of trading days to fetch (default: 1, max: 2520)\n");
     printf("  -t TIMEFRAME    Timeframe: 1Min, 5Min, 15Min, 1Hour, 1Day, etc. (default: 1Min)\n");
     printf("  -w LENGTH       Hanning window length, must be odd > 1 (default: 11)\n");
     printf("  -k KEY          Data field to filter: open, high, low, close, vwap (default: close)\n");
@@ -858,8 +858,8 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Error: Window length must be odd for proper filtering, got %d\n", arguments.window_length);
         exit(1);
     }
-    if (arguments.days < 1 || arguments.days > 365) {
-        fprintf(stderr, "Error: Days must be between 1 and 365, got %d\n", arguments.days);
+    if (arguments.days < 1 || arguments.days > 2520) {
+        fprintf(stderr, "Error: Days must be between 1 and 2520, got %d\n", arguments.days);
         exit(1);
     }
 
