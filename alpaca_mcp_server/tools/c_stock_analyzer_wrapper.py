@@ -95,6 +95,17 @@ class CStockAnalyzer:
         if min_trades is None:
             min_trades = self.default_min_trades
 
+        # Default ticker universe: ~/autotrade/combined.lis (user's curated list).
+        # Without this, the C binary falls back to "combined.lis" relative to its
+        # CWD — which is the stale snapshot in the project root and still contains
+        # delisted tickers (e.g. NLSP last refreshed 2025-08).
+        # `symbols` (via -s) overrides `symbols_file` in the C program, so we only
+        # set the default when the caller hasn't passed explicit symbols.
+        if symbols_file is None and not symbols:
+            default_symbols_path = Path.home() / "autotrade" / "combined.lis"
+            if default_symbols_path.is_file():
+                symbols_file = str(default_symbols_path)
+
         # Build command
         cmd = [str(self.c_program_path)]
 
