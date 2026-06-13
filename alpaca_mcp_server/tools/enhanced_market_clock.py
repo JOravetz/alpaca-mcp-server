@@ -1,6 +1,8 @@
 """Enhanced market clock with extended hours awareness."""
 
-from datetime import time, timedelta
+from datetime import time
+
+from alpaca.trading.requests import GetCalendarRequest
 
 from ..config.settings import get_trading_client
 from ..utils.timezone_utils import get_eastern_time
@@ -19,29 +21,72 @@ async def get_extended_market_clock() -> str:
         # Get current Eastern time
         now_et, tz_name = get_eastern_time()
         current_time = now_et.time()
+        today = now_et.date()
 
-        # Define trading sessions
+        # Extended-hours window boundaries (fixed regardless of session length)
         premarket_start = time(4, 0)  # 4:00 AM
-        market_open = time(9, 30)  # 9:30 AM
-        market_close = time(16, 0)  # 4:00 PM
         postmarket_end = time(20, 0)  # 8:00 PM
 
-        # Determine current session
-        if premarket_start <= current_time < market_open:
+        # Authoritative next regular open from Alpaca (already skips weekends/holidays).
+        next_open_et = (
+            clock.next_open.astimezone(now_et.tzinfo) if clock.next_open else None
+        )
+
+        # Determine whether *today* is an actual trading day (handles weekends AND
+        # market holidays) and fetch today's real regular-session bounds (handles
+        # early-close half-days) from the trading calendar. Fall back to the Alpaca
+        # clock if the calendar lookup is unavailable.
+        market_open = time(9, 30)  # 9:30 AM
+        market_close = time(16, 0)  # 4:00 PM
+        is_trading_day = clock.is_open or bool(
+            next_open_et and next_open_et.date() == today
+        )
+        try:
+            calendar = client.get_calendar(
+                filters=GetCalendarRequest(
+                    start=today.isoformat(), end=today.isoformat()
+                )
+            )
+            today_entry = next(
+                (d for d in calendar if str(d.date)[:10] == today.isoformat()),
+                None,
+            )
+            if today_entry is not None:
+                is_trading_day = True
+                market_open = today_entry.open
+                market_close = today_entry.close
+            elif calendar:
+                # Calendar returned but today is absent -> not a trading day.
+                is_trading_day = False
+        except Exception:
+            pass  # keep the clock-derived fallback for is_trading_day
+
+        # Determine current session (only trading days have live sessions)
+        if is_trading_day and premarket_start <= current_time < market_open:
             session = "pre_market"
             session_status = "Pre-market trading active"
             extended_hours = True
             next_session = "Regular market opens"
-            next_time = now_et.replace(hour=9, minute=30, second=0, microsecond=0)
+            next_time = now_et.replace(
+                hour=market_open.hour,
+                minute=market_open.minute,
+                second=0,
+                microsecond=0,
+            )
 
-        elif market_open <= current_time < market_close:
+        elif is_trading_day and market_open <= current_time < market_close:
             session = "regular_market"
             session_status = "Regular market hours"
             extended_hours = False
             next_session = "After-hours begins"
-            next_time = now_et.replace(hour=16, minute=0, second=0, microsecond=0)
+            next_time = now_et.replace(
+                hour=market_close.hour,
+                minute=market_close.minute,
+                second=0,
+                microsecond=0,
+            )
 
-        elif market_close <= current_time < postmarket_end:
+        elif is_trading_day and market_close <= current_time < postmarket_end:
             session = "post_market"
             session_status = "After-hours trading active"
             extended_hours = True
@@ -53,16 +98,14 @@ async def get_extended_market_clock() -> str:
             session_status = "Markets closed"
             extended_hours = False
 
-            # Determine next opening
-            if current_time >= postmarket_end:
-                # After 8 PM - next is pre-market tomorrow
-                next_session = "Pre-market opens"
-                next_time = (now_et + timedelta(days=1)).replace(
+            # Next extended-hours session starts at 4:00 AM on the next trading day.
+            # next_open_et already accounts for weekends and holidays.
+            next_session = "Pre-market opens"
+            if next_open_et is not None:
+                next_time = next_open_et.replace(
                     hour=4, minute=0, second=0, microsecond=0
                 )
             else:
-                # Before 4 AM - next is pre-market today
-                next_session = "Pre-market opens"
                 next_time = now_et.replace(hour=4, minute=0, second=0, microsecond=0)
 
         # Calculate time to next session
