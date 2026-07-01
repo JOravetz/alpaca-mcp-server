@@ -1,0 +1,20 @@
+{
+  "name": "alpaca-local",
+  "description": "Personal marketplace for the alpaca-trading day-trading plugin",
+  "owner": {
+    "name": "Joe Oravetz",
+    "email": "jjoravet@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "alpaca-trading",
+      "description": "HFT-style day-trading toolkit for Alpaca Markets — explosive stock scanners plus the enhanced Alpaca MCP server (~120 tools).",
+      "author": {
+        "name": "Joe Oravetz",
+        "email": "jjoravet@gmail.com"
+      },
+      "category": "productivity",
+      "source": "./claude-plugin"
+    }
+  ]
+}

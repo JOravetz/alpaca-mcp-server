@@ -1,0 +1,30 @@
+{
+  "name": "alpaca-trading",
+  "description": "HFT-style day-trading toolkit for Alpaca Markets — explosive stock scanners (/scan, /gaps, /morning_scanner) plus the enhanced Alpaca MCP server with ~120 tools for streaming quotes, peak/trough analysis, support/resistance levels, order placement, and position monitoring. Requires APCA_API_KEY_ID and APCA_API_SECRET_KEY in the environment.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Joe Oravetz",
+    "email": "jjoravet@gmail.com"
+  },
+  "homepage": "https://github.com/JOravetz/alpaca-mcp-server",
+  "mcpServers": {
+    "alpaca-trading": {
+      "command": "/home/jjoravet/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/home/jjoravet/alpaca-mcp-server-enhanced",
+        "run",
+        "python",
+        "-m",
+        "alpaca_mcp_server"
+      ],
+      "env": {
+        "ALPACA_API_KEY_ID": "${APCA_API_KEY_ID}",
+        "ALPACA_API_SECRET_KEY": "${APCA_API_SECRET_KEY}",
+        "ALPACA_BASE_URL": "https://paper-api.alpaca.markets",
+        "LOG_LEVEL": "INFO",
+        "PYTHONPATH": "/home/jjoravet/alpaca-mcp-server-enhanced"
+      }
+    }
+  }
+}
