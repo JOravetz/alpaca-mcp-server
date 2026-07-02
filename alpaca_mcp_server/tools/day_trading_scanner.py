@@ -9,6 +9,7 @@ import requests
 
 # Import global configuration
 from ..config import get_scanner_config, get_trading_config
+from .freshness import format_cutoff, freshness_cutoff, is_stale
 
 logger = logging.getLogger(__name__)
 
@@ -180,6 +181,10 @@ async def scan_day_trading_opportunities(
         snapshots = all_snapshots
         results = []
 
+        # Freshness gate: drop symbols whose latest print predates the cutoff
+        cutoff_epoch, cutoff_source = freshness_cutoff()
+        stale_filtered = 0
+
         # Process each symbol exactly like C program (lines 668-759)
         for symbol in symbol_list:
             try:
@@ -193,6 +198,12 @@ async def scan_day_trading_opportunities(
                 minute_bar = snapshot.get("minuteBar")
 
                 if not latest_trade or not minute_bar:
+                    continue
+
+                # Halted/delisted symbols keep stale prints in snapshots;
+                # drop them instead of ranking three-week-old data.
+                if is_stale(latest_trade.get("t"), cutoff_epoch):
+                    stale_filtered += 1
                     continue
 
                 # Extract trade count from minuteBar.n exactly like C program (lines 682-687)
@@ -303,6 +314,7 @@ Time: {current_time.strftime("%Y-%m-%d %H:%M:%S")} EDT
 Market Status: {market_status}
 Threshold: {min_trades_per_minute} trades/minute
 Total Qualified: 0 stocks
+Freshness: last trade ≥ {format_cutoff(cutoff_epoch)} ({cutoff_source}); filtered {stale_filtered} stale symbols
 {weekend_warning}
 **No opportunities found with current filters**
 
@@ -327,6 +339,7 @@ Time: {current_time.strftime("%Y-%m-%d %H:%M:%S")} EDT
 Market Status: {market_status}
 Threshold: {min_trades_per_minute} trades/minute
 Total Qualified: {len(results)} stocks
+Freshness: last trade ≥ {format_cutoff(cutoff_epoch)} ({cutoff_source}); filtered {stale_filtered} stale symbols
 {weekend_warning}
 
 ```
