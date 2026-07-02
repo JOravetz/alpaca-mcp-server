@@ -247,7 +247,7 @@ int read_symbols(const char* filename, char ***symbols) {
 }
 
 // Get stock snapshots from Alpaca API
-int get_stock_snapshots(char **symbols, int symbol_count, StockData *results, int *result_count, double max_price, double min_percent_change, int min_trades, int all_symbols, int raw_output) {
+int get_stock_snapshots(char **symbols, int symbol_count, StockData *results, int *result_count, double max_price, double min_percent_change, int min_trades, int all_symbols, int raw_output, long min_trade_epoch) {
     CURL *curl;
     CURLcode res;
     APIResponse response = {0};
@@ -357,6 +357,18 @@ int get_stock_snapshots(char **symbols, int symbol_count, StockData *results, in
         double day_close = json_object_get_double(day_close_json);
         int trades = json_object_get_int(trades_json);
         int volume = json_object_get_int(volume_json);
+
+        // Freshness gate: halted/delisted symbols keep their last pre-halt
+        // print in the snapshot indefinitely, so anything older than the
+        // cutoff is dropped BEFORE ranking. Missing/unparseable timestamps
+        // fail closed when a cutoff is active.
+        if (!all_symbols && min_trade_epoch > 0) {
+            long trade_epoch = -1L;
+            if (timestamp_json) {
+                trade_epoch = parse_iso8601_to_epoch(json_object_get_string(timestamp_json));
+            }
+            if (trade_epoch < min_trade_epoch) continue;
+        }
 
         // Skip filtering if all_symbols flag is set
         if (!all_symbols) {
@@ -659,6 +671,8 @@ void print_help(const char *program_name) {
     printf("  -p PRICE      Maximum stock price filter in USD (default: 30.0)\n");
     printf("  -c PERCENT    Minimum percent change threshold (default: 20.0)\n");
     printf("  -t TRADES     Minimum number of trades threshold (default: 1000)\n");
+    printf("  -T EPOCH      Minimum latestTrade Unix timestamp in seconds (default: 0 = disabled)\n");
+    printf("                Symbols whose last trade is older are skipped (stale/halted filter)\n");
     printf("  -f FILE       Symbol list file to use (default: combined.lis)\n");
     printf("  -k KEYS       Comma-separated sort keys in ascending order (default: trades,percent_change)\n");
     printf("                Available keys: symbol, price, day_close, percent_change, gradient_full,\n");
@@ -687,6 +701,7 @@ int main(int argc, char *argv[]) {
     const char *sort_keys = "trades,percent_change";  // Default sorting keys
     int all_symbols = 0;  // Flag for outputting all symbols without filtering
     int raw_output = 0;   // Flag for outputting raw JSON snapshot data
+    long min_trade_epoch = 0;  // 0 = freshness filter disabled
 
     // Parse command line arguments
     for (int i = 1; i < argc; i++) {
@@ -731,6 +746,14 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
             min_trades = (int)val;
+        } else if (strcmp(argv[i], "-T") == 0 && i + 1 < argc) {
+            char *endptr;
+            long val = strtol(argv[++i], &endptr, 10);
+            if (*endptr != '\0' || val < 0) {
+                fprintf(stderr, "Error: -T requires a non-negative Unix epoch (seconds), got '%s'\n", argv[i]);
+                return 1;
+            }
+            min_trade_epoch = val;
         } else if (strcmp(argv[i], "-f") == 0 && i + 1 < argc) {
             symbol_file = argv[++i];
         } else if (strcmp(argv[i], "-k") == 0 && i + 1 < argc) {
@@ -796,7 +819,7 @@ int main(int argc, char *argv[]) {
     int result_count;
 
     // Get stock data from Alpaca API
-    if (get_stock_snapshots(symbols, symbol_count, results, &result_count, max_price, min_percent_change, min_trades, all_symbols, raw_output) != 0) {
+    if (get_stock_snapshots(symbols, symbol_count, results, &result_count, max_price, min_percent_change, min_trades, all_symbols, raw_output, min_trade_epoch) != 0) {
         fprintf(stderr, "Error: Failed to get stock snapshots\n");
         for (int i = 0; i < symbol_count; i++) free(symbols[i]);
         free(symbols);
