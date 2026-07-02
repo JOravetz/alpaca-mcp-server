@@ -28,6 +28,17 @@ class TestParseIsoEpoch:
         assert freshness.parse_iso_epoch("") is None
         assert freshness.parse_iso_epoch(None) is None
 
+    def test_negative_offset_with_fraction(self):
+        # 16:00 EDT == 20:00 UTC — the offset must be honored, not dropped
+        assert (
+            freshness.parse_iso_epoch("2026-06-08T16:00:00.123456789-04:00")
+            == 1780948800
+        )
+
+    def test_naive_timestamp_is_utc(self):
+        # Matches the C parser: naive strings are UTC, never local time
+        assert freshness.parse_iso_epoch("2026-06-08T20:00:00") == 1780948800
+
 
 class TestIsStale:
     def test_older_than_cutoff_is_stale(self):

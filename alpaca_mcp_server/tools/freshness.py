@@ -8,8 +8,9 @@ results (see docs/superpowers/specs/2026-07-01-scanner-freshness-gating-design.m
 """
 
 import logging
+import re
 import time as _time
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 
 import pytz
 
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 _EASTERN = pytz.timezone("America/New_York")
 _PREMARKET_START = time(4, 0)
 _CACHE_TTL_SECONDS = 900  # 15 minutes
+_FALLBACK_TTL_SECONDS = 60  # retry the calendar quickly after a failure
 _FALLBACK_WINDOW_HOURS = 96
 
 _cache: dict = {"value": None, "expires": 0.0}
@@ -39,8 +41,14 @@ def freshness_cutoff() -> tuple[int, str]:
         logger.warning("Market calendar unavailable, using 96h fallback: %s", exc)
         value = (int(now - _FALLBACK_WINDOW_HOURS * 3600), "fallback")
 
+    # Cache fallback results briefly so a transient calendar blip doesn't
+    # pin the looser 96h cutoff for a full 15 minutes. Dict writes are
+    # GIL-atomic and value-before-expires ordering means a racing reader
+    # sees either a valid tuple or a redundant cache miss — no lock needed.
     _cache["value"] = value
-    _cache["expires"] = now + _CACHE_TTL_SECONDS
+    _cache["expires"] = now + (
+        _CACHE_TTL_SECONDS if value[1] == "calendar" else _FALLBACK_TTL_SECONDS
+    )
     return value
 
 
@@ -88,12 +96,13 @@ def parse_iso_epoch(iso_timestamp: str | None) -> int | None:
     if not iso_timestamp:
         return None
     try:
-        head = iso_timestamp.replace("Z", "+00:00")
-        if "." in head:
-            base, _, frac = head.partition(".")
-            plus = frac.find("+")
-            head = base + (frac[plus:] if plus != -1 else "+00:00")
-        return int(datetime.fromisoformat(head).timestamp())
+        head = re.sub(r"\.\d+", "", iso_timestamp.replace("Z", "+00:00"), count=1)
+        dt = datetime.fromisoformat(head)
+        if dt.tzinfo is None:
+            # Naive timestamps are UTC (matches the C parser's semantics),
+            # never the machine's local zone.
+            dt = dt.replace(tzinfo=UTC)
+        return int(dt.timestamp())
     except (ValueError, AttributeError, TypeError):
         return None
 
