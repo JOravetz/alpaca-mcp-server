@@ -77,12 +77,23 @@ int load_credentials() {
 
 // Parse an ISO-8601 UTC timestamp (e.g. "2026-06-08T20:00:00.123456789Z")
 // to Unix epoch seconds. Fractional seconds are ignored.
+// After the seconds field, only "", "Z", or "." + digits (optionally
+// ending in "Z") are accepted; anything else — including numeric UTC
+// offsets like "-04:00" — returns -1 rather than being misparsed as UTC.
 // Returns -1 on NULL, malformed, or too-short input.
 long parse_iso8601_to_epoch(const char *ts) {
     if (ts == NULL || strlen(ts) < 19) return -1L;
     struct tm tm_utc;
     memset(&tm_utc, 0, sizeof(tm_utc));
-    if (strptime(ts, "%Y-%m-%dT%H:%M:%S", &tm_utc) == NULL) return -1L;
+    char *end = strptime(ts, "%Y-%m-%dT%H:%M:%S", &tm_utc);
+    if (end == NULL) return -1L;
+    if (*end == '.') {
+        end++;
+        if (!isdigit((unsigned char)*end)) return -1L;
+        while (isdigit((unsigned char)*end)) end++;
+    }
+    if (*end == 'Z') end++;
+    if (*end != '\0') return -1L;
     time_t epoch = timegm(&tm_utc);
     if (epoch == (time_t)-1) return -1L;
     return (long)epoch;

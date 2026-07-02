@@ -67,7 +67,7 @@ run_freshness_tests: $(TARGET5)
 test_stock_analyzer: $(TARGET4)
 	@echo "Test executable $(TARGET4) compiled successfully"
 
-test: $(TARGET4)
+test: $(TARGET4) run_freshness_tests
 	@echo "Running all tests..."
 	@if [ -x "./$(TARGET4)" ]; then \
 		echo "Executing ./$(TARGET4)"; \
