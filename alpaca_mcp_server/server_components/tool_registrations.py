@@ -483,6 +483,7 @@ def register_scanner_tools(mcp):
         min_percent_change: float = 5.0,
         min_trades: int = 500,
         sort_by: str = "trades,percent_change",
+        require_fresh: bool = True,
     ) -> str:
         """
         Ultra-fast market activity analysis using C implementation (10x+ faster).
@@ -500,6 +501,7 @@ def register_scanner_tools(mcp):
             min_percent_change: Minimum percent change threshold
             min_trades: Minimum trades threshold
             sort_by: Sort keys (trades, percent_change, volume, gradient_change)
+            require_fresh: Drop symbols whose last trade predates the freshness cutoff (default True)
 
         Returns:
             Formatted analysis with high-activity trading opportunities
@@ -507,7 +509,13 @@ def register_scanner_tools(mcp):
         from ..tools.c_stock_analyzer_wrapper import analyze_market_activity_fast as c_analyzer_func
 
         return await c_analyzer_func(
-            symbols, max_results, max_price, min_percent_change, min_trades, sort_by
+            symbols,
+            max_results,
+            max_price,
+            min_percent_change,
+            min_trades,
+            sort_by,
+            require_fresh=require_fresh,
         )
 
     @mcp.tool()
@@ -515,6 +523,7 @@ def register_scanner_tools(mcp):
         max_results: int = 20,
         min_percent_change: float = 10.0,
         max_price: float = 30.0,
+        require_fresh: bool = True,
     ) -> str:
         """
         Lightning-fast scan for explosive penny stocks using C analyzer.
@@ -526,13 +535,14 @@ def register_scanner_tools(mcp):
             max_results: Maximum number of results
             min_percent_change: Minimum percent change for explosive moves
             max_price: Maximum price (focus on penny stocks)
+            require_fresh: Drop symbols whose last trade predates the freshness cutoff (default True)
 
         Returns:
             Formatted list of explosive trading opportunities
         """
         from ..tools.c_stock_analyzer_wrapper import scan_explosive_stocks_fast as c_scanner_func
 
-        return await c_scanner_func(max_results, min_percent_change, max_price)
+        return await c_scanner_func(max_results, min_percent_change, max_price, require_fresh)
 
     @mcp.tool()
     async def compare_analyzer_performance(
@@ -1388,7 +1398,7 @@ def register_cleanup_tools(mcp):
         Returns:
             Report of files that can be cleaned up
         """
-        return await list_cleanup_candidates()
+        return await cleanup_server(dry_run=True)
 
 
 def register_price_trigger_tools(mcp):
