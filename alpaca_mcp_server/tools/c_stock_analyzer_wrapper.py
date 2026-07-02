@@ -11,6 +11,12 @@ import os
 import subprocess
 from pathlib import Path
 
+from alpaca_mcp_server.tools.freshness import (
+    format_cutoff,
+    format_trade_age,
+    freshness_cutoff,
+)
+
 # No config imports needed - using C program defaults
 
 
@@ -69,6 +75,7 @@ class CStockAnalyzer:
         sort_keys: str = "trades,percent_change",
         output_all: bool = False,
         raw_data: bool = False,
+        min_trade_ts: int | None = None,
     ) -> dict:
         """
         Analyze stocks using the fast C implementation.
@@ -83,6 +90,8 @@ class CStockAnalyzer:
             sort_keys: Comma-separated sort keys
             output_all: Output all symbols without filtering
             raw_data: Include raw snapshot data
+            min_trade_ts: Minimum latestTrade Unix timestamp (seconds). Symbols
+                with older prints are dropped by the C program (-T).
 
         Returns:
             Dict containing analysis results
@@ -132,6 +141,9 @@ class CStockAnalyzer:
 
         if raw_data:
             cmd.append("-r")
+
+        if min_trade_ts and min_trade_ts > 0:
+            cmd.extend(["-T", str(min_trade_ts)])
 
         # Set environment variables for API access
         env = os.environ.copy()
@@ -184,6 +196,7 @@ async def analyze_market_activity_fast(
     min_percent_change: float = 20.0,  # C program default
     min_trades: int = 1000,  # C program default
     sort_by: str = "trades,percent_change",  # C program default
+    require_fresh: bool = True,
 ) -> str:
     """
     Ultra-fast market activity analysis using C implementation.
@@ -198,6 +211,8 @@ async def analyze_market_activity_fast(
         min_percent_change: Minimum percent change threshold
         min_trades: Minimum trades threshold
         sort_by: Sort keys (trades, percent_change, volume, gradient_change)
+        require_fresh: Drop symbols whose last trade predates the freshness
+            cutoff (default True; False restores unfiltered behavior).
 
     Returns:
         Formatted string with market analysis and trading opportunities
@@ -205,6 +220,10 @@ async def analyze_market_activity_fast(
     try:
         # Create analyzer instance
         analyzer = CStockAnalyzer()
+
+        cutoff_epoch, cutoff_source = (0, "disabled")
+        if require_fresh:
+            cutoff_epoch, cutoff_source = freshness_cutoff()
 
         # Run analysis
         result = analyzer.analyze(
@@ -215,6 +234,7 @@ async def analyze_market_activity_fast(
             min_trades=min_trades,
             sort_keys=sort_by,
             output_all=False,
+            min_trade_ts=cutoff_epoch,
         )
 
         # Check for errors
@@ -234,6 +254,17 @@ async def analyze_market_activity_fast(
         output.append(f"  • Max Price Filter: ${max_price:.2f}")
         output.append(f"  • Min Change Filter: {min_percent_change:.1f}%")
         output.append(f"  • Min Trades Filter: {min_trades}")
+        if cutoff_source == "disabled":
+            output.append("  • Freshness Filter: DISABLED (stale prints may appear)")
+        else:
+            note = (
+                " — market calendar unavailable, using 96h fallback"
+                if cutoff_source == "fallback"
+                else ""
+            )
+            output.append(
+                f"  • Freshness Cutoff: last trade ≥ {format_cutoff(cutoff_epoch)}{note}"
+            )
 
         # Stock results
         stocks = result.get("stocks", [])
@@ -270,6 +301,7 @@ async def analyze_market_activity_fast(
                 output.append(f"    • Gradient Change: {gradient_change:+.2f}%")
                 output.append(f"    • Volume: {volume:,}")
                 output.append(f"    • Trades: {trades:,}")
+                output.append(f"    • Last trade: {format_trade_age(stock.get('timestamp'))}")
                 output.append(f"    • Signal: {signal}")
         else:
             output.append("\n⚠️ No stocks found matching criteria")
@@ -289,6 +321,7 @@ async def scan_explosive_stocks_fast(
     max_results: int = 20,
     min_percent_change: float = 15.0,  # Higher for explosive moves
     max_price: float = 30.0,  # C program default for penny stocks
+    require_fresh: bool = True,
 ) -> str:
     """
     Fast scan for explosive momentum stocks using C analyzer.
@@ -300,12 +333,18 @@ async def scan_explosive_stocks_fast(
         max_results: Maximum number of results
         min_percent_change: Minimum percent change for explosive moves
         max_price: Maximum price (focus on penny stocks)
+        require_fresh: Drop symbols whose last trade predates the freshness
+            cutoff (default True; False restores unfiltered behavior).
 
     Returns:
         Formatted list of explosive opportunities
     """
     # Use lower trades threshold for explosive penny stocks
     min_trades = 100  # Lower threshold for volatile stocks
+
+    cutoff_epoch, cutoff_source = (0, "disabled")
+    if require_fresh:
+        cutoff_epoch, cutoff_source = freshness_cutoff()
 
     # Create analyzer instance and run analysis directly
     analyzer = CStockAnalyzer()
@@ -317,6 +356,7 @@ async def scan_explosive_stocks_fast(
         min_trades=min_trades,
         sort_keys="percent_change,trades",  # Sort by biggest movers first
         output_all=False,
+        min_trade_ts=cutoff_epoch,
     )
 
     # Check for errors
@@ -334,6 +374,17 @@ async def scan_explosive_stocks_fast(
     output.append(f"  • Max Price Filter: ${max_price:.2f}")
     output.append(f"  • Min Change Filter: {min_percent_change:.1f}%")
     output.append(f"  • Min Trades Filter: {min_trades}")
+    if cutoff_source == "disabled":
+        output.append("  • Freshness Filter: DISABLED (stale prints may appear)")
+    else:
+        note = (
+            " — market calendar unavailable, using 96h fallback"
+            if cutoff_source == "fallback"
+            else ""
+        )
+        output.append(
+            f"  • Freshness Cutoff: last trade ≥ {format_cutoff(cutoff_epoch)}{note}"
+        )
 
     # Stock results
     stocks = result.get("stocks", [])
@@ -362,6 +413,7 @@ async def scan_explosive_stocks_fast(
             output.append(f"    • Change: {percent_change:+.2f}%")
             output.append(f"    • Volume: {volume:,}")
             output.append(f"    • Trades: {trades:,}")
+            output.append(f"    • Last trade: {format_trade_age(stock.get('timestamp'))}")
     else:
         output.append("\n⚠️ No explosive stocks found")
         output.append("   Market may be calm - check again soon")

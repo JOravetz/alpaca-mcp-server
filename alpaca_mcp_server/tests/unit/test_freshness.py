@@ -130,3 +130,32 @@ class TestFormatting:
     def test_format_cutoff(self):
         # 1782806400 == 2026-06-30 04:00 ET (date -u -d "2026-06-30T04:00:00-04:00" +%s)
         assert freshness.format_cutoff(1782806400) == "2026-06-30 04:00 ET"
+
+
+class TestAnalyzerCutoffFlag:
+    def _run_analyze(self, **kwargs):
+        from alpaca_mcp_server.tools.c_stock_analyzer_wrapper import CStockAnalyzer
+
+        captured = {}
+
+        def fake_run(cmd, **_kw):
+            captured["cmd"] = cmd
+            return SimpleNamespace(
+                stdout='{"results_count": 0, "stocks": []}', stderr="", returncode=0
+            )
+
+        with patch(
+            "alpaca_mcp_server.tools.c_stock_analyzer_wrapper.subprocess.run",
+            side_effect=fake_run,
+        ):
+            CStockAnalyzer().analyze(symbols="AAPL", **kwargs)
+        return captured["cmd"]
+
+    def test_min_trade_ts_appends_T_flag(self):
+        cmd = self._run_analyze(min_trade_ts=1782806400)
+        assert "-T" in cmd
+        assert cmd[cmd.index("-T") + 1] == "1782806400"
+
+    def test_no_min_trade_ts_no_T_flag(self):
+        cmd = self._run_analyze()
+        assert "-T" not in cmd
