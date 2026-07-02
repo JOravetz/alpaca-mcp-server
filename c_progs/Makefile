@@ -24,6 +24,10 @@ SRC3 = filter_bars_input.c
 TARGET4 = test_stock_analyzer
 SRC4 = test_stock_analyzer.c
 
+# --- Program 5: test_freshness_filter ---
+TARGET5 = test_freshness_filter
+SRC5 = test_freshness_filter.c
+
 
 # The 'all' rule is the default goal.
 # Running 'make' will build all target executables.
@@ -50,6 +54,15 @@ $(TARGET4): $(SRC4) stock_analyzer_json.c
 	@echo "Compiling test executable $< -> $@"
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
+# Rule to build the freshness filter test program
+$(TARGET5): $(SRC5) stock_analyzer_json.c
+	@echo "Compiling test executable $< -> $@"
+	$(CC) $(CFLAGS) -o $@ $(SRC5) $(LDFLAGS)
+
+# Build and run the freshness tests
+run_freshness_tests: $(TARGET5)
+	./$(TARGET5)
+
 # Test targets
 test_stock_analyzer: $(TARGET4)
 	@echo "Test executable $(TARGET4) compiled successfully"
@@ -67,7 +80,7 @@ test: $(TARGET4)
 # Rule to clean up all compiled files
 clean:
 	@echo "Cleaning up compiled executables and test artifacts..."
-	rm -f $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) *.o
+	rm -f $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) $(TARGET5) *.o
 
 # Phony targets are not files; 'all' and 'clean' are commands.
-.PHONY: all clean test_stock_analyzer test
+.PHONY: all clean test_stock_analyzer test run_freshness_tests

@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 700
+#define _DEFAULT_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,6 +73,19 @@ int load_credentials() {
     API_SECRET[sizeof(API_SECRET) - 1] = '\0';
 
     return 0;
+}
+
+// Parse an ISO-8601 UTC timestamp (e.g. "2026-06-08T20:00:00.123456789Z")
+// to Unix epoch seconds. Fractional seconds are ignored.
+// Returns -1 on NULL, malformed, or too-short input.
+long parse_iso8601_to_epoch(const char *ts) {
+    if (ts == NULL || strlen(ts) < 19) return -1L;
+    struct tm tm_utc;
+    memset(&tm_utc, 0, sizeof(tm_utc));
+    if (strptime(ts, "%Y-%m-%dT%H:%M:%S", &tm_utc) == NULL) return -1L;
+    time_t epoch = timegm(&tm_utc);
+    if (epoch == (time_t)-1) return -1L;
+    return (long)epoch;
 }
 
 // Check if current time is during pre-market hours (4:00 AM - 9:30 AM ET)
@@ -650,6 +665,7 @@ void print_help(const char *program_name) {
     printf("\nOutput: JSON formatted list of most active stocks ranked by trading volume\n");
 }
 
+#ifndef STOCK_ANALYZER_NO_MAIN
 int main(int argc, char *argv[]) {
     int max_output = 5;
     double max_price = 30.0;
@@ -791,3 +807,4 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+#endif /* STOCK_ANALYZER_NO_MAIN */
