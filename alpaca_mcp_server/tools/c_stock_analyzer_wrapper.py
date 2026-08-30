@@ -20,6 +20,12 @@ from alpaca_mcp_server.tools.freshness import (
 # No config imports needed - using C program defaults
 
 
+# Effectively "no maximum price". The C program's -p flag defaults to 30.0, so a
+# caller wanting an uncapped scan must pass a value above any real share price
+# rather than omit the flag.
+_NO_PRICE_CAP = 1_000_000.0
+
+
 class CStockAnalyzer:
     """Wrapper for the C stock analyzer program."""
 
@@ -68,7 +74,7 @@ class CStockAnalyzer:
         self,
         symbols: str | list[str] | None = None,
         max_results: int | None = None,
-        max_price: float = 30.0,
+        max_price: float | None = 30.0,
         min_percent_change: float | None = None,
         min_trades: int | None = None,
         symbols_file: str | None = None,
@@ -83,7 +89,9 @@ class CStockAnalyzer:
         Args:
             symbols: Optional symbols to analyze (comma-separated or list)
             max_results: Maximum number of results (uses config default if None)
-            max_price: Maximum stock price filter
+            max_price: Maximum stock price filter. None omits the cap entirely,
+                which is required when scanning a curated universe whose names
+                trade well above the $30 default.
             min_percent_change: Minimum percent change threshold
             min_trades: Minimum trades threshold
             symbols_file: File containing symbols to analyze
@@ -129,7 +137,13 @@ class CStockAnalyzer:
             cmd.append("-a")
         else:
             cmd.extend(["-n", str(max_results)])
-            cmd.extend(["-p", str(max_price)])
+            # max_price=None means NO price cap, which requires an explicit
+            # sentinel rather than omitting the flag: `-p` defaults to 30.0
+            # INSIDE the C program, so leaving it out silently reinstates the
+            # very cap the caller asked to remove. (Passing str(None) is also
+            # wrong — the C program would parse "None" as 0 and filter out
+            # everything.) Verified by inspecting the built argv both ways.
+            cmd.extend(["-p", str(_NO_PRICE_CAP if max_price is None else max_price)])
             cmd.extend(["-c", str(min_percent_change)])
             cmd.extend(["-t", str(min_trades)])
 
@@ -320,8 +334,10 @@ async def analyze_market_activity_fast(
 async def scan_explosive_stocks_fast(
     max_results: int = 20,
     min_percent_change: float = 15.0,  # Higher for explosive moves
-    max_price: float = 30.0,  # C program default for penny stocks
+    max_price: float | None = 30.0,  # None = no cap
     require_fresh: bool = True,
+    symbols: str | None = None,
+    symbols_file: str | None = None,
 ) -> str:
     """
     Fast scan for explosive momentum stocks using C analyzer.
@@ -332,7 +348,13 @@ async def scan_explosive_stocks_fast(
     Args:
         max_results: Maximum number of results
         min_percent_change: Minimum percent change for explosive moves
-        max_price: Maximum price (focus on penny stocks)
+        max_price: Maximum price. Defaults to $30, which restricts results to
+            low-priced names; pass None to scan a curated universe of
+            higher-priced stocks, where a $30 cap would silently exclude most
+            of it.
+        symbols: Optional comma-separated symbols to scan.
+        symbols_file: Optional path to a file of symbols to scan. `symbols`
+            takes precedence when both are given.
         require_fresh: Drop symbols whose last trade predates the freshness
             cutoff (default True; False restores unfiltered behavior).
 
@@ -349,7 +371,8 @@ async def scan_explosive_stocks_fast(
     # Create analyzer instance and run analysis directly
     analyzer = CStockAnalyzer()
     result = analyzer.analyze(
-        symbols=None,  # Use default symbol list
+        symbols=symbols,            # None -> fall back to symbols_file / default
+        symbols_file=symbols_file,
         max_results=max_results,
         max_price=max_price,
         min_percent_change=min_percent_change,
@@ -371,7 +394,10 @@ async def scan_explosive_stocks_fast(
 
     # Summary section
     output.append("\n📊 Scanner Settings:")
-    output.append(f"  • Max Price Filter: ${max_price:.2f}")
+    output.append(
+        f"  • Max Price Filter: ${max_price:.2f}" if max_price is not None
+        else "  • Max Price Filter: none (curated universe)"
+    )
     output.append(f"  • Min Change Filter: {min_percent_change:.1f}%")
     output.append(f"  • Min Trades Filter: {min_trades}")
     if cutoff_source == "disabled":
