@@ -36,7 +36,9 @@ def to_et(value: datetime | float | int | str) -> datetime:
     return value.astimezone(ET)
 
 
-def fmt_et(value: datetime | float | int | str | None = None, fmt: str = "%Y-%m-%d %H:%M:%S %Z") -> str:
+def fmt_et(
+    value: datetime | float | int | str | None = None, fmt: str = "%Y-%m-%d %H:%M:%S %Z"
+) -> str:
     """Format *value* (default: now) in ET; ``%Z`` renders EST or EDT."""
     return (now_et() if value is None else to_et(value)).strftime(fmt)
 

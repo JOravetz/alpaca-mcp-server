@@ -30,10 +30,7 @@ class TestParseIsoEpoch:
 
     def test_negative_offset_with_fraction(self):
         # 16:00 EDT == 20:00 UTC — the offset must be honored, not dropped
-        assert (
-            freshness.parse_iso_epoch("2026-06-08T16:00:00.123456789-04:00")
-            == 1780948800
-        )
+        assert freshness.parse_iso_epoch("2026-06-08T16:00:00.123456789-04:00") == 1780948800
 
     def test_naive_timestamp_is_utc(self):
         # Matches the C parser: naive strings are UTC, never local time
@@ -58,9 +55,7 @@ class TestIsStale:
 class TestFreshnessCutoff:
     def _client_with_sessions(self, dates):
         client = MagicMock()
-        client.get_calendar.return_value = [
-            SimpleNamespace(date=d.isoformat()) for d in dates
-        ]
+        client.get_calendar.return_value = [SimpleNamespace(date=d.isoformat()) for d in dates]
         return client
 
     def test_calendar_cutoff_is_prev_trading_day_0400_et(self):
@@ -68,18 +63,14 @@ class TestFreshnessCutoff:
         eastern = pytz.timezone("America/New_York")
         today = datetime.now(eastern).date()
         prev_day = today - timedelta(days=3)  # pretend a long weekend
-        client = self._client_with_sessions(
-            [today, prev_day, prev_day - timedelta(days=1)]
-        )
+        client = self._client_with_sessions([today, prev_day, prev_day - timedelta(days=1)])
         with patch(
             "alpaca_mcp_server.config.settings.get_trading_client",
             return_value=client,
         ):
             cutoff, source = freshness.freshness_cutoff()
         expected = int(
-            eastern.localize(
-                datetime.combine(prev_day, freshness._PREMARKET_START)
-            ).timestamp()
+            eastern.localize(datetime.combine(prev_day, freshness._PREMARKET_START)).timestamp()
         )
         assert source == "calendar"
         assert cutoff == expected
@@ -97,9 +88,7 @@ class TestFreshnessCutoff:
 
     def test_result_is_cached(self):
         _reset_cache()
-        client = self._client_with_sessions(
-            [date.today() - timedelta(days=1)]
-        )
+        client = self._client_with_sessions([date.today() - timedelta(days=1)])
         with patch(
             "alpaca_mcp_server.config.settings.get_trading_client",
             return_value=client,

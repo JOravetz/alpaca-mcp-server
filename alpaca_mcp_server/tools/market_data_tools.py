@@ -885,7 +885,9 @@ async def get_stock_snapshots(symbols: str | list[str]) -> str:
                     # Pre-market only on a trading day: on a weekend or holiday morning
                     # the daily bar is the last session, and the reference stays its prior close.
                     current_time_et = datetime.now(eastern)
-                    market_open = current_time_et.replace(hour=9, minute=30, second=0, microsecond=0)
+                    market_open = current_time_et.replace(
+                        hour=9, minute=30, second=0, microsecond=0
+                    )
                     is_pre_market = (
                         current_time_et.hour >= 4
                         and current_time_et < market_open
@@ -984,7 +986,9 @@ async def get_stock_trades(symbol: str, days: int = 5, limit: int | None = None)
             # sort=DESC returns newest-first; reverse to chronological for display.
             trades = list(reversed(trades_dict[symbol]))
 
-            result = f"Recent Trades for {symbol} (Last {len(trades)} trades, {feed_label(feed)}):\n"
+            result = (
+                f"Recent Trades for {symbol} (Last {len(trades)} trades, {feed_label(feed)}):\n"
+            )
             result += "=" * 50 + "\n"
 
             eastern = pytz.timezone("America/New_York")

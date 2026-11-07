@@ -42,8 +42,7 @@ async def market_overview() -> str:
         )
 
         stdout, stderr = await asyncio.wait_for(
-            process.communicate(),
-            timeout=120  # 2 minute timeout
+            process.communicate(), timeout=120  # 2 minute timeout
         )
 
         output = stdout.decode("utf-8")

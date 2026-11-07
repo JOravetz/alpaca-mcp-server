@@ -276,9 +276,7 @@ async def analyze_market_activity_fast(
                 if cutoff_source == "fallback"
                 else ""
             )
-            output.append(
-                f"  • Freshness Cutoff: last trade ≥ {format_cutoff(cutoff_epoch)}{note}"
-            )
+            output.append(f"  • Freshness Cutoff: last trade ≥ {format_cutoff(cutoff_epoch)}{note}")
 
         # Stock results
         stocks = result.get("stocks", [])
@@ -371,7 +369,7 @@ async def scan_explosive_stocks_fast(
     # Create analyzer instance and run analysis directly
     analyzer = CStockAnalyzer()
     result = analyzer.analyze(
-        symbols=symbols,            # None -> fall back to symbols_file / default
+        symbols=symbols,  # None -> fall back to symbols_file / default
         symbols_file=symbols_file,
         max_results=max_results,
         max_price=max_price,
@@ -395,7 +393,8 @@ async def scan_explosive_stocks_fast(
     # Summary section
     output.append("\n📊 Scanner Settings:")
     output.append(
-        f"  • Max Price Filter: ${max_price:.2f}" if max_price is not None
+        f"  • Max Price Filter: ${max_price:.2f}"
+        if max_price is not None
         else "  • Max Price Filter: none (curated universe)"
     )
     output.append(f"  • Min Change Filter: {min_percent_change:.1f}%")
@@ -408,9 +407,7 @@ async def scan_explosive_stocks_fast(
             if cutoff_source == "fallback"
             else ""
         )
-        output.append(
-            f"  • Freshness Cutoff: last trade ≥ {format_cutoff(cutoff_epoch)}{note}"
-        )
+        output.append(f"  • Freshness Cutoff: last trade ≥ {format_cutoff(cutoff_epoch)}{note}")
 
     # Stock results
     stocks = result.get("stocks", [])

@@ -107,7 +107,6 @@ dependencies = [
     { name = "onnxruntime" },
     { name = "pandas" },
     { name = "pandas-market-calendars" },
-    { name = "perplexity-client" },
     { name = "playwright" },
     { name = "playwright-stealth" },
     { name = "psutil" },
@@ -140,6 +139,9 @@ dev = [
     { name = "types-psutil" },
     { name = "types-requests" },
 ]
+perplexity = [
+    { name = "perplexity-client" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -162,7 +164,6 @@ requires-dist = [
     { name = "onnxruntime", specifier = ">=1.22.1" },
     { name = "pandas", specifier = ">=2.3.0" },
     { name = "pandas-market-calendars", specifier = ">=4.4.0" },
-    { name = "perplexity-client", editable = "/home/jjoravet/perplexity_client" },
     { name = "playwright", specifier = ">=1.54.0" },
     { name = "playwright-stealth", specifier = ">=2.0.0" },
     { name = "psutil", specifier = ">=5.9.0" },
@@ -195,6 +196,7 @@ dev = [
     { name = "types-psutil", specifier = ">=7.0.0.20250801" },
     { name = "types-requests", specifier = ">=2.31.0.6" },
 ]
+perplexity = [{ name = "perplexity-client", editable = "/home/jjoravet/perplexity_client" }]
 
 [[package]]
 name = "alpaca-py"

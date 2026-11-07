@@ -88,7 +88,9 @@ async def generate_stock_plot(
             return f"❌ plot_mode must be one of: {', '.join(_MODES)}"
         feed = feed.lower()
         if feed not in ("sip", "boats"):
-            return "❌ feed must be 'sip' or 'boats' (SIP is the consolidated tape; IEX is not used)"
+            return (
+                "❌ feed must be 'sip' or 'boats' (SIP is the consolidated tape; IEX is not used)"
+            )
 
         symbol_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
         if not symbol_list:
@@ -120,7 +122,13 @@ async def generate_stock_plot(
     if not no_plot and found:
         out = plot_dir()
         stamp = now_et().strftime("%H%M%S")
-        common = {"timeframe": timeframe, "days": days, "window": window, "lookahead": lookahead, "feed": feed}
+        common = {
+            "timeframe": timeframe,
+            "days": days,
+            "window": window,
+            "lookahead": lookahead,
+            "feed": feed,
+        }
         pages: list[tuple[str, dict, bool, bool]] = []  # (name, data, symbol panels, overlay)
         if plot_mode in ("single", "all"):
             pages += [(f"{s}_{timeframe}_{stamp}", {s: data[s]}, True, False) for s in found]
@@ -147,7 +155,18 @@ async def generate_stock_plot(
             webbrowser.open(Path(files[0]).as_uri())
 
     return _report(
-        data, found, missing, files, png_notes, timeframe, days, window, lookahead, feed, plot_mode, no_plot
+        data,
+        found,
+        missing,
+        files,
+        png_notes,
+        timeframe,
+        days,
+        window,
+        lookahead,
+        feed,
+        plot_mode,
+        no_plot,
     )
 
 
@@ -176,7 +195,8 @@ def _report(data, found, missing, files, png_notes, timeframe, days, window, loo
             f"{len(a.peaks)} peaks / {len(a.troughs)} troughs over {a.total_bars:,} bars"
         )
         turns = sorted(
-            [("Peak", p) for p in a.peaks] + [("Trough", t) for t in a.troughs], key=lambda r: r[1].index
+            [("Peak", p) for p in a.peaks] + [("Trough", t) for t in a.troughs],
+            key=lambda r: r[1].index,
         )
         if turns:
             kind, p = turns[-1]
@@ -193,5 +213,8 @@ def _report(data, found, missing, files, png_notes, timeframe, days, window, loo
         lines.append("• none (no symbol returned data)")
     if png_notes:
         lines += ["", "⚠️ PNG snapshot skipped:"] + [f"• {n}" for n in png_notes]
-    lines += ["", "✅ ANALYSIS COMPLETE — interactive ECharts HTML (open in a browser) + PNG snapshot"]
+    lines += [
+        "",
+        "✅ ANALYSIS COMPLETE — interactive ECharts HTML (open in a browser) + PNG snapshot",
+    ]
     return "\n".join(lines)

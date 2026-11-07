@@ -14,6 +14,9 @@ import pytest  # noqa: E402
 
 from alpaca_mcp_server.server import mcp  # noqa: E402
 
+# Live Alpaca connections: selected by -m integration, skipped where no keys exist (CI).
+pytestmark = [pytest.mark.integration, pytest.mark.live_alpaca]
+
 
 class TestMCPServerIntegration:
     """Test MCP server prompt registrations and execution."""

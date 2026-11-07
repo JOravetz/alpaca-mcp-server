@@ -15,15 +15,47 @@ import websockets
 from alpaca_mcp_server.utils.stream_hub_client import HubStream, hub_available
 
 EVENTS = [
-    {"type": "trade", "symbol": "SNTI", "price": 0.1568, "size": 115, "i": 361, "x": "P",
-     "c": ["@", "T"], "t": "2026-11-07T00:17:40.81282526Z"},
-    {"type": "quote", "symbol": "SNTI", "bid": 0.151, "ask": 0.1568, "bid_size": 700,
-     "ask_size": 100, "t": "2026-11-07T00:50:33.955730591Z"},
-    {"type": "bar", "symbol": "SNTI", "o": 0.1568, "h": 0.1568, "l": 0.1568, "c": 0.1568,
-     "v": 115, "n": 1, "vw": 0.1568, "t": "2026-11-07T00:17:00Z"},
+    {
+        "type": "trade",
+        "symbol": "SNTI",
+        "price": 0.1568,
+        "size": 115,
+        "i": 361,
+        "x": "P",
+        "c": ["@", "T"],
+        "t": "2026-11-07T00:17:40.81282526Z",
+    },
+    {
+        "type": "quote",
+        "symbol": "SNTI",
+        "bid": 0.151,
+        "ask": 0.1568,
+        "bid_size": 700,
+        "ask_size": 100,
+        "t": "2026-11-07T00:50:33.955730591Z",
+    },
+    {
+        "type": "bar",
+        "symbol": "SNTI",
+        "o": 0.1568,
+        "h": 0.1568,
+        "l": 0.1568,
+        "c": 0.1568,
+        "v": 115,
+        "n": 1,
+        "vw": 0.1568,
+        "t": "2026-11-07T00:17:00Z",
+    },
     {"type": "gap", "from": "2026-11-07T00:18:00Z", "to": "2026-11-07T00:19:00Z"},
-    {"type": "tradingstatus", "symbol": "SNTI", "status_code": "H", "status_message": "Halted",
-     "reason_code": "T1", "reason_message": "News pending", "t": "2026-11-07T00:20:00Z"},
+    {
+        "type": "tradingstatus",
+        "symbol": "SNTI",
+        "status_code": "H",
+        "status_message": "Halted",
+        "reason_code": "T1",
+        "reason_message": "News pending",
+        "t": "2026-11-07T00:20:00Z",
+    },
 ]
 
 
@@ -86,9 +118,20 @@ async def test_subscribes_and_translates_events():
     assert (trade.symbol, trade.price, trade.size, trade.exchange) == ("SNTI", 0.1568, 115, "P")
     assert trade.timestamp.tzinfo is not None  # aware, so to_et() renders it in ET
     (quote,) = received["quotes"]
-    assert (quote.bid_price, quote.ask_price, quote.bid_size, quote.ask_size) == (0.151, 0.1568, 700, 100)
+    assert (quote.bid_price, quote.ask_price, quote.bid_size, quote.ask_size) == (
+        0.151,
+        0.1568,
+        700,
+        100,
+    )
     (bar,) = received["bars"]
-    assert (bar.open, bar.close, bar.volume, bar.trade_count, bar.vwap) == (0.1568, 0.1568, 115, 1, 0.1568)
+    assert (bar.open, bar.close, bar.volume, bar.trade_count, bar.vwap) == (
+        0.1568,
+        0.1568,
+        115,
+        1,
+        0.1568,
+    )
     (status,) = received["statuses"]
     assert (status.status, status.reason_code) == ("H", "T1")
     assert stream.gaps == [("2026-11-07T00:18:00Z", "2026-11-07T00:19:00Z")]
@@ -120,6 +163,9 @@ def streaming(monkeypatch):
     from alpaca_mcp_server.tools import streaming_tools
 
     monkeypatch.setattr(streaming_tools, "StockDataStream", _DirectStub)
+    # The direct path checks for keys before building the stream; the stub never uses them.
+    monkeypatch.setenv("APCA_API_KEY_ID", "PKTESTONLY")
+    monkeypatch.setenv("APCA_API_SECRET_KEY", "test-only")
     return streaming_tools
 
 
@@ -151,7 +197,9 @@ async def test_falls_back_to_direct_without_hub(streaming, monkeypatch):
 async def test_direct_when_hub_cannot_serve_type(streaming, monkeypatch):
     async with FakeHub() as hub:
         monkeypatch.setenv("BB_STREAM_HUB", hub.url)
-        result, stream = await _start_then_stop(streaming, symbols=["SNTI"], data_types=["daily_bars"])
+        result, stream = await _start_then_stop(
+            streaming, symbols=["SNTI"], data_types=["daily_bars"]
+        )
     assert isinstance(stream, _DirectStub)
     assert "hub serves" in result
 

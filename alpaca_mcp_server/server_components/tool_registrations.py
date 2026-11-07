@@ -1133,6 +1133,7 @@ def register_plotting_tools(mcp):
             open_in_browser=open_in_browser,
         )
 
+
 def register_help_tools(mcp):
     """Register help system tools."""
 

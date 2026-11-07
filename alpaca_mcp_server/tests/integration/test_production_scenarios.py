@@ -25,6 +25,9 @@ from alpaca_mcp_server.tools.peak_trough_analysis_tool import (  # noqa: E402
     analyze_peaks_and_troughs,
 )
 
+# Live Alpaca connections: selected by -m integration, skipped where no keys exist (CI).
+pytestmark = [pytest.mark.integration, pytest.mark.live_alpaca]
+
 
 class TestProductionScenarios:
     """REAL production scenario tests with market conditions."""

@@ -10,8 +10,7 @@ the tool's time math (.time(), .date(), .replace(), arithmetic) runs for real.
 """
 
 import sys
-from datetime import date, datetime, timedelta, timezone
-from datetime import time as dtime
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -102,7 +101,7 @@ class TestExtendedMarketClockWeekend:
         rather than always reporting closed."""
         now_et = datetime(2026, 6, 15, 8, 42, tzinfo=ET)
         clock = _make_clock(False, MON_OPEN, MON_CLOSE)
-        today = _make_calendar_day(date(2026, 6, 15), dtime(9, 30), dtime(16, 0))
+        today = _make_calendar_day(date(2026, 6, 15), time(9, 30), time(16, 0))
         output = await _run(now_et, clock, [today])
 
         assert _section(output, "Current Session") == "Pre-market trading active"

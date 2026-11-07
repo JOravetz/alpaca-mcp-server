@@ -58,8 +58,7 @@ async def discover(articles: int = 500) -> str:
 
         # Longer timeout for 2 pages with up to 1000 articles
         stdout, stderr = await asyncio.wait_for(
-            process.communicate(),
-            timeout=240  # 4 minute timeout for 2 pages
+            process.communicate(), timeout=240  # 4 minute timeout for 2 pages
         )
 
         output = stdout.decode("utf-8")

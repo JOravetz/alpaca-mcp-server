@@ -7,8 +7,9 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-API_KEY_ID = os.environ["APCA_API_KEY_ID"]
-SECRET_KEY_ID = os.environ["APCA_API_SECRET_KEY"]
+# Keys are read when a request is made, not at import: an import-time
+# os.environ[...] made every module that imports this one crash where the keys
+# are absent (CI), and could capture keys before settings applied ~/.secrets.
 
 
 def is_premarket(current_time: datetime) -> bool:
@@ -235,11 +236,11 @@ def run(args: argparse.Namespace) -> None:
     with open(LIST + ".lis") as f:
         universe = [line.strip().split()[0].upper() for line in f if line.strip()]
 
-    url = f"https://data.alpaca.markets/v2/stocks/snapshots?symbols={','.join(universe)}"
+    url = f"https://data.alpaca.markets/v2/stocks/snapshots?symbols={','.join(universe)}&feed=sip"
     headers = {
         "accept": "application/json",
-        "APCA-API-KEY-ID": API_KEY_ID,
-        "APCA-API-SECRET-KEY": SECRET_KEY_ID,
+        "APCA-API-KEY-ID": os.environ.get("APCA_API_KEY_ID", ""),
+        "APCA-API-SECRET-KEY": os.environ.get("APCA_API_SECRET_KEY", ""),
     }
     response = requests.get(url, headers=headers, timeout=30)
     snapshots = response.json()

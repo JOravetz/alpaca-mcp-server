@@ -541,11 +541,7 @@ class HelpSystem:
             return "Account & Portfolio"
         elif "order" in name_lower:
             return "Order Management"
-        elif (
-            "stock" in name_lower
-            or "quote" in name_lower
-            or "bar" in name_lower
-        ):
+        elif "stock" in name_lower or "quote" in name_lower or "bar" in name_lower:
             return "Market Data"
         elif "scan" in tool_name.lower():
             return "Scanners & Analysis"

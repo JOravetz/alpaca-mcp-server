@@ -20,9 +20,16 @@ SR_ALPACA_BINARY = Path(os.path.expanduser("~/autotrade/bin/sr_alpaca"))
 
 # Valid timeframes
 VALID_TIMEFRAMES = [
-    "1Min", "5Min", "15Min", "30Min",
-    "1Hour", "2Hour", "4Hour",
-    "1Day", "1Week", "1Month"
+    "1Min",
+    "5Min",
+    "15Min",
+    "30Min",
+    "1Hour",
+    "2Hour",
+    "4Hour",
+    "1Day",
+    "1Week",
+    "1Month",
 ]
 
 # Valid peak detection methods
@@ -77,7 +84,9 @@ async def get_support_resistance(
         return f"Error: sr_alpaca binary not found at {SR_ALPACA_BINARY}"
 
     if timeframe not in VALID_TIMEFRAMES:
-        return f"Error: Invalid timeframe '{timeframe}'. Valid options: {', '.join(VALID_TIMEFRAMES)}"
+        return (
+            f"Error: Invalid timeframe '{timeframe}'. Valid options: {', '.join(VALID_TIMEFRAMES)}"
+        )
 
     if method not in VALID_METHODS:
         return f"Error: Invalid method '{method}'. Valid options: {', '.join(VALID_METHODS)}"
@@ -86,12 +95,18 @@ async def get_support_resistance(
         # Build command
         cmd = [
             str(SR_ALPACA_BINARY),
-            "-s", symbol,
-            "-t", timeframe,
-            "-d", str(days),
-            "-c", str(clusters),
-            "-m", method,
-            "-n", str(samples),
+            "-s",
+            symbol,
+            "-t",
+            timeframe,
+            "-d",
+            str(days),
+            "-c",
+            str(clusters),
+            "-m",
+            method,
+            "-n",
+            str(samples),
         ]
 
         if fractals:
@@ -111,8 +126,7 @@ async def get_support_resistance(
         )
 
         stdout, stderr = await asyncio.wait_for(
-            process.communicate(),
-            timeout=60  # 1 minute timeout
+            process.communicate(), timeout=60  # 1 minute timeout
         )
 
         output = stdout.decode("utf-8").strip()

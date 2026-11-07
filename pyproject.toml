@@ -55,8 +55,23 @@ dependencies = [
     "lxml>=6.0.2",
     "camoufox[geoip]>=0.4.11",
     "curl-cffi>=0.14.0",
-    "perplexity-client",
 ]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+# Only the server package: the repo root also holds data/, songs/, charts/, ...
+include = ["alpaca_mcp_server*"]
+
+[tool.uv]
+# uv runs this repo in place (python -m alpaca_mcp_server); don't install it into the venv.
+package = false
+# perplexity-client is a private repo installed from a local checkout, so it lives
+# in its own group: on by default here (plain `uv run` keeps it installed), and
+# CI syncs with `--no-group perplexity` because the runner has no such path.
+default-groups = ["dev", "perplexity"]
 
 [tool.uv.sources]
 perplexity-client = { path = "/home/jjoravet/perplexity_client", editable = true }
@@ -65,6 +80,7 @@ perplexity-client = { path = "/home/jjoravet/perplexity_client", editable = true
 alpaca-mcp-server = "alpaca_mcp_server.main:main"
 
 [dependency-groups]
+perplexity = ["perplexity-client"]
 dev = [
     "black>=25.1.0",
     "isort>=6.0.1",
@@ -199,6 +215,7 @@ addopts = [
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "live_alpaca: needs real Alpaca market data; skipped when no API keys are configured (CI)",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
     "performance: marks tests as performance tests",

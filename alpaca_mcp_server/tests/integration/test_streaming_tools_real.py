@@ -17,6 +17,9 @@ sys.path.insert(0, str(project_root))
 
 from alpaca_mcp_server.tools import streaming_tools  # noqa: E402
 
+# Live Alpaca connections: selected by -m integration, skipped where no keys exist (CI).
+pytestmark = [pytest.mark.integration, pytest.mark.live_alpaca]
+
 
 @pytest.fixture(scope="module")
 def check_credentials():

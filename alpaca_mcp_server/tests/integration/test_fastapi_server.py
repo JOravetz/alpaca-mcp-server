@@ -17,6 +17,9 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from alpaca_mcp_server.monitoring.fastapi_service import app  # noqa: E402
 
+# Live Alpaca connections: selected by -m integration, skipped where no keys exist (CI).
+pytestmark = [pytest.mark.integration, pytest.mark.live_alpaca]
+
 
 class TestFastAPIServer:
     """REAL FastAPI server integration tests."""

@@ -387,6 +387,7 @@ class TestGetLatestSignal:
 class TestAnalyzePeaksAndTroughs:
     """Test main analysis function with real API calls."""
 
+    @pytest.mark.live_alpaca
     @pytest.mark.asyncio
     async def test_analyze_peaks_and_troughs_manual_symbols(self):
         """Test with manually specified symbols."""
@@ -440,6 +441,7 @@ class TestAnalyzePeaksAndTroughs:
         assert "No valid symbols provided" in result
         print("✅ Parameter validation working")
 
+    @pytest.mark.live_alpaca
     @pytest.mark.asyncio
     async def test_analyze_peaks_and_troughs_different_timeframes(self):
         """Test different timeframes."""
@@ -818,8 +820,12 @@ class TestRealMarketDataIntegration:
             # them as "### Peaks (Resistance/Sell Signals): N" per symbol.
             import re
 
-            peak_count = sum(int(n) for n in re.findall(r"### Peaks \(Resistance/Sell Signals\): (\d+)", result))
-            trough_count = sum(int(n) for n in re.findall(r"### Troughs \(Support/Buy Signals\): (\d+)", result))
+            peak_count = sum(
+                int(n) for n in re.findall(r"### Peaks \(Resistance/Sell Signals\): (\d+)", result)
+            )
+            trough_count = sum(
+                int(n) for n in re.findall(r"### Troughs \(Support/Buy Signals\): (\d+)", result)
+            )
 
             total_signals = peak_count + trough_count
             assert total_signals > 0, "Volatile stocks should have signals"
@@ -1098,9 +1104,7 @@ class TestBoundaryConditions:
             # With very high lookahead, should find fewer but more significant peaks
             assert len(result.peaks) <= 5, "High lookahead should find few peaks"
             assert len(result.troughs) <= 5, "High lookahead should find few troughs"
-            print(
-                f"✅ Maximum lookahead: {len(result.peaks)} peaks, {len(result.troughs)} troughs"
-            )
+            print(f"✅ Maximum lookahead: {len(result.peaks)} peaks, {len(result.troughs)} troughs")
 
     def test_maximum_window_length(self):
         """Test with maximum window length."""

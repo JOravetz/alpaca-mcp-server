@@ -238,11 +238,7 @@ Options:
         # direct socket only when the hub is absent or cannot serve the request
         # (it transports trades/quotes/bars/statuses on the feed it was started with).
         hub_feed = os.getenv("BB_STREAM_HUB_FEED", "sip").lower()
-        use_hub = (
-            set(data_types) <= set(HUB_TYPES)
-            and feed == hub_feed
-            and await hub_available()
-        )
+        use_hub = set(data_types) <= set(HUB_TYPES) and feed == hub_feed and await hub_available()
         if use_hub:
             _settings_module._global_stock_stream = HubStream()  # type: ignore[attr-defined]
             source = f"bb-stream-hub ({hub_url()}) — shared with the Rust consumers"
@@ -916,9 +912,7 @@ async def get_stock_stream_buffer_stats() -> str:
         for buffer_key, buffer in sorted(_settings_module._stock_data_buffers.items()):
             stats = buffer.get_stats()
             last_update = (
-                fmt_et(stats["last_update"], "%H:%M:%S %Z")
-                if stats["last_update"]
-                else "Never"
+                fmt_et(stats["last_update"], "%H:%M:%S %Z") if stats["last_update"] else "Never"
             )
             result += f"  {buffer_key}:\n"
             utilization = (

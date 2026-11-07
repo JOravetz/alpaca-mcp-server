@@ -9,6 +9,11 @@ on:
 env:
   PYTHON_VERSION: "3.12"
   PAPER: "true"  # Always use paper trading in CI
+  # perplexity-client is a private repo installed from a local checkout (see the
+  # `perplexity` dependency group in pyproject.toml); the runner has no such path.
+  # Sync once without that group, from the lockfile as committed, and stop
+  # `uv run` from re-syncing, which would try to read the missing path.
+  UV_NO_SYNC: "1"
 
 jobs:
   code-quality:
@@ -30,7 +35,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        uv sync --dev
+        uv sync --dev --frozen --no-group perplexity
     
     - name: Run Black (code formatting)
       run: |
@@ -67,7 +72,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        uv sync --dev
+        uv sync --dev --frozen --no-group perplexity
     
     - name: Run unit tests
       run: |
@@ -103,7 +108,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        uv sync --dev
+        uv sync --dev --frozen --no-group perplexity
     
     - name: Run integration tests
       env:
@@ -143,7 +148,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        uv sync --dev
+        uv sync --dev --frozen --no-group perplexity
     
     - name: Run performance tests
       env:
@@ -172,7 +177,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        uv sync --dev
+        uv sync --dev --frozen --no-group perplexity
     
     - name: Run Bandit security scan
       run: |

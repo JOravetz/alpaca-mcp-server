@@ -109,7 +109,9 @@ async def fetch_chart_data(
     start, end = trading_days[-1], trading_days[0]
     results = await asyncio.gather(
         *(
-            asyncio.to_thread(_fetch_one, fetcher, s, timeframe, start, end, feed, window, lookahead)
+            asyncio.to_thread(
+                _fetch_one, fetcher, s, timeframe, start, end, feed, window, lookahead
+            )
             for s in symbols
         )
     )
@@ -362,7 +364,10 @@ def render_html(
             )
     payload = json.dumps([_payload(cd) for cd in ok.values()], separators=(",", ":"))
     mode = json.dumps(
-        {"overlay": bool(overlay and len(ok) > 1), "symbols": bool(symbol_panels or not overlay or len(ok) < 2)}
+        {
+            "overlay": bool(overlay and len(ok) > 1),
+            "symbols": bool(symbol_panels or not overlay or len(ok) < 2),
+        }
     )
     js = (
         _JS.replace("__DATA__", payload.replace("</", "<\\/"))
@@ -387,7 +392,9 @@ def render_html(
 # ── png ──────────────────────────────────────────────────────────────────────
 
 
-async def render_png(html_path: Path, png_path: Path, *, dark: bool = True, width: int = 1400) -> str | None:
+async def render_png(
+    html_path: Path, png_path: Path, *, dark: bool = True, width: int = 1400
+) -> str | None:
     """Screenshot the page headlessly. Returns an error string, or None on success."""
     if os.environ.get("ALPACA_PLOT_PNG", "1").lower() in ("0", "false", "no"):
         return "PNG rendering disabled (ALPACA_PLOT_PNG=0)"

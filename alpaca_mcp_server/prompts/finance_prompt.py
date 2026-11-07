@@ -51,8 +51,7 @@ async def finance(articles: int = 200) -> str:
         )
 
         stdout, stderr = await asyncio.wait_for(
-            process.communicate(),
-            timeout=180  # 3 minute timeout for larger article counts
+            process.communicate(), timeout=180  # 3 minute timeout for larger article counts
         )
 
         output = stdout.decode("utf-8")

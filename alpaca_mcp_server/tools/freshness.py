@@ -68,15 +68,11 @@ def _calendar_cutoff() -> int:
         )
     )
     session_dates = sorted(
-        d
-        for d in (_session_date(entry) for entry in calendar)
-        if d is not None and d < today_et
+        d for d in (_session_date(entry) for entry in calendar) if d is not None and d < today_et
     )
     if not session_dates:
         raise RuntimeError("no prior trading sessions in calendar response")
-    cutoff_dt = _EASTERN.localize(
-        datetime.combine(session_dates[-1], _PREMARKET_START)
-    )
+    cutoff_dt = _EASTERN.localize(datetime.combine(session_dates[-1], _PREMARKET_START))
     return int(cutoff_dt.timestamp())
 
 
@@ -140,6 +136,4 @@ def format_trade_age(iso_timestamp: str | None) -> str:
 
 def format_cutoff(cutoff_epoch: int) -> str:
     """Render the cutoff as '2026-06-30 04:00 ET'."""
-    return datetime.fromtimestamp(cutoff_epoch, _EASTERN).strftime(
-        "%Y-%m-%d %H:%M ET"
-    )
+    return datetime.fromtimestamp(cutoff_epoch, _EASTERN).strftime("%Y-%m-%d %H:%M ET")

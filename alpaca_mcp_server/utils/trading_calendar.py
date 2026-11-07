@@ -29,7 +29,11 @@ def _now_eastern(as_of: datetime | None = None) -> pd.Timestamp:
     if as_of is None:
         return pd.Timestamp.now(tz="America/New_York")
     ts = pd.Timestamp(as_of)
-    return ts.tz_localize("America/New_York") if ts.tzinfo is None else ts.tz_convert("America/New_York")
+    return (
+        ts.tz_localize("America/New_York")
+        if ts.tzinfo is None
+        else ts.tz_convert("America/New_York")
+    )
 
 
 def _recent_valid_days(n: int, as_of: datetime | None = None) -> pd.DatetimeIndex:

@@ -6,6 +6,7 @@ provides the curl_cffi-based REST client (TLS impersonation, no browser).
 Replaces the prior cloudscraper + Camoufox subprocess implementation.
 """
 
+import asyncio
 import json
 import time
 from datetime import UTC, datetime
@@ -13,7 +14,16 @@ from typing import Any
 
 import pytz
 from alpaca.data.enums import DataFeed
-from perplexity_client import PerplexityClient
+
+try:
+    from perplexity_client import PerplexityClient
+except ImportError:  # optional: the `perplexity` dependency group (a private repo)
+    PerplexityClient = None  # type: ignore[assignment,misc]
+
+_NOT_INSTALLED = (
+    "Error: perplexity-client is not installed. It is the optional `perplexity`\n"
+    "dependency group (a private repo); install it with `uv sync --group perplexity`."
+)
 
 from ..utils.feed_select import live_feed
 from ..utils.timezone_utils import now_et
@@ -61,21 +71,39 @@ def _normalize_alpaca_snapshot(
     if not price:
         return None
 
-    prev_close = float(prev_bar.close) if prev_bar is not None and getattr(prev_bar, "close", None) else 0.0
+    prev_close = (
+        float(prev_bar.close) if prev_bar is not None and getattr(prev_bar, "close", None) else 0.0
+    )
     if pre_market and daily_bar is not None and getattr(daily_bar, "close", None):
         prev_close = float(daily_bar.close)
     change_pct = ((price - prev_close) / prev_close * 100) if prev_close else 0.0
-    volume = int(daily_bar.volume) if daily_bar is not None and getattr(daily_bar, "volume", None) else 0
-    day_low = float(daily_bar.low) if daily_bar is not None and getattr(daily_bar, "low", None) else 0.0
-    day_high = float(daily_bar.high) if daily_bar is not None and getattr(daily_bar, "high", None) else 0.0
-    bid = float(latest_quote.bid_price) if latest_quote is not None and getattr(latest_quote, "bid_price", None) else 0.0
-    ask = float(latest_quote.ask_price) if latest_quote is not None and getattr(latest_quote, "ask_price", None) else 0.0
+    volume = (
+        int(daily_bar.volume) if daily_bar is not None and getattr(daily_bar, "volume", None) else 0
+    )
+    day_low = (
+        float(daily_bar.low) if daily_bar is not None and getattr(daily_bar, "low", None) else 0.0
+    )
+    day_high = (
+        float(daily_bar.high) if daily_bar is not None and getattr(daily_bar, "high", None) else 0.0
+    )
+    bid = (
+        float(latest_quote.bid_price)
+        if latest_quote is not None and getattr(latest_quote, "bid_price", None)
+        else 0.0
+    )
+    ask = (
+        float(latest_quote.ask_price)
+        if latest_quote is not None and getattr(latest_quote, "ask_price", None)
+        else 0.0
+    )
 
     as_of = ""
     ref_ts = getattr(latest_trade, "timestamp", None) or getattr(daily_bar, "timestamp", None)
     if ref_ts is not None:
         try:
-            as_of = ref_ts.astimezone(pytz.timezone("America/New_York")).strftime("%Y-%m-%d %H:%M:%S %Z")
+            as_of = ref_ts.astimezone(pytz.timezone("America/New_York")).strftime(
+                "%Y-%m-%d %H:%M:%S %Z"
+            )
         except Exception:
             as_of = ""
 
@@ -90,9 +118,7 @@ def _normalize_alpaca_snapshot(
         "bid": bid,
         "ask": ask,
         "as_of": as_of,
-        "stale": is_stale(
-            ref_ts.isoformat() if ref_ts is not None else None, cutoff_epoch
-        ),
+        "stale": is_stale(ref_ts.isoformat() if ref_ts is not None else None, cutoff_epoch),
     }
 
 
@@ -234,7 +260,11 @@ def _format_quote_entry(symbol: str, pplx_quote: Any, alpaca_quote: dict | None)
     """
     nq = alpaca_quote or _normalize_pplx_quote(pplx_quote)
     if nq is None:
-        err = pplx_quote.get("error", "unknown") if isinstance(pplx_quote, dict) else "invalid response"
+        err = (
+            pplx_quote.get("error", "unknown")
+            if isinstance(pplx_quote, dict)
+            else "invalid response"
+        )
         return f"{symbol}: Error - {err}"
     header = [f"\n{'=' * 50}", f"  {symbol} - Quote", f"{'=' * 50}"]
     body = _format_quote_block(nq)
@@ -256,19 +286,20 @@ async def get_perplexity_quote(symbols: str) -> str:
     Returns:
         Formatted quote data including price, change, bid/ask, volume, as-of time.
     """
+    if PerplexityClient is None:
+        return _NOT_INSTALLED
     symbol_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
     if not symbol_list:
         return "Error: No symbols provided"
 
-    paths = [
-        f"/rest/finance/quote/{s}?with_history=false&with_ui_hints=true"
-        for s in symbol_list
-    ]
+    paths = [f"/rest/finance/quote/{s}?with_history=false&with_ui_hints=true" for s in symbol_list]
     async with PerplexityClient() as pc:
         quotes = await pc.fetch_many(paths)
-    alpaca = _alpaca_realtime_quotes(symbol_list)
+    # Blocking HTTP (snapshots + market calendar): run it off the event loop.
+    alpaca = await asyncio.to_thread(_alpaca_realtime_quotes, symbol_list)
     return "\n".join(
-        _format_quote_entry(sym, q, alpaca.get(sym)) for sym, q in zip(symbol_list, quotes, strict=False)
+        _format_quote_entry(sym, q, alpaca.get(sym))
+        for sym, q in zip(symbol_list, quotes, strict=False)
     )
 
 
@@ -285,6 +316,8 @@ async def get_perplexity_movers() -> str:
     Returns:
         Formatted list of top gainers and losers for day-trading.
     """
+    if PerplexityClient is None:
+        return _NOT_INSTALLED
     async with PerplexityClient() as pc:
         data = await pc.fetch_json("/rest/finance/top-movers/market?country=US")
 
@@ -303,10 +336,14 @@ async def get_perplexity_movers() -> str:
     def _row(q: dict) -> str:
         sym = _safe_get(q, "symbol", "ticker", default="?")
         price = _safe_get(q, "price", "regularMarketPrice", default=0) or 0
-        pct = _safe_get(
-            q, "changesPercentage", "percentChange", "regularMarketChangePercent", default=0
-        ) or 0
-        return f"  {sym:6s} ${float(price):8.2f}  {float(pct):+7.2f}%"
+        pct = (
+            _safe_get(
+                q, "changesPercentage", "percentChange", "regularMarketChangePercent", default=0
+            )
+            or 0
+        )
+        # _px keeps sub-dollar movers at 4 decimals ($0.1568, not $0.16); right-justified.
+        return f"  {sym:6s} {_px(float(price)):>10s}  {float(pct):+7.2f}%"
 
     lines = [f"\n{'=' * 60}", "  🚀 TOP MOVERS - Perplexity Finance", "=" * 60, ""]
     if gainers:
@@ -432,6 +469,8 @@ async def get_perplexity_comprehensive(symbol: str, json_output: bool = False) -
     Returns:
         Formatted comprehensive analysis or JSON dump.
     """
+    if PerplexityClient is None:
+        return _NOT_INSTALLED
     symbol = symbol.strip().upper()
     if not symbol:
         return "Error: No symbol provided"
@@ -441,7 +480,7 @@ async def get_perplexity_comprehensive(symbol: str, json_output: bool = False) -
     raw = result.get("raw", {})
 
     # Authoritative real-time price from Alpaca; Perplexity's quote lags a session.
-    quote = _alpaca_realtime_quotes([symbol]).get(symbol)
+    quote = (await asyncio.to_thread(_alpaca_realtime_quotes, [symbol])).get(symbol)
 
     if json_output:
         if quote is not None:

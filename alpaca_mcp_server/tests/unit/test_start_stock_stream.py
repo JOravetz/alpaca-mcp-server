@@ -48,9 +48,13 @@ class TestStartGlobalStockStream:
     @pytest.mark.asyncio
     async def test_start_global_stock_stream_single_symbol(self, start_stream):
         with patch(_TARGET, new_callable=AsyncMock) as mock_stream:
-            mock_stream.return_value = "✅ Global stock stream started for ['AAPL'] with trades data types"
+            mock_stream.return_value = (
+                "✅ Global stock stream started for ['AAPL'] with trades data types"
+            )
 
-            result = await start_stream(symbols=["AAPL"], data_types=["trades"], duration_seconds=60)
+            result = await start_stream(
+                symbols=["AAPL"], data_types=["trades"], duration_seconds=60
+            )
 
             mock_stream.assert_awaited_once_with(["AAPL"], ["trades"], "sip", 60, None, False)
             assert "✅" in result

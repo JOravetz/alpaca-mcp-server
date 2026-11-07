@@ -245,6 +245,7 @@ async def get_option_snapshot(symbol: str) -> str:
         close_price: Any = "N/A"
         try:
             from ..config.settings import get_trading_client
+
             trading_client = get_trading_client()
             contract = trading_client.get_option_contract(symbol)
             open_interest = getattr(contract, "open_interest", None) or "N/A"

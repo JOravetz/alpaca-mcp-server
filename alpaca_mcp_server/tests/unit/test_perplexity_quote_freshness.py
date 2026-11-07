@@ -31,7 +31,9 @@ def _fake_snapshot(price, prev_close, low, high, volume):
     return SimpleNamespace(
         latest_trade=SimpleNamespace(price=price, timestamp=eastern_ts, size=1000),
         latest_quote=SimpleNamespace(bid_price=price, ask_price=price + 0.01),
-        daily_bar=SimpleNamespace(close=price, low=low, high=high, volume=volume, timestamp=eastern_ts),
+        daily_bar=SimpleNamespace(
+            close=price, low=low, high=high, volume=volume, timestamp=eastern_ts
+        ),
         previous_daily_bar=SimpleNamespace(close=prev_close),
         minute_bar=None,
     )
@@ -51,8 +53,15 @@ def test_pplx_quote_flagged_stale_when_old():
     # Perplexity quote timestamped at yesterday's close, "now" is next morning.
     yday_close = int(datetime(2026, 6, 29, 20, 0, 1, tzinfo=UTC).timestamp())
     now = int(datetime(2026, 6, 30, 13, 40, 0, tzinfo=UTC).timestamp())
-    q = {"price": 0.81, "previousClose": 1.2, "changesPercentage": -32.48,
-         "volume": 40_575_118, "dayLow": 0.79, "dayHigh": 1.25, "timestamp": yday_close}
+    q = {
+        "price": 0.81,
+        "previousClose": 1.2,
+        "changesPercentage": -32.48,
+        "volume": 40_575_118,
+        "dayLow": 0.79,
+        "dayHigh": 1.25,
+        "timestamp": yday_close,
+    }
     nq = _normalize_pplx_quote(q, now_epoch=now)
     assert nq is not None
     assert nq["source"] == "perplexity"
@@ -64,8 +73,13 @@ def test_pplx_quote_flagged_stale_when_old():
 
 def test_pplx_quote_fresh_not_flagged():
     now = int(datetime(2026, 6, 30, 13, 40, 0, tzinfo=UTC).timestamp())
-    q = {"price": 4.08, "previousClose": 0.81, "changesPercentage": 403.7,
-         "volume": 58_000_000, "timestamp": now - 30}
+    q = {
+        "price": 4.08,
+        "previousClose": 0.81,
+        "changesPercentage": 403.7,
+        "volume": 58_000_000,
+        "timestamp": now - 30,
+    }
     nq = _normalize_pplx_quote(q, now_epoch=now)
     assert nq["stale"] is False
     assert "STALE" not in "\n".join(_format_quote_block(nq))
@@ -80,9 +94,18 @@ def test_alpaca_block_labeled_realtime():
 
 def test_comprehensive_prefers_override_quote_over_stale_raw():
     # raw carries the stale Perplexity quote; override is the live Alpaca quote.
-    raw = {"quote": {"price": 0.81, "previousClose": 1.2, "changesPercentage": -32.48,
-                     "volume": 40_575_118, "timestamp": 0}}
-    override = _normalize_alpaca_snapshot("CELZ", _fake_snapshot(4.08, 0.81, 2.60, 4.08, 58_000_000))
+    raw = {
+        "quote": {
+            "price": 0.81,
+            "previousClose": 1.2,
+            "changesPercentage": -32.48,
+            "volume": 40_575_118,
+            "timestamp": 0,
+        }
+    }
+    override = _normalize_alpaca_snapshot(
+        "CELZ", _fake_snapshot(4.08, 0.81, 2.60, 4.08, 58_000_000)
+    )
     out = _format_comprehensive("CELZ", raw, quote=override)
     assert "$4.08" in out
     assert "$0.81 (-32.48%)" not in out  # stale Perplexity price must not appear

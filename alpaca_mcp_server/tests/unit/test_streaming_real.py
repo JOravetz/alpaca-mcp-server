@@ -153,7 +153,10 @@ class TestStreamingReal:
         scanner_config = get_scanner_config()
 
         # Verify they all return the values in config/global_config.json
-        assert trading_config.trades_per_minute_threshold == _json_trading()["trades_per_minute_threshold"]
+        assert (
+            trading_config.trades_per_minute_threshold
+            == _json_trading()["trades_per_minute_threshold"]
+        )
         assert technical_config.hanning_window_samples == 11
         assert technical_config.peak_trough_min_distance == 3
         assert scanner_config.max_watchlist_size == 50
@@ -242,8 +245,14 @@ class TestStreamingReal:
         scanner_config = get_scanner_config()
 
         # The values in config/global_config.json are the ones in effect
-        assert trading_config.trades_per_minute_threshold == _json_trading()["trades_per_minute_threshold"]
-        assert trading_config.min_percent_change_threshold == _json_trading()["min_percent_change_threshold"]
+        assert (
+            trading_config.trades_per_minute_threshold
+            == _json_trading()["trades_per_minute_threshold"]
+        )
+        assert (
+            trading_config.min_percent_change_threshold
+            == _json_trading()["min_percent_change_threshold"]
+        )
         assert trading_config.never_sell_for_loss is True  # Never sell for loss
 
         # Test scanner is configured for aggressive trading

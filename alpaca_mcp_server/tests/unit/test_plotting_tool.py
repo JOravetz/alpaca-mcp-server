@@ -28,6 +28,7 @@ class TestAdvancedPlottingTool:
         assert callable(generate_peak_trough_plots)
         print("✅ Plotting tool import successful")
 
+    @pytest.mark.live_alpaca
     @pytest.mark.asyncio
     async def test_single_symbol_plot(self):
         """Test single symbol plotting."""
@@ -50,6 +51,7 @@ class TestAdvancedPlottingTool:
                 f"⚠️  Single symbol plot returned error (expected if no API keys): {result[:200]}..."
             )
 
+    @pytest.mark.live_alpaca
     @pytest.mark.asyncio
     async def test_multi_symbol_plot(self):
         """Test multi-symbol plotting."""
@@ -110,6 +112,7 @@ class TestAdvancedPlottingTool:
         assert "No valid symbols provided" in result
         print("✅ Whitespace-only symbols validation working")
 
+    @pytest.mark.live_alpaca
     @pytest.mark.asyncio
     async def test_different_plot_modes(self):
         """Test different plot modes."""
@@ -127,6 +130,7 @@ class TestAdvancedPlottingTool:
             else:
                 print(f"⚠️  Plot mode '{mode}': error (may be expected)")
 
+    @pytest.mark.live_alpaca
     @pytest.mark.asyncio
     async def test_different_timeframes(self):
         """Test different timeframes."""
@@ -169,6 +173,7 @@ class TestAdvancedPlottingTool:
             if original_secret:
                 os.environ["APCA_API_SECRET_KEY"] = original_secret
 
+    @pytest.mark.live_alpaca
     @pytest.mark.asyncio
     async def test_window_length_adjustment(self):
         """Test that even window lengths are adjusted to odd."""

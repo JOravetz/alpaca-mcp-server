@@ -34,9 +34,7 @@ async def get_extended_market_clock() -> str:
         postmarket_end = time(20, 0)  # 8:00 PM
 
         # Authoritative next regular open from Alpaca (already skips weekends/holidays).
-        next_open_et = (
-            clock.next_open.astimezone(now_et.tzinfo) if clock.next_open else None
-        )
+        next_open_et = clock.next_open.astimezone(now_et.tzinfo) if clock.next_open else None
 
         # Determine whether *today* is an actual trading day (handles weekends AND
         # market holidays) and fetch today's real regular-session bounds (handles
@@ -44,13 +42,9 @@ async def get_extended_market_clock() -> str:
         # clock if the calendar lookup is unavailable.
         market_open = time(9, 30)  # 9:30 AM
         market_close = time(16, 0)  # 4:00 PM
-        is_trading_day = clock.is_open or bool(
-            next_open_et and next_open_et.date() == today
-        )
+        is_trading_day = clock.is_open or bool(next_open_et and next_open_et.date() == today)
         try:
-            calendar = client.get_calendar(
-                filters=GetCalendarRequest(start=today, end=today)
-            )
+            calendar = client.get_calendar(filters=GetCalendarRequest(start=today, end=today))
             # Duck-typed on .date: entries may be Calendar models or ISO-dated stand-ins.
             today_entry: Any = next(
                 (d for d in calendar if str(getattr(d, "date", ""))[:10] == today.isoformat()),
@@ -110,9 +104,7 @@ async def get_extended_market_clock() -> str:
             # next_open_et already accounts for weekends and holidays.
             next_session = "Pre-market opens"
             if next_open_et is not None:
-                next_time = next_open_et.replace(
-                    hour=4, minute=0, second=0, microsecond=0
-                )
+                next_time = next_open_et.replace(hour=4, minute=0, second=0, microsecond=0)
             else:
                 next_time = now_et.replace(hour=4, minute=0, second=0, microsecond=0)
 
