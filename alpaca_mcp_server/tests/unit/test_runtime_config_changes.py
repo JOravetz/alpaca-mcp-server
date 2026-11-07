@@ -21,6 +21,7 @@ from alpaca_mcp_server.config import get_technical_config, get_trading_config  #
 from alpaca_mcp_server.config.global_config import (  # noqa: E402
     GlobalConfig,
     reload_global_config,
+    write_json_atomic,
 )
 from alpaca_mcp_server.monitoring.fastapi_service import MonitoringServiceAPI  # noqa: E402
 
@@ -187,8 +188,10 @@ class TestRuntimeConfigChanges:
                             }
                         }
 
-                        with open(temp_file, "w") as f:
-                            json.dump(modified_config, f)
+                        # Atomic, as GlobalConfig.save writes: a reader sees the old
+                        # file or the new one, never a truncated one (which loaded
+                        # as the 500 default and failed this test intermittently).
+                        write_json_atomic(temp_file, modified_config)
 
                         time.sleep(0.02)
 

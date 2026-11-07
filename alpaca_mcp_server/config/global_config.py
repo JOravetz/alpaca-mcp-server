@@ -3,13 +3,38 @@
 Fast, aggressive trading configuration - no conservative thresholds.
 """
 
+import contextlib
 import json
 import logging
+import os
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+
+def write_json_atomic(path: str | Path, data: dict) -> None:
+    """Write JSON so a concurrent reader sees the old file or the new one, never half.
+
+    open(path, "w") truncates first, so a reader landing in between parsed empty
+    or partial JSON and GlobalConfig.load() fell back to the built-in defaults.
+    The symlink is resolved first: os.replace onto the link itself would swap it
+    for a plain file and disconnect it from the config it points at.
+    """
+    target = Path(path).resolve()
+    fd, tmp = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, target)
+    except BaseException:
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(tmp)
+        raise
 
 
 @dataclass
@@ -148,8 +173,7 @@ class GlobalConfig:
             "description": "Global configuration for fast, aggressive MCP trading system",
         }
 
-        with open(config_path_obj, "w") as f:
-            json.dump(data, f, indent=2)
+        write_json_atomic(config_path_obj, data)
 
         logger.info(f"Configuration saved to {config_path_obj}")
 

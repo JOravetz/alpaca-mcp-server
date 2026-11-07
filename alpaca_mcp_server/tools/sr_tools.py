@@ -12,6 +12,7 @@ Provides professional-grade support/resistance detection with:
 """
 
 import asyncio
+import math
 import os
 import shutil
 from pathlib import Path
@@ -27,6 +28,31 @@ SR_ALPACA_BINARY = Path(
     or shutil.which("bb-sr-alpaca")
     or os.path.expanduser("~/bottom_barrel/target/release/bb-sr-alpaca")
 )
+
+# bb-sr-alpaca's -d is a BAR count ("Using N bars for analysis"), while these
+# tools take trading DAYS, as the old sr_alpaca did. Passing days straight
+# through gave get_intraday_sr_levels(days=5) on 5Min bars just 5 bars (25
+# minutes): a 36-cent band on SOXX. Bars per trading day on the SIP tape,
+# 04:00-20:00 ET (16 h). A thinly traded name has fewer bars, so its N bars
+# reach further back than N/bars-per-day days.
+BARS_PER_DAY = {
+    "1Min": 960,
+    "5Min": 192,
+    "15Min": 64,
+    "30Min": 32,
+    "1Hour": 16,
+    "2Hour": 8,
+    "4Hour": 4,
+    "1Day": 1,
+    "1Week": 1 / 5,
+    "1Month": 1 / 21,
+}
+
+
+def days_to_bars(days: int, timeframe: str) -> int:
+    """Trading days -> the bar count bb-sr-alpaca's -d expects (at least 1)."""
+    return max(1, math.ceil(days * BARS_PER_DAY.get(timeframe, 1)))
+
 
 # Valid timeframes
 VALID_TIMEFRAMES = [
@@ -49,7 +75,7 @@ VALID_METHODS = ["peak", "hanning"]
 async def get_support_resistance(
     symbol: str,
     timeframe: str = "5Min",
-    days: int = 30,
+    days: int = 5,
     clusters: int = 5,
     method: str = "peak",
     fractals: bool = False,
@@ -70,7 +96,7 @@ async def get_support_resistance(
     Args:
         symbol: Stock ticker symbol (e.g., "AAPL", "TSLA", "RKLB")
         timeframe: Bar timeframe - 1Min, 5Min, 15Min, 30Min, 1Hour, 2Hour, 4Hour, 1Day, 1Week, 1Month
-        days: Number of trading days to analyze (default: 30)
+        days: Number of trading days to analyze (default: 5)
         clusters: Number of S/R level clusters (default: 5)
         method: Peak detection method - "peak" (scipy-style) or "hanning"
         fractals: Enable Williams Fractals detection
@@ -102,6 +128,7 @@ async def get_support_resistance(
         return f"Error: Invalid method '{method}'. Valid options: {', '.join(VALID_METHODS)}"
 
     try:
+        bars = days_to_bars(days, timeframe)
         # Build command
         cmd = [
             str(SR_ALPACA_BINARY),
@@ -110,13 +137,15 @@ async def get_support_resistance(
             "-t",
             timeframe,
             "-d",
-            str(days),
+            str(bars),  # -d is bars, not days
             "-c",
             str(clusters),
             "-m",
             method,
             "-n",
-            str(samples),
+            # -n caps what is fetched; below the bar count it would silently truncate
+            # (30 days of 1Min = 28,800 bars against the 10,000 default).
+            str(max(samples, bars)),
         ]
 
         if fractals:
@@ -168,7 +197,7 @@ async def get_support_resistance(
 async def get_support_resistance_comprehensive(
     symbol: str,
     timeframe: str = "5Min",
-    days: int = 30,
+    days: int = 5,
     clusters: int = 5,
 ) -> str:
     """
@@ -180,7 +209,7 @@ async def get_support_resistance_comprehensive(
     Args:
         symbol: Stock ticker symbol
         timeframe: Bar timeframe (default: 5Min)
-        days: Number of trading days (default: 30)
+        days: Number of trading days (default: 5)
         clusters: Number of S/R clusters (default: 5)
 
     Returns:
@@ -204,7 +233,7 @@ async def get_support_resistance_comprehensive(
 async def get_volume_profile(
     symbol: str,
     timeframe: str = "5Min",
-    days: int = 30,
+    days: int = 5,
 ) -> str:
     """
     Get Volume Profile analysis with POC (Point of Control) and Value Area.
@@ -215,7 +244,7 @@ async def get_volume_profile(
     Args:
         symbol: Stock ticker symbol
         timeframe: Bar timeframe (default: 5Min)
-        days: Number of trading days (default: 30)
+        days: Number of trading days (default: 5)
 
     Returns:
         Volume Profile analysis with POC and Value Area

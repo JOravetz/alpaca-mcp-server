@@ -1584,7 +1584,7 @@ def register_sr_tools(mcp):
     async def get_support_resistance(
         symbol: str,
         timeframe: str = "5Min",
-        days: int = 30,
+        days: int = 5,
         clusters: int = 5,
         method: str = "peak",
         fractals: bool = False,
@@ -1605,7 +1605,7 @@ def register_sr_tools(mcp):
         Args:
             symbol: Stock ticker symbol (e.g., "AAPL", "TSLA", "RKLB")
             timeframe: Bar timeframe - 1Min, 5Min, 15Min, 30Min, 1Hour, 2Hour, 4Hour, 1Day, 1Week, 1Month
-            days: Number of trading days to analyze (default: 30)
+            days: Number of trading days to analyze (default: 5)
             clusters: Number of S/R level clusters (default: 5)
             method: Peak detection method - "peak" (scipy-style) or "hanning"
             fractals: Enable Williams Fractals detection
@@ -1639,7 +1639,7 @@ def register_sr_tools(mcp):
     async def get_support_resistance_comprehensive(
         symbol: str,
         timeframe: str = "5Min",
-        days: int = 30,
+        days: int = 5,
         clusters: int = 5,
     ) -> str:
         """
@@ -1651,7 +1651,7 @@ def register_sr_tools(mcp):
         Args:
             symbol: Stock ticker symbol
             timeframe: Bar timeframe (default: 5Min)
-            days: Number of trading days (default: 30)
+            days: Number of trading days (default: 5)
             clusters: Number of S/R clusters (default: 5)
 
         Returns:
@@ -1668,7 +1668,7 @@ def register_sr_tools(mcp):
     async def get_volume_profile(
         symbol: str,
         timeframe: str = "5Min",
-        days: int = 30,
+        days: int = 5,
     ) -> str:
         """
         Get Volume Profile analysis with POC (Point of Control) and Value Area.
@@ -1679,7 +1679,7 @@ def register_sr_tools(mcp):
         Args:
             symbol: Stock ticker symbol
             timeframe: Bar timeframe (default: 5Min)
-            days: Number of trading days (default: 30)
+            days: Number of trading days (default: 5)
 
         Returns:
             Volume Profile analysis with POC and Value Area
