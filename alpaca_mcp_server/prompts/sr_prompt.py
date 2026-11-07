@@ -1,11 +1,11 @@
-"""Support & Resistance Analysis Prompt - Uses sr_alpaca C binary."""
+"""Support & Resistance Analysis Prompt - uses bottom_barrel bb-sr-alpaca (split-adjusted bars)."""
 
 
 async def sr(symbol: str, mode: str = "intraday") -> str:
     """
     Get professional support and resistance levels for day trading.
 
-    Uses high-performance C implementation (sr_alpaca) with:
+    Uses bottom_barrel bb-sr-alpaca (Rust, split-adjusted bars) with:
     - Scipy-style peak detection (EXACT Python match)
     - Williams Fractals (classic 5-bar pattern)
     - Volume Profile / POC (institutional-grade)
@@ -63,7 +63,7 @@ async def sr(symbol: str, mode: str = "intraday") -> str:
     header = f"""
 ================================================================================
                     SUPPORT & RESISTANCE ANALYSIS: {symbol}
-                    Mode: {mode.upper()} | Powered by sr_alpaca
+                    Mode: {mode.upper()} | Powered by bb-sr-alpaca
 ================================================================================
 """
     return header + result

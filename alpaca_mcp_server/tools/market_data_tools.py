@@ -284,7 +284,7 @@ async def get_stock_bars_intraday(
     start_date: str | None = None,
     end_date: str | None = None,
     limit: int = 10000,
-    adjustment: str = "raw",
+    adjustment: str = "all",
     feed: str = "auto",
     currency: str = "USD",
     sort: str = "asc",
@@ -298,7 +298,8 @@ async def get_stock_bars_intraday(
         start_date (Optional[str]): Start date in YYYY-MM-DD format (default: today)
         end_date (Optional[str]): End date in YYYY-MM-DD format (default: now)
         limit (int): Maximum number of bars to return per symbol (default: 10000)
-        adjustment (str): Price adjustment type (raw, split, dividend, all)
+        adjustment (str): Price adjustment: "all" (split + dividend, default; the same
+            basis as get_stock_bars), "split", "dividend", or "raw" (as traded)
         feed (str): Data feed: "auto" (default: BOATS during the 20:00-04:00 ET
             overnight session, SIP otherwise), or sip, boats, overnight, otc
         currency (str): Currency for international symbols
@@ -421,7 +422,11 @@ async def get_stock_bars_intraday(
                 )
 
         # Parse enums
-        adjustment_enum = getattr(Adjustment, adjustment.upper(), Adjustment.RAW)
+        # An unknown value used to become RAW silently; refuse it instead.
+        try:
+            adjustment_enum = Adjustment(adjustment.lower())
+        except ValueError:
+            return f"Invalid adjustment '{adjustment}'. Valid options: raw, split, dividend, all"
         if feed.lower() == "auto":
             feed_enum = live_feed()
         else:

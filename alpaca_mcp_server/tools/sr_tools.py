@@ -1,7 +1,7 @@
 """
 Support & Resistance MCP Tools.
 
-High-performance S/R analysis using the sr_alpaca C binary.
+High-performance S/R analysis using bottom_barrel's bb-sr-alpaca (split-adjusted bars).
 Provides professional-grade support/resistance detection with:
 - Multiple timeframes (1Min to 1Month)
 - Peak detection methods (scipy-style, hanning filter)
@@ -13,10 +13,20 @@ Provides professional-grade support/resistance detection with:
 
 import asyncio
 import os
+import shutil
 from pathlib import Path
 
-# Path to the sr_alpaca binary
-SR_ALPACA_BINARY = Path(os.path.expanduser("~/autotrade/bin/sr_alpaca"))
+# bottom_barrel's bb-sr-alpaca: the same CLI and text output as the old
+# ~/autotrade/bin/sr_alpaca, but on split-adjusted bars. The old binary had no
+# adjustment option, so any window crossing a split mixed pre- and post-split
+# prices (SOXX after its 3:1 split on 2026-11-05: "resistance" 347/527/641 and
+# "support" above the $136 price). It reads APCA_* from the environment, which
+# settings fills from ~/.secrets. ALPACA_SR_BINARY overrides the path.
+SR_ALPACA_BINARY = Path(
+    os.environ.get("ALPACA_SR_BINARY")
+    or shutil.which("bb-sr-alpaca")
+    or os.path.expanduser("~/bottom_barrel/target/release/bb-sr-alpaca")
+)
 
 # Valid timeframes
 VALID_TIMEFRAMES = [
@@ -81,7 +91,7 @@ async def get_support_resistance(
     symbol = symbol.strip().upper()
 
     if not SR_ALPACA_BINARY.exists():
-        return f"Error: sr_alpaca binary not found at {SR_ALPACA_BINARY}"
+        return f"Error: bb-sr-alpaca binary not found at {SR_ALPACA_BINARY}"
 
     if timeframe not in VALID_TIMEFRAMES:
         return (
@@ -113,12 +123,16 @@ async def get_support_resistance(
             cmd.append("--fractals")
         if volume_profile:
             cmd.append("--volume-profile")
-        if vwap:
-            cmd.append("--vwap")
+        # bb-sr-alpaca has no VWAP mode; say so rather than pass an unknown flag.
+        vwap_note = (
+            "\nNote: VWAP-based S/R is not available in bb-sr-alpaca; levels above exclude it."
+            if vwap
+            else ""
+        )
         if verbose:
             cmd.append("-v")
 
-        # Run the sr_alpaca binary
+        # Run bb-sr-alpaca (inherits os.environ, which carries the Alpaca keys)
         process = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,
@@ -136,17 +150,17 @@ async def get_support_resistance(
             # Check for common errors
             if "No peaks detected" in error_msg or "No peaks detected" in output:
                 return f"{symbol}: No S/R levels detected. Try different timeframe or more days."
-            return f"Error running sr_alpaca: {error_msg}"
+            return f"Error running bb-sr-alpaca: {error_msg}"
 
         if not output:
             return f"No S/R data returned for {symbol}"
 
-        return output
+        return output + vwap_note
 
     except TimeoutError:
         return f"Error: Timeout analyzing {symbol} (exceeded 60 seconds)"
     except FileNotFoundError:
-        return f"Error: sr_alpaca binary not found at {SR_ALPACA_BINARY}"
+        return f"Error: bb-sr-alpaca binary not found at {SR_ALPACA_BINARY}"
     except Exception as e:
         return f"Error: {str(e)}"
 

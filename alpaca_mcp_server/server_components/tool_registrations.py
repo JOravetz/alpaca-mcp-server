@@ -96,10 +96,15 @@ def register_market_data_tools(mcp):
         start_date: str | None = None,
         end_date: str | None = None,
         limit: int = 10000,
+        adjustment: str = "all",
     ) -> str:
-        """Get intraday historical bars with analysis."""
+        """Get intraday historical bars with analysis.
+
+        adjustment: "all" (split + dividend, default; the same basis as
+        get_stock_bars), "split", "dividend", or "raw" (prices as traded).
+        """
         return await market_data_tools.get_stock_bars_intraday(
-            symbol, timeframe, start_date, end_date, limit
+            symbol, timeframe, start_date, end_date, limit, adjustment
         )
 
     @mcp.tool()
