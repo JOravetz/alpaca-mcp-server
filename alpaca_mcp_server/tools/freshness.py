@@ -11,6 +11,7 @@ import logging
 import re
 import time as _time
 from datetime import UTC, date, datetime, time, timedelta
+from typing import Any
 
 import pytz
 
@@ -62,8 +63,8 @@ def _calendar_cutoff() -> int:
     today_et = datetime.now(_EASTERN).date()
     calendar = client.get_calendar(
         filters=GetCalendarRequest(
-            start=(today_et - timedelta(days=10)).isoformat(),
-            end=today_et.isoformat(),
+            start=today_et - timedelta(days=10),
+            end=today_et,
         )
     )
     session_dates = sorted(
@@ -79,7 +80,7 @@ def _calendar_cutoff() -> int:
     return int(cutoff_dt.timestamp())
 
 
-def _session_date(entry) -> date | None:
+def _session_date(entry: Any) -> date | None:
     """Calendar entries expose .date as a date or an ISO string."""
     try:
         return date.fromisoformat(str(entry.date)[:10])

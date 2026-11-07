@@ -53,6 +53,8 @@ def setup_backend_for_args(no_plot=False):
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from peakdetect import peakdetect, peakdetect_savgol  # noqa: E402
 
+from ..utils.timezone_utils import fmt_et
+
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -97,6 +99,14 @@ class MCPPlotManager:
 
     def _display_with_imagemagick(self, filepath):
         """Display image using ImageMagick in background process"""
+        # Never pop viewer windows from a test run (each `display` spins ~half a
+        # core; the plotting tests opened a dozen and pinned the machine on
+        # 2026-11-07), and allow opting out with ALPACA_PLOT_DISPLAY=0.
+        if os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get(
+            "ALPACA_PLOT_DISPLAY", "1"
+        ).lower() in ("0", "false", "no"):
+            logger.info(f"Plot saved (viewer disabled): {filepath}")
+            return
         try:
             # Use ImageMagick's display command
             process = subprocess.Popen(
@@ -184,9 +194,12 @@ def parse_timestamp_to_datetime(timestamp_str):
 
 
 def format_datetime_for_display(dt):
-    """Format datetime for display in dd/mm/yyyy hh:mm format"""
+    """Format an ET datetime as "YYYY-MM-DD HH:MM EST" (unambiguous, zone-labelled).
+
+    Was "%d/%m/%Y %H:%M": 05/11/2026 read as May 11 and carried no zone.
+    """
     try:
-        return dt.strftime("%d/%m/%Y %H:%M")
+        return dt.strftime("%Y-%m-%d %H:%M %Z")
     except (AttributeError, ValueError, TypeError):
         return str(dt)
 
@@ -824,7 +837,7 @@ def print_latest_signals_table(all_results):
 
 def generate_html_report(all_results, test_symbols, analysis_params, sort_by="signal_age"):
     """Generate comprehensive HTML report for batch analysis results"""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S EST")
+    timestamp = fmt_et()
 
     # Calculate summary statistics
     total_symbols = len(test_symbols)

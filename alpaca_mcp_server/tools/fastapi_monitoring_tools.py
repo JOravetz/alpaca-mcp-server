@@ -7,7 +7,9 @@ Provides HTTP-based communication with the persistent monitoring service.
 import asyncio
 import json
 import logging
+import subprocess
 from datetime import UTC
+from pathlib import Path
 
 import aiohttp
 
@@ -311,7 +313,7 @@ async def start_fastapi_monitoring_service() -> dict:
                 "reason": "Service only runs during pre-market (4 AM), regular (9:30 AM-4 PM), or after-hours (4-8 PM) ET",
                 "service_available": False,
                 "recommendation": "Start service during pre-market (4:00 AM), regular hours (9:30 AM-4:00 PM), or after-hours (4:00-8:00 PM) ET",
-                "current_time_et": now_et.strftime("%Y-%m-%d %H:%M:%S EDT"),
+                "current_time_et": now_et.strftime("%Y-%m-%d %H:%M:%S %Z"),
                 "trading_window": "4:00 AM - 8:00 PM ET",
             }
 
@@ -332,9 +334,23 @@ async def start_fastapi_monitoring_service() -> dict:
         }
 
     try:
-        # Start the service using the script
-        script_path = "./scripts/start_monitoring_service.sh"
-        result = subprocess.run([script_path], capture_output=True, text=True, timeout=30)
+        # Start the service using the script. Use an absolute path anchored to
+        # the package root so the call works regardless of caller's cwd.
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        script_path = repo_root / "scripts" / "services" / "start_monitoring_service.sh"
+        if not script_path.exists():
+            return {
+                "status": "error",
+                "message": f"Service start script not found at {script_path}",
+                "service_available": False,
+            }
+        result = subprocess.run(
+            [str(script_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(repo_root),
+        )
 
         if result.returncode != 0:
             return {
@@ -432,12 +448,24 @@ async def stop_fastapi_monitoring_service() -> dict:
     """
     Stop the FastAPI monitoring service gracefully.
     """
-    import subprocess
-
     try:
-        # Stop the service using the script
-        script_path = "./scripts/stop_monitoring_service.sh"
-        result = subprocess.run([script_path], capture_output=True, text=True, timeout=30)
+        # Stop the service using the script. Anchor to the package root so the
+        # call works regardless of caller's cwd.
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        script_path = repo_root / "scripts" / "services" / "stop_monitoring_service.sh"
+        if not script_path.exists():
+            return {
+                "status": "error",
+                "message": f"Service stop script not found at {script_path}",
+                "service_available": True,
+            }
+        result = subprocess.run(
+            [str(script_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(repo_root),
+        )
 
         if result.returncode != 0:
             return {

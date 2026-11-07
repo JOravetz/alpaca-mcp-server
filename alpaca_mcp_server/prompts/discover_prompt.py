@@ -73,7 +73,7 @@ async def discover(articles: int = 500) -> str:
 
         return output
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return f"Timeout: Exceeded 240 seconds fetching {articles} articles from discover pages"
     except FileNotFoundError:
         return "Error: 'uv' command not found. Make sure uv is installed."

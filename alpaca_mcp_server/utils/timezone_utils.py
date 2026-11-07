@@ -1,60 +1,57 @@
-"""Timezone utilities for consistent Eastern time handling across the application."""
+"""Eastern-time (America/New_York) handling for everything the server reports.
 
-from datetime import UTC, datetime, timedelta, timezone
+Every time the MCP server shows a caller is in ET, labelled EST or EDT by the
+real tz database. The old version guessed DST as "March 8 - November 7"; on
+2026-11-01..07 that labelled EST as EDT and shifted every reported time by an
+hour.
+
+Rules for naive datetimes passed to :func:`to_et`: naive means *UTC* (that is
+what alpaca-py and the REST payloads carry). Never pass a naive
+``datetime.now()``: on this host that is America/Chicago wall-clock. Use
+:func:`now_et` instead.
+"""
+
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
+
+ET = ZoneInfo("America/New_York")
+
+
+def now_et() -> datetime:
+    """The current time as an aware America/New_York datetime."""
+    return datetime.now(ET)
+
+
+def to_et(value: datetime | float | int | str) -> datetime:
+    """Convert a datetime, epoch seconds, or ISO-8601 string to aware ET.
+
+    Naive datetimes and offset-less ISO strings are taken as UTC.
+    """
+    if isinstance(value, int | float):
+        return datetime.fromtimestamp(float(value), UTC).astimezone(ET)
+    if isinstance(value, str):
+        value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    return value.astimezone(ET)
+
+
+def fmt_et(value: datetime | float | int | str | None = None, fmt: str = "%Y-%m-%d %H:%M:%S %Z") -> str:
+    """Format *value* (default: now) in ET; ``%Z`` renders EST or EDT."""
+    return (now_et() if value is None else to_et(value)).strftime(fmt)
 
 
 def get_eastern_time() -> tuple[datetime, str]:
-    """
-    Get current time in Eastern timezone (EDT/EST).
-
-    Returns:
-        Tuple of (datetime object in Eastern timezone, timezone name string)
-    """
-    # Handle EDT (UTC-4) vs EST (UTC-5) automatically
-    utc_now = datetime.now(UTC)
-
-    # Accurate DST check for Eastern timezone:
-    # DST starts 2nd Sunday in March, ends 1st Sunday in November
-    month = utc_now.month
-    day = utc_now.day
-
-    # Approximate DST period - March 8 to November 7 covers most cases
-    # This is a simplified version, but accurate enough for trading hours
-    if (
-        month > 3 and month < 11 or month == 3 and day >= 8 or month == 11 and day <= 7
-    ):  # April through October - definitely EDT
-        eastern = timezone(timedelta(hours=-4))
-        tz_name = "EDT"
-    else:  # December, January, February, early March, late November - EST
-        eastern = timezone(timedelta(hours=-5))
-        tz_name = "EST"
-
-    eastern_time = utc_now.astimezone(eastern)
-    return eastern_time, tz_name
+    """Current time in ET and its abbreviation ("EST" or "EDT")."""
+    now = now_et()
+    return now, now.strftime("%Z")
 
 
 def get_eastern_time_string(format_str: str = "%Y-%m-%d %H:%M:%S %Z") -> str:
-    """
-    Get current Eastern time as a formatted string.
-
-    Args:
-        format_str: strftime format string (default: "%Y-%m-%d %H:%M:%S %Z")
-
-    Returns:
-        Formatted time string with Eastern timezone
-    """
-    eastern_time, tz_name = get_eastern_time()
-    # Replace %Z with the actual timezone name since strftime doesn't handle our custom timezone
-    format_with_tz = format_str.replace("%Z", tz_name)
-    return eastern_time.strftime(format_with_tz)
+    """Current ET time formatted with *format_str* (``%Z`` -> EST/EDT)."""
+    return now_et().strftime(format_str)
 
 
 def get_market_time_display() -> str:
-    """
-    Get current time in format suitable for market displays (HH:MM EDT/EST).
-
-    Returns:
-        Time string in format "HH:MM EDT" or "HH:MM EST"
-    """
-    eastern_time, tz_name = get_eastern_time()
-    return f"{eastern_time.strftime('%H:%M')} {tz_name}"
+    """Current time as "HH:MM EST" / "HH:MM EDT"."""
+    return now_et().strftime("%H:%M %Z")

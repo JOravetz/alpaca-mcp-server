@@ -39,7 +39,7 @@ def register_core_prompts(mcp):
 
     @mcp.prompt()
     async def market_analysis(
-        symbols: list = None, timeframe: str = "1Day", analysis_type: str = "comprehensive"  # type: ignore[assignment]
+        symbols: str | None = None, timeframe: str = "1Day", analysis_type: str = "comprehensive"
     ) -> str:
         """Real-time market analysis with trading opportunities."""
         return await market_analysis_prompt.market_analysis(symbols, timeframe, analysis_type)

@@ -260,59 +260,36 @@ class TestPlottingIntegration:
 
 
 class TestPlottingDependencies:
-    """Test plotting dependencies and fallbacks."""
+    """The chart pipeline's dependencies (ECharts HTML + headless PNG; no matplotlib)."""
 
-    def test_matplotlib_available(self):
-        """Test matplotlib dependency."""
-        try:
-            import matplotlib.pyplot as plt  # noqa: F401
+    @staticmethod
+    def _available(module: str) -> bool:
+        import importlib.util
 
-            print("✅ Matplotlib available")
-            return True
-        except ImportError:
-            print("❌ Matplotlib not available")
-            return False
+        return importlib.util.find_spec(module) is not None
 
     def test_scipy_available(self):
-        """Test scipy dependency."""
-        try:
-            import scipy.signal  # noqa: F401
-
-            print("✅ Scipy available")
-            return True
-        except ImportError:
-            print("❌ Scipy not available")
-            return False
+        """scipy.signal drives the zero-phase Hanning filter."""
+        assert self._available("scipy.signal")
 
     def test_numpy_available(self):
-        """Test numpy dependency."""
-        try:
-            import numpy as np  # noqa: F401
+        assert self._available("numpy")
 
-            print("✅ Numpy available")
-            return True
-        except ImportError:
-            print("❌ Numpy not available")
-            return False
+    def test_playwright_available(self):
+        """Playwright renders the PNG snapshot headlessly."""
+        assert self._available("playwright.async_api")
 
     @pytest.mark.asyncio
-    async def test_dependency_fallback(self):
-        """Test graceful fallback when dependencies missing."""
-        # This test would require temporarily removing dependencies
-        # For now, just test the current state
+    async def test_png_can_be_disabled(self, monkeypatch, tmp_path):
+        """ALPACA_PLOT_PNG=0 skips the browser entirely and says so."""
+        # async, not asyncio.run(): asyncio.run tears down the thread's loop and
+        # left pytest-asyncio creating one it never closed (ResourceWarning).
+        from alpaca_mcp_server.tools.echart_plot import render_png
 
-        dependencies_available = all(
-            [
-                self.test_matplotlib_available(),
-                self.test_scipy_available(),
-                self.test_numpy_available(),
-            ]
-        )
-
-        if dependencies_available:
-            print("✅ All plotting dependencies available")
-        else:
-            print("⚠️  Some plotting dependencies missing - fallback should be used")
+        monkeypatch.setenv("ALPACA_PLOT_PNG", "0")
+        err = await render_png(tmp_path / "x.html", tmp_path / "x.png")
+        assert err is not None and "disabled" in err
+        assert not (tmp_path / "x.png").exists()
 
 
 class TestPlottingPerformance:

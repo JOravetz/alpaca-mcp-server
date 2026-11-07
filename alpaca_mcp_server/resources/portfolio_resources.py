@@ -16,7 +16,7 @@ async def get_portfolio_performance() -> dict:
         positions = client.get_all_positions()
 
         total_unrealized_pnl = sum(float(pos.unrealized_pl or 0) for pos in positions)  # type: ignore[misc]
-        total_value = float(account.portfolio_value)  # type: ignore[union-attr]
+        total_value = float(account.equity)  # type: ignore[union-attr]
         cash_value = float(account.cash)  # type: ignore[union-attr]
         equity_value = float(account.equity)  # type: ignore[union-attr]
 
@@ -55,7 +55,7 @@ async def get_portfolio_allocation() -> dict:
         positions = client.get_all_positions()
         account = client.get_account()
 
-        total_value = float(account.portfolio_value)  # type: ignore[union-attr]
+        total_value = float(account.equity)  # type: ignore[union-attr]
         cash_value = float(account.cash)  # type: ignore[union-attr]
 
         allocations = {
@@ -129,7 +129,7 @@ async def get_portfolio_risk() -> dict:
         account = client.get_account()
         positions = client.get_all_positions()
 
-        total_value = float(account.portfolio_value)  # type: ignore[union-attr]
+        total_value = float(account.equity)  # type: ignore[union-attr]
         cash_value = float(account.cash)  # type: ignore[union-attr]
         buying_power = float(account.buying_power)  # type: ignore[union-attr]
 
@@ -161,7 +161,6 @@ async def get_portfolio_risk() -> dict:
                 if concentration_risk > 20 or leverage_ratio > 0.8
                 else ("MEDIUM" if concentration_risk > 10 or leverage_ratio > 0.6 else "LOW")
             ),
-            "pattern_day_trader": account.pattern_day_trader,  # type: ignore[union-attr]
             "last_updated": datetime.now().isoformat(),
         }
     except Exception as e:

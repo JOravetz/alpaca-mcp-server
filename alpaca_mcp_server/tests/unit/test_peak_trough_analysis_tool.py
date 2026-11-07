@@ -18,12 +18,34 @@ sys.path.insert(0, str(project_root))
 
 from alpaca_mcp_server.tools.peak_trough_analysis_tool import (  # noqa: E402
     HistoricalDataFetcher,
+    PeakTroughPoint,
+    SymbolAnalysisResult,
     analyze_peaks_and_troughs,
     convert_to_nyc_timezone,
     get_latest_signal,
     process_bars_for_peaks,
     zero_phase_filter,
 )
+
+
+def _as_result(d: dict) -> SymbolAnalysisResult:
+    """Build the SymbolAnalysisResult dataclass get_latest_signal takes from a dict fixture.
+
+    process_bars_for_peaks / get_latest_signal moved from dicts to dataclasses in
+    3f0b4ae; the fixtures stay as readable dicts and are converted here.
+    """
+    prices = d.get("original_prices", [])
+    return SymbolAnalysisResult(
+        symbol=d["symbol"],
+        total_bars=d["total_bars"],
+        timestamps=d.get("timestamps", []),
+        original_prices=prices,
+        filtered_prices=d.get("filtered_prices", prices),
+        peaks=[PeakTroughPoint(**pt) for pt in d.get("peaks", [])],
+        troughs=[PeakTroughPoint(**pt) for pt in d.get("troughs", [])],
+        filter_params=d.get("filter_params", {}),
+        stats=d.get("stats", {}),
+    )
 
 
 class TestZeroPhaseFilter:
@@ -225,14 +247,14 @@ class TestProcessBarsForPeaks:
         result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=2)
 
         if result:
-            assert result["symbol"] == "TEST"
-            assert result["total_bars"] == len(bars)
-            assert len(result["original_prices"]) == len(bars)
-            assert len(result["filtered_prices"]) == len(bars)
-            assert isinstance(result["peaks"], list)
-            assert isinstance(result["troughs"], list)
+            assert result.symbol == "TEST"
+            assert result.total_bars == len(bars)
+            assert len(result.original_prices) == len(bars)
+            assert len(result.filtered_prices) == len(bars)
+            assert isinstance(result.peaks, list)
+            assert isinstance(result.troughs, list)
             print(
-                f"✅ Basic peak processing: {len(result['peaks'])} peaks, {len(result['troughs'])} troughs"
+                f"✅ Basic peak processing: {len(result.peaks)} peaks, {len(result.troughs)} troughs"
             )
         else:
             print("⚠️ Peak processing returned None")
@@ -258,7 +280,7 @@ class TestProcessBarsForPeaks:
         result = process_bars_for_peaks("TEST", bars, window_len=None, lookahead=None)
 
         if result:
-            assert "filter_params" in result
+            assert result.filter_params is not None
             print("✅ Peak processing uses global config defaults")
 
 
@@ -322,16 +344,16 @@ class TestGetLatestSignal:
     def test_get_latest_signal_peak(self):
         """Test getting latest peak signal."""
         results = self.create_sample_results()
-        latest_signal = get_latest_signal(results)
+        latest_signal = get_latest_signal(_as_result(results))
 
         assert latest_signal is not None
-        assert latest_signal["type"] == "Peak"
-        assert latest_signal["index"] == 45
-        assert latest_signal["signal_price"] == 154.5
-        assert "samples_ago" in latest_signal
-        assert "price_change" in latest_signal
+        assert latest_signal.signal_type == "Peak"
+        assert latest_signal.index == 45
+        assert latest_signal.signal_price == 154.5
+        assert hasattr(latest_signal, "samples_ago")
+        assert hasattr(latest_signal, "price_change")
         print(
-            f"✅ Latest peak signal: index {latest_signal['index']}, price ${latest_signal['signal_price']}"
+            f"✅ Latest peak signal: index {latest_signal.index}, price ${latest_signal.signal_price}"
         )
 
     def test_get_latest_signal_trough(self):
@@ -340,12 +362,12 @@ class TestGetLatestSignal:
         # Make latest trough more recent than latest peak
         results["troughs"][-1]["index"] = 47
 
-        latest_signal = get_latest_signal(results)
+        latest_signal = get_latest_signal(_as_result(results))
 
         assert latest_signal is not None
-        assert latest_signal["type"] == "Trough"
-        assert latest_signal["index"] == 47
-        print(f"✅ Latest trough signal: index {latest_signal['index']}")
+        assert latest_signal.signal_type == "Trough"
+        assert latest_signal.index == 47
+        print(f"✅ Latest trough signal: index {latest_signal.index}")
 
     def test_get_latest_signal_empty(self):
         """Test with no peaks or troughs."""
@@ -357,7 +379,7 @@ class TestGetLatestSignal:
             "troughs": [],
         }
 
-        latest_signal = get_latest_signal(results)
+        latest_signal = get_latest_signal(_as_result(results))
         assert latest_signal is None
         print("✅ Empty peaks/troughs handled correctly")
 
@@ -534,8 +556,9 @@ class TestAnalyzePeaksAndTroughsWithPlotPy:
         assert isinstance(result, str)
 
         if "Error" not in result:
-            assert "Peak and Trough Analysis" in result
-            assert "plot.py" in result.lower() or "Plot" in result
+            # analyze_peaks_and_troughs_with_plot_py reports via plot.py's summary block
+            assert "RESULTS SUMMARY for SPY" in result
+            assert "Peaks detected:" in result and "Troughs detected:" in result
             print(f"✅ Plot.py integration working: {len(result)} chars")
         else:
             print(f"⚠️ Plot.py integration error: {result[:200]}...")
@@ -678,11 +701,11 @@ class TestErrorHandlingAndEdgeCases:
             ],
         }
 
-        signal = get_latest_signal(results)
+        signal = get_latest_signal(_as_result(results))
         assert signal is not None
         # Should prefer one over the other consistently
-        assert signal["type"] in ["Peak", "Trough"]
-        print(f"✅ Tie-breaking handled: selected {signal['type']}")
+        assert signal.signal_type in ["Peak", "Trough"]
+        print(f"✅ Tie-breaking handled: selected {signal.signal_type}")
 
 
 class TestFilterParameterCalculations:
@@ -720,7 +743,7 @@ class TestFilterParameterCalculations:
         for lookahead in lookahead_values:
             result = process_bars_for_peaks("TEST", bars, window_len=11, lookahead=lookahead)
             if result:
-                peak_counts.append(len(result["peaks"]))
+                peak_counts.append(len(result.peaks))
             else:
                 peak_counts.append(0)
 
@@ -791,9 +814,12 @@ class TestRealMarketDataIntegration:
         assert isinstance(result, str)
 
         if "Error" not in result:
-            # Volatile stocks should have multiple peaks/troughs
-            peak_count = result.count("Peak @")
-            trough_count = result.count("Trough @")
+            # Volatile stocks should have multiple peaks/troughs. The report states
+            # them as "### Peaks (Resistance/Sell Signals): N" per symbol.
+            import re
+
+            peak_count = sum(int(n) for n in re.findall(r"### Peaks \(Resistance/Sell Signals\): (\d+)", result))
+            trough_count = sum(int(n) for n in re.findall(r"### Troughs \(Support/Buy Signals\): (\d+)", result))
 
             total_signals = peak_count + trough_count
             assert total_signals > 0, "Volatile stocks should have signals"
@@ -888,7 +914,7 @@ class TestDataValidationAndConsistency:
         result = process_bars_for_peaks("TEST", bars, window_len=3, lookahead=1)
         # Should handle duplicates gracefully
         if result:
-            assert result["total_bars"] == len(bars)
+            assert result.total_bars == len(bars)
             print("✅ Duplicate timestamps handled")
         else:
             print("✅ Duplicate timestamps rejected (also valid)")
@@ -947,12 +973,12 @@ class TestTradingSignalAccuracy:
 
         if result:
             # Should detect approximately 2 peaks (sine wave maxima)
-            peak_count = len(result["peaks"])
+            peak_count = len(result.peaks)
             assert 1 <= peak_count <= 3, f"Should detect 1-3 peaks in sine wave, got {peak_count}"
 
             # Check peak prices are near expected maxima (160)
-            for peak in result["peaks"]:
-                assert 158 <= peak["original_price"] <= 162, "Peak should be near sine maximum"
+            for peak in result.peaks:
+                assert 158 <= peak.original_price <= 162, "Peak should be near sine maximum"
 
             print(f"✅ Peak detection accuracy: {peak_count} peaks found at correct levels")
 
@@ -972,14 +998,14 @@ class TestTradingSignalAccuracy:
 
         if result:
             # Should detect approximately 2 troughs (sine wave minima)
-            trough_count = len(result["troughs"])
+            trough_count = len(result.troughs)
             assert (
                 1 <= trough_count <= 3
             ), f"Should detect 1-3 troughs in sine wave, got {trough_count}"
 
             # Check trough prices are near expected minima (140)
-            for trough in result["troughs"]:
-                assert 138 <= trough["original_price"] <= 142, "Trough should be near sine minimum"
+            for trough in result.troughs:
+                assert 138 <= trough.original_price <= 142, "Trough should be near sine minimum"
 
             print(f"✅ Trough detection accuracy: {trough_count} troughs found at correct levels")
 
@@ -995,9 +1021,9 @@ class TestTradingSignalAccuracy:
 
         result = process_bars_for_peaks("TEST", bars, window_len=5, lookahead=2)
 
-        if result and result["peaks"]:
+        if result and result.peaks:
             # Peak should be detected near index 25
-            peak_indices = [p["index"] for p in result["peaks"]]
+            peak_indices = [p.index for p in result.peaks]
             assert any(
                 23 <= idx <= 27 for idx in peak_indices
             ), "Peak should be detected near index 25"
@@ -1021,8 +1047,8 @@ class TestTradingSignalAccuracy:
 
         if result:
             # Filtered prices should have lower variance than original
-            original_var = np.var(result["original_prices"])
-            filtered_var = np.var(result["filtered_prices"])
+            original_var = np.var(result.original_prices)
+            filtered_var = np.var(result.filtered_prices)
 
             assert filtered_var < original_var * 0.8, "Filter should reduce variance significantly"
             print(
@@ -1051,7 +1077,7 @@ class TestBoundaryConditions:
         result = process_bars_for_peaks("TEST", bars, window_len=3, lookahead=1)
 
         if result:
-            assert result["total_bars"] == 10
+            assert result.total_bars == 10
             print("✅ Minimum bars boundary condition processed")
         else:
             print("✅ Minimum bars boundary condition rejected")
@@ -1070,10 +1096,10 @@ class TestBoundaryConditions:
 
         if result:
             # With very high lookahead, should find fewer but more significant peaks
-            assert len(result["peaks"]) <= 5, "High lookahead should find few peaks"
-            assert len(result["troughs"]) <= 5, "High lookahead should find few troughs"
+            assert len(result.peaks) <= 5, "High lookahead should find few peaks"
+            assert len(result.troughs) <= 5, "High lookahead should find few troughs"
             print(
-                f"✅ Maximum lookahead: {len(result['peaks'])} peaks, {len(result['troughs'])} troughs"
+                f"✅ Maximum lookahead: {len(result.peaks)} peaks, {len(result.troughs)} troughs"
             )
 
     def test_maximum_window_length(self):
@@ -1090,8 +1116,8 @@ class TestBoundaryConditions:
 
         if result:
             # Very large window should produce very smooth filtered data
-            filtered_std = np.std(result["filtered_prices"])
-            original_std = np.std(result["original_prices"])
+            filtered_std = np.std(result.filtered_prices)
+            original_std = np.std(result.original_prices)
             assert filtered_std < original_std * 0.5, "Large window should smooth significantly"
             print(f"✅ Maximum window length: smoothing ratio {filtered_std/original_std:.2f}")
 
@@ -1107,8 +1133,8 @@ class TestBoundaryConditions:
 
         if result:
             # Should find no peaks or troughs in flat data
-            assert len(result["peaks"]) == 0, "No peaks in flat data"
-            assert len(result["troughs"]) == 0, "No troughs in flat data"
+            assert len(result.peaks) == 0, "No peaks in flat data"
+            assert len(result.troughs) == 0, "No troughs in flat data"
             print("✅ Flat price data: correctly found no signals")
 
 
@@ -1208,3 +1234,39 @@ class TestPeakTroughPerformance:
 if __name__ == "__main__":
     # Run peak trough analysis tests directly
     pytest.main([__file__, "-v", "-s"])
+
+
+class TestFallbackPeakdetectSymmetry:
+    """Regression: delta was measured peak-to-previous-PEAK, so a new peak was kept only
+    if it was at least as high as the last one. A downtrend kept 1 peak and every trough;
+    an uptrend the reverse (SOXL 2026-11-05/06, 5Min: 1 peak vs 5 troughs)."""
+
+    @staticmethod
+    def _wave(trend: float):
+        x = np.arange(400)
+        return np.sin(x / 10) + trend * x
+
+    @pytest.mark.parametrize("trend", [-0.01, 0.0, 0.01])
+    def test_finds_every_swing_whatever_the_trend(self, trend):
+        from scipy.signal import argrelextrema
+
+        from alpaca_mcp_server.tools.peak_trough_analysis_tool import _fallback_peakdetect
+
+        y = self._wave(trend)
+        peaks, troughs = _fallback_peakdetect(y, lookahead=2)
+        # Independent oracle: strict local extrema over the same +-2 window.
+        want_peaks = list(argrelextrema(y, np.greater, order=2)[0])
+        want_troughs = list(argrelextrema(y, np.less, order=2)[0])
+        assert len(want_peaks) >= 6 and len(want_troughs) >= 6  # the wave really swings
+        assert [i for i, _ in peaks] == want_peaks, f"trend {trend}"
+        assert [i for i, _ in troughs] == want_troughs, f"trend {trend}"
+
+    def test_delta_is_swing_size_from_opposite_turn(self):
+        from alpaca_mcp_server.tools.peak_trough_analysis_tool import _fallback_peakdetect
+
+        # swings of amplitude 2 (peak-to-trough); delta 1 keeps them, delta 3 drops them
+        y = self._wave(0.0)
+        kept = _fallback_peakdetect(y, lookahead=2, delta=1.0)
+        dropped = _fallback_peakdetect(y, lookahead=2, delta=3.0)
+        assert len(kept[0]) >= 5 and len(kept[1]) >= 5
+        assert len(dropped[0]) <= 1 and len(dropped[1]) <= 1

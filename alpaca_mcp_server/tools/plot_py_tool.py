@@ -1,22 +1,32 @@
-"""
-Plot.py MCP Tool Integration
-Registers the standalone plot.py script as an MCP tool with proper ImageMagick display.
+"""Peak/trough stock charts as an MCP tool: interactive ECharts HTML plus a PNG.
+
+Formerly a wrapper that shelled out to the matplotlib script plot.py and opened
+every PNG in an ImageMagick `display` window. The analysis (zero-phase Hanning
+filter + peak detection) is unchanged; rendering moved to tools/echart_plot.py,
+and nothing opens on screen unless the caller asks for it.
 """
 
-import asyncio
 import logging
 import os
-import sys
+import webbrowser
 from pathlib import Path
 
-# Import global configuration
 from ..config import get_technical_config
-
-# Add project root to path to import plot.py
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
+from ..utils.timezone_utils import now_et
+from .echart_plot import fetch_chart_data, plot_dir, render_html, render_png
 
 logger = logging.getLogger(__name__)
+
+MAX_SYMBOLS = 10  # past this an overlay cannot keep a validated colour per line
+_MODES = ("single", "combined", "overlay", "all")
+
+
+def _max_days(timeframe: str) -> int:
+    if timeframe == "1Day":
+        return 2520  # ~10 years
+    if timeframe in ("1Hour", "2Hour", "4Hour"):
+        return 90
+    return 30  # intraday
 
 
 async def generate_stock_plot(
@@ -28,259 +38,160 @@ async def generate_stock_plot(
     feed: str = "sip",
     no_plot: bool = False,
     verbose: bool = False,
+    plot_mode: str = "single",
+    open_in_browser: bool = False,
 ) -> str:
     """
-    Generate stock analysis plots using the plot.py script with ImageMagick display.
+    Generate interactive peak/trough charts (ECharts HTML) with a PNG snapshot.
 
-    This tool integrates the standalone plot.py script as an MCP tool, providing
-    professional technical analysis plots with automatic ImageMagick display.
-
-    Features:
-    - Zero-phase Hanning filtering for noise reduction
-    - Peak/trough detection with precise price annotations
-    - Real-time market data from Alpaca API
-    - Professional styling with NYC/EDT timezone
-    - Automatic plot display via ImageMagick
-    - Multi-symbol support in single API call
+    Each symbol gets a price panel (raw close, zero-phase Hanning filter, peaks ▼
+    and troughs ▲ with the latest prices labelled) over a separate volume panel,
+    with crosshair tooltip, zoom, dark/light toggle, ET time axis and a table view
+    of every turning point. Uses the global config when window/lookahead are None.
 
     Args:
-        symbols: Comma-separated stock symbols (e.g., "AAPL,MSFT,TSLA")
-        timeframe: Bar timeframe - "1Min", "5Min", "15Min", "30Min", "1Hour", "1Day"
-        days: Number of trading days to analyze (1-30 for intraday, 1-2520 for daily)
-        window: Hanning filter window length (3-101, must be odd)
-        lookahead: Peak detection sensitivity (1-50, higher = more sensitive)
-        feed: Data feed - "sip", "iex", or "otc"
-        no_plot: Skip plotting and only show analysis (useful for batch processing)
-        verbose: Enable detailed logging output
+        symbols: Comma-separated symbols (e.g., "AAPL,MSFT,TSLA"), at most 10.
+        timeframe: "1Min", "5Min", "15Min", "30Min", "1Hour", "1Day".
+        days: Trading days (1-30 intraday, 1-90 hourly, 1-2520 daily).
+        window: Hanning window length (3-101; even values are rounded up to odd).
+        lookahead: Peak detection lookahead (1-50).
+        feed: Market-data feed, "sip" (default) or "boats" (overnight session).
+        no_plot: Analysis text only; write no chart files.
+        verbose: Accepted for compatibility; logging follows the server's level.
+        plot_mode: "single" (one chart file per symbol), "combined" (all symbols
+            on one page), "overlay" (symbols indexed to % change on one axis),
+            or "all".
+        open_in_browser: Open the HTML in the default browser (default False).
 
     Returns:
-        Comprehensive analysis results with plot locations and trading signals
+        Analysis summary, signal levels and the paths of the HTML and PNG files.
     """
-
+    del verbose  # logging level is the server's
     try:
-        # Load global config defaults for None parameters
         tech_config = get_technical_config()
         if window is None:
             window = tech_config.hanning_window_samples
         if lookahead is None:
             lookahead = tech_config.peak_trough_lookahead
 
-        # Validate parameters - timeframe-aware limits
-        if timeframe == "1Day":
-            max_days = 2520  # ~10 years for daily analysis
-        elif timeframe in ["1Hour", "2Hour", "4Hour"]:
-            max_days = 90  # 3 months for hourly
-        else:  # Intraday timeframes (1Min, 5Min, etc.)
-            max_days = 30  # Current limit for intraday
-
+        max_days = _max_days(timeframe)
         if days < 1 or days > max_days:
             return f"❌ Days must be between 1 and {max_days} for {timeframe} timeframe"
-
         if window < 3 or window > 101:
             return "❌ Window length must be between 3 and 101"
-
         if window % 2 == 0:
             window += 1
-            logger.info(f"Window length adjusted to {window} (must be odd)")
-
+            logger.info("Window length adjusted to %s (must be odd)", window)
         if lookahead < 1 or lookahead > 50:
             return "❌ Lookahead must be between 1 and 50"
+        if plot_mode not in _MODES:
+            return f"❌ plot_mode must be one of: {', '.join(_MODES)}"
+        feed = feed.lower()
+        if feed not in ("sip", "boats"):
+            return "❌ feed must be 'sip' or 'boats' (SIP is the consolidated tape; IEX is not used)"
 
-        # Parse and validate symbols
         symbol_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
         if not symbol_list:
             return "❌ No valid symbols provided"
+        if len(symbol_list) > MAX_SYMBOLS:
+            return f"❌ Maximum {MAX_SYMBOLS} symbols allowed"
 
-        if len(symbol_list) > 20:
-            return "❌ Maximum 20 symbols allowed"
-
-        # Check API credentials
         api_key = os.environ.get("APCA_API_KEY_ID")
         api_secret = os.environ.get("APCA_API_SECRET_KEY")
-
         if not api_key or not api_secret:
-            return """
-❌ API CREDENTIALS NOT CONFIGURED
-
-Please set environment variables:
-• APCA_API_KEY_ID
-• APCA_API_SECRET_KEY
-
-Current paper trading status: """ + str(
-                os.environ.get("PAPER", "Not set")
+            return (
+                "\n❌ API CREDENTIALS NOT CONFIGURED\n\n"
+                "The server reads them from ~/.secrets (APCA_API_KEY_ID / APCA_API_SECRET_KEY).\n"
+                f"Current paper trading status: {os.environ.get('PAPER', 'Not set')}"
             )
 
-        # Construct command for plot.py script
-        plot_script = Path(__file__).parent / "plot.py"
-        if not plot_script.exists():
-            return f"❌ Plot script not found at {plot_script}"
-
-        cmd = [
-            "python",
-            str(plot_script),
-            "--symbols",
-            symbols,
-            "--timeframe",
-            timeframe,
-            "--days",
-            str(days),
-            "--window",
-            str(window),
-            "--lookahead",
-            str(lookahead),
-            "--feed",
-            feed,
-        ]
-
-        if no_plot:
-            cmd.append("--no-plot")
-
-        if verbose:
-            cmd.append("--verbose")
-
-        logger.info(f"Executing plot.py with command: {' '.join(cmd)}")
-
-        # Execute plot.py script asynchronously
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            env=dict(os.environ),  # Pass current environment including API keys
+        data = await fetch_chart_data(
+            symbol_list, timeframe, days, window, lookahead, feed, api_key, api_secret
         )
-
-        stdout, stderr = await process.communicate()
-
-        # Decode output
-        stdout_text = stdout.decode("utf-8") if stdout else ""
-        stderr_text = stderr.decode("utf-8") if stderr else ""
-
-        # Check for errors
-        if process.returncode != 0:
-            error_info = f"""
-❌ PLOT GENERATION FAILED
-
-Return code: {process.returncode}
-
-STDOUT:
-{stdout_text}
-
-STDERR:
-{stderr_text}
-
-🔧 TROUBLESHOOTING:
-1. Verify API credentials are properly set
-2. Check symbol validity (try with just "AAPL")
-3. Ensure plot.py script has proper dependencies
-4. Try with --verbose flag for detailed logging
-5. Check if market data is available for selected timeframe
-
-💡 FALLBACK:
-Use get_stock_peak_trough_analysis() for text-based analysis
-            """
-            return error_info
-
-        # Parse output for plot information
-        plot_files_generated = []
-        temp_dir = ""
-
-        for line in stdout_text.split("\n"):
-            if "Plot generated and displayed:" in line:
-                plot_file = line.split(":")[-1].strip()
-                plot_files_generated.append(plot_file)
-            elif "Generated" in line and "plots in:" in line:
-                temp_dir = line.split(":")[-1].strip()
-
-        # Generate success response
-        symbol_count = len(symbol_list)
-        plot_count = len(plot_files_generated)
-
-        success_msg = f"""
-🎯 STOCK PLOT GENERATION SUCCESSFUL
-
-📊 ANALYSIS COMPLETED:
-• Symbols processed: {symbol_count}
-• Timeframe: {timeframe} over {days} trading day(s)
-• Filter: Zero-phase Hanning window (length={window})
-• Peak sensitivity: Lookahead={lookahead}
-• Data feed: {feed}
-
-📈 PLOTS GENERATED:
-• Plot files created: {plot_count}
-• Auto-display: ✅ ImageMagick (background windows)
-• Output directory: {temp_dir or 'Temporary directory'}
-
-📁 PLOT FILES:
-{chr(10).join(f"• {os.path.basename(f)}" for f in plot_files_generated)}
-
-📋 ANALYSIS OUTPUT:
-{stdout_text}
-
-💡 PLOT FEATURES:
-• Original and filtered price data visualization
-• Peak/trough detection with price annotations
-• Professional styling with NYC/EDT timezone
-• Support/resistance level identification
-• Statistical summary and trading signals
-
-🔍 NEXT STEPS:
-• Review plots for visual confirmation of levels
-• Use identified peaks/troughs for entry/exit planning
-• Set price alerts at key support/resistance levels
-• Integrate with real-time streaming for live validation
-
-✅ PROFESSIONAL TECHNICAL ANALYSIS WITH IMAGEMAGICK DISPLAY COMPLETE!
-        """
-
-        # Include any stderr warnings if present (but not errors)
-        if stderr_text and "warning" in stderr_text.lower():
-            success_msg += f"\n\n⚠️  WARNINGS:\n{stderr_text}"
-
-        return success_msg
-
-    except FileNotFoundError as e:
-        return f"""
-❌ SCRIPT EXECUTION ERROR
-
-Could not execute plot.py script: {e}
-
-🔧 TROUBLESHOOTING:
-1. Ensure Python is available in PATH
-2. Verify plot.py script exists at project root
-3. Check file permissions on plot.py
-4. Try running manually: python plot.py --help
-
-SYSTEM INFO:
-• Project root: {project_root}
-• Plot script: {project_root / 'plot.py'}
-• Current working directory: {os.getcwd()}
-        """
-
     except Exception as e:
-        return f"""
-❌ UNEXPECTED ERROR
+        logger.exception("plot generation failed")
+        return f"❌ PLOT GENERATION FAILED\n\nError: {type(e).__name__}: {e}"
 
-Error during plot generation: {str(e)}
+    found = [s for s, cd in data.items() if cd is not None]
+    missing = [s for s, cd in data.items() if cd is None]
 
-🔧 TROUBLESHOOTING:
-1. Check API credentials and connectivity
-2. Verify symbol validity and market hours
-3. Try with simpler parameters (single symbol, 1 day)
-4. Enable verbose mode for detailed logging
-5. Check system resources and dependencies
+    files: list[str] = []
+    png_notes: list[str] = []
+    if not no_plot and found:
+        out = plot_dir()
+        stamp = now_et().strftime("%H%M%S")
+        common = {"timeframe": timeframe, "days": days, "window": window, "lookahead": lookahead, "feed": feed}
+        pages: list[tuple[str, dict, bool, bool]] = []  # (name, data, symbol panels, overlay)
+        if plot_mode in ("single", "all"):
+            pages += [(f"{s}_{timeframe}_{stamp}", {s: data[s]}, True, False) for s in found]
+        if plot_mode in ("combined", "all") and len(found) > 1:
+            pages.append((f"combined_{'-'.join(found)}_{timeframe}_{stamp}", data, True, False))
+        if plot_mode in ("overlay", "all") and len(found) > 1:
+            pages.append((f"overlay_{'-'.join(found)}_{timeframe}_{stamp}", data, False, True))
+        if not pages:  # combined/overlay with a single symbol
+            pages = [(f"{found[0]}_{timeframe}_{stamp}", {found[0]: data[found[0]]}, True, False)]
+        for name, page_data, panels, overlay in pages:
+            html_path = out / f"{name}.html"
+            html_path.write_text(
+                render_html(page_data, symbol_panels=panels, overlay=overlay, **common),  # type: ignore[arg-type]
+                encoding="utf-8",
+            )
+            files.append(str(html_path))
+            png_path = html_path.with_suffix(".png")
+            err = await render_png(html_path, png_path)
+            if err is None:
+                files.append(str(png_path))
+            else:
+                png_notes.append(f"{png_path.name}: {err}")
+        if open_in_browser:
+            webbrowser.open(Path(files[0]).as_uri())
 
-💡 FALLBACK OPTIONS:
-• Use get_stock_peak_trough_analysis() for text analysis
-• Try generate_advanced_technical_plots() alternative
-• Use get_stock_bars_intraday() for raw data
-
-PARAMETERS USED:
-• Symbols: {symbols}
-• Timeframe: {timeframe}
-• Days: {days}
-• Window: {window}
-• Lookahead: {lookahead}
-        """
+    return _report(
+        data, found, missing, files, png_notes, timeframe, days, window, lookahead, feed, plot_mode, no_plot
+    )
 
 
-# Export for MCP server registration
-__all__ = ["generate_stock_plot"]
+def _money(v: float) -> str:
+    return f"${v:.4f}" if abs(v) < 1 else f"${v:,.2f}"
+
+
+def _report(data, found, missing, files, png_notes, timeframe, days, window, lookahead, feed, plot_mode, no_plot) -> str:  # type: ignore[no-untyped-def]
+    lines = [
+        "",
+        "📊 ANALYSIS COMPLETED:",
+        f"• Symbols: {', '.join(found) if found else 'none with data'}",
+        f"• Timeframe: {timeframe} over {days} trading day(s)",
+        f"• Filter: Hanning window {window}, lookahead {lookahead}",
+        f"• Feed: {feed.upper()}",
+        f"• Plot mode: {plot_mode}",
+    ]
+    if missing:
+        lines.append(f"• No bars returned for: {', '.join(missing)}")
+    lines += ["", "📋 ANALYSIS SUMMARY:"]
+    for s in found:
+        a = data[s].analysis
+        last = a.original_prices[-1]
+        lines.append(
+            f"• {s}: last {_money(last)}, range {_money(a.stats['price_min'])} – {_money(a.stats['price_max'])}, "
+            f"{len(a.peaks)} peaks / {len(a.troughs)} troughs over {a.total_bars:,} bars"
+        )
+        turns = sorted(
+            [("Peak", p) for p in a.peaks] + [("Trough", t) for t in a.troughs], key=lambda r: r[1].index
+        )
+        if turns:
+            kind, p = turns[-1]
+            lines.append(
+                f"    latest {kind.lower()} {_money(p.original_price)} "
+                f"({a.total_bars - 1 - p.index} bars ago; now {(last / p.original_price - 1) * 100:+.2f}% from it)"
+            )
+    lines += ["", "📈 PLOTS GENERATED:"]
+    if no_plot:
+        lines.append("• none (no_plot=True)")
+    elif files:
+        lines += [f"• {f}" for f in files]
+    else:
+        lines.append("• none (no symbol returned data)")
+    if png_notes:
+        lines += ["", "⚠️ PNG snapshot skipped:"] + [f"• {n}" for n in png_notes]
+    lines += ["", "✅ ANALYSIS COMPLETE — interactive ECharts HTML (open in a browser) + PNG snapshot"]
+    return "\n".join(lines)

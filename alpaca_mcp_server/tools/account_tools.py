@@ -37,12 +37,9 @@ Status: {account.status}
 Currency: {account.currency}
 Buying Power: ${float(account.buying_power or 0):.2f}
 Cash: ${float(account.cash or 0):.2f}
-Portfolio Value: ${float(account.portfolio_value or 0):.2f}
 Equity: ${float(account.equity or 0):.2f}
 Long Market Value: ${float(account.long_market_value or 0):.2f}
-Short Market Value: ${float(account.short_market_value or 0):.2f}
-Pattern Day Trader: {"Yes" if account.pattern_day_trader else "No"}
-Day Trades Remaining: {account.daytrade_count if hasattr(account, "daytrade_count") else "Unknown"}"""
+Short Market Value: ${float(account.short_market_value or 0):.2f}"""
 
         return info
 

@@ -108,3 +108,21 @@ class TestExtendedMarketClockWeekend:
         assert _section(output, "Current Session") == "Pre-market trading active"
         assert _section(output, "Extended Hours") == "Yes"
         assert _section(output, "Next Event") == "Regular market opens"
+
+    @pytest.mark.asyncio
+    async def test_calendar_open_close_as_datetime(self):
+        """Regression: alpaca-py's Calendar model exposes ``open``/``close`` as
+        ``datetime.datetime`` (date + time), not ``datetime.time``. The tool must
+        still classify the session instead of raising
+        '<' not supported between instances of 'datetime.time' and 'datetime.datetime'.
+        Mirrors the real model type the previous fixture did not.
+        """
+        now_et = datetime(2026, 6, 15, 11, 0, tzinfo=ET)
+        clock = _make_clock(True, MON_OPEN, MON_CLOSE)
+        # Real alpaca-py type: full datetime objects for open/close.
+        today = _make_calendar_day(date(2026, 6, 15), MON_OPEN, MON_CLOSE)
+        output = await _run(now_et, clock, [today])
+
+        assert _section(output, "Current Session") == "Regular market hours"
+        assert _section(output, "Extended Hours") == "No"
+        assert "Error fetching enhanced market clock" not in output

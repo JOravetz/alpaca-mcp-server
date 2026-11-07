@@ -256,6 +256,7 @@ class MonitoringServiceAPI:
         # Remove existing handlers to avoid duplicates
         for handler in logger.handlers[:]:
             logger.removeHandler(handler)
+            handler.close()  # removing without closing leaked the log file (ResourceWarning)
 
         # File handler for permanent audit trail
         log_path = Path("fastapi_monitoring.log")

@@ -34,9 +34,8 @@ async def get_api_status() -> dict:
                 "account_status": account.status.value,  # type: ignore[union-attr]
                 "buying_power": float(account.buying_power),  # type: ignore[union-attr]
                 "cash": float(account.cash),  # type: ignore[union-attr]
-                "portfolio_value": float(account.portfolio_value),  # type: ignore[union-attr]
+                "portfolio_value": float(account.equity),  # type: ignore[union-attr]
                 "positions_count": positions_count,
-                "pattern_day_trader": account.pattern_day_trader,  # type: ignore[union-attr]
                 "last_test": datetime.now().isoformat(),
             }
         except Exception as e:

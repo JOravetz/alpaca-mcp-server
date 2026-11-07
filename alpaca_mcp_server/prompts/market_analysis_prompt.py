@@ -1,6 +1,7 @@
 """Market analysis prompt implementation."""
 
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from ..resources.market_resources import get_market_conditions
 from ..tools.enhanced_market_clock import get_extended_market_clock
@@ -8,7 +9,7 @@ from ..tools.market_data_tools import get_stock_snapshots
 
 
 async def market_analysis(
-    symbols: list[str] | None = None,
+    symbols: list[str] | str | None = None,
     timeframe: str = "1Day",
     analysis_type: str = "comprehensive",
 ) -> str:
@@ -20,11 +21,14 @@ async def market_analysis(
         market_conditions = await get_market_conditions()
 
         # Default symbols if none provided
-        if symbols is None:
+        # A slash command passes its arguments as one string: accept "SPY,QQQ" or "SPY QQQ"
+        if isinstance(symbols, str):
+            symbols = [s.upper() for s in symbols.replace(",", " ").split()]
+        if not symbols:
             symbols = ["SPY", "QQQ", "IWM", "AAPL", "MSFT", "NVDA"]
 
-        # Get market snapshots for analysis
-        snapshots = await get_stock_snapshots(",".join(symbols[:4]))  # Limit to avoid too much data
+        # Get market snapshots for every symbol listed in the header
+        snapshots = await get_stock_snapshots(",".join(symbols))
 
         # Generate market analysis based on session
         session_status = "UNKNOWN"
@@ -72,7 +76,7 @@ async def market_analysis(
         result = f"""# {session_emoji} Market Analysis Report - {session_status}
 
 ## 📊 Market Overview
-**Analysis Time:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S ET")}
+**Analysis Time:** {datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d %H:%M:%S %Z")}
 **Market Session:** {session_status}
 **Timeframe:** {timeframe}
 **Analysis Type:** {analysis_type}

@@ -218,9 +218,9 @@ async def scan_day_trading_opportunities(
                 if minute_bar_time:
                     try:
                         bar_time = datetime.fromisoformat(minute_bar_time.replace("Z", "+00:00"))
-                        age_minutes = (
-                            current_time.replace(tzinfo=UTC) - bar_time
-                        ).total_seconds() / 60
+                        # current_time is ET wall-clock; relabelling it UTC made
+                        # ages 4-5 h too small and hid stale bars.
+                        age_minutes = (datetime.now(UTC) - bar_time).total_seconds() / 60
                         if age_minutes > 60:  # Data older than 1 hour
                             data_age_warning = f" (Data: {age_minutes:.0f}m old)"
                     except (AttributeError, TypeError, ValueError):
@@ -310,7 +310,7 @@ async def scan_day_trading_opportunities(
 
             return f"""
 🎯 **DAY TRADING OPPORTUNITY SCAN**
-Time: {current_time.strftime("%Y-%m-%d %H:%M:%S")} EDT
+Time: {current_time.strftime("%Y-%m-%d %H:%M:%S %Z")}
 Market Status: {market_status}
 Threshold: {min_trades_per_minute} trades/minute
 Total Qualified: 0 stocks
@@ -335,7 +335,7 @@ Freshness: last trade ≥ {format_cutoff(cutoff_epoch)} ({cutoff_source}); filte
         # Professional tabular format like shell script output
         result = f"""
 🎯 **DAY TRADING OPPORTUNITY SCAN**
-Time: {current_time.strftime("%Y-%m-%d %H:%M:%S")} EDT
+Time: {current_time.strftime("%Y-%m-%d %H:%M:%S %Z")}
 Market Status: {market_status}
 Threshold: {min_trades_per_minute} trades/minute
 Total Qualified: {len(results)} stocks

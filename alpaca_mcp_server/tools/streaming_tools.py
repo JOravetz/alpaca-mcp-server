@@ -9,7 +9,6 @@ import sys
 import threading
 import time
 from collections import defaultdict
-from datetime import datetime
 from typing import cast
 
 from alpaca.data.enums import DataFeed
@@ -19,6 +18,8 @@ from alpaca.data.live import StockDataStream
 from alpaca_mcp_server.config.settings import (
     get_or_create_stock_buffer as _get_or_create_stock_buffer,  # Classes and functions
 )
+from alpaca_mcp_server.utils.stream_hub_client import HUB_TYPES, HubStream, hub_available, hub_url
+from alpaca_mcp_server.utils.timezone_utils import fmt_et, to_et
 
 # Get the actual module from sys.modules to avoid the Settings instance shadowing
 _settings_module = sys.modules["alpaca_mcp_server.config.settings"]
@@ -38,7 +39,7 @@ async def handle_stock_trade(trade):
             "price": float(trade.price),
             "size": int(trade.size),
             "timestamp": (
-                trade.timestamp.isoformat()
+                to_et(trade.timestamp).isoformat()
                 if hasattr(trade.timestamp, "isoformat")
                 else str(trade.timestamp)
             ),
@@ -68,7 +69,7 @@ async def handle_stock_quote(quote):
             "bid_size": int(quote.bid_size) if quote.bid_size else None,
             "ask_size": int(quote.ask_size) if quote.ask_size else None,
             "timestamp": (
-                quote.timestamp.isoformat()
+                to_et(quote.timestamp).isoformat()
                 if hasattr(quote.timestamp, "isoformat")
                 else str(quote.timestamp)
             ),
@@ -100,7 +101,7 @@ async def handle_stock_bar(bar):
             "close": float(bar.close),
             "volume": int(bar.volume),
             "timestamp": (
-                bar.timestamp.isoformat()
+                to_et(bar.timestamp).isoformat()
                 if hasattr(bar.timestamp, "isoformat")
                 else str(bar.timestamp)
             ),
@@ -128,7 +129,7 @@ async def handle_stock_status(status):
             "symbol": symbol,
             "status": str(status.status),
             "timestamp": (
-                status.timestamp.isoformat()
+                to_et(status.timestamp).isoformat()
                 if hasattr(status.timestamp, "isoformat")
                 else str(status.timestamp)
             ),
@@ -162,7 +163,9 @@ async def start_global_stock_stream(
             - "updated_bars": Corrections to stock minute bars
             - "daily_bars": Daily OHLCV stock bars
             - "statuses": Stock trading halt/resume notifications
-        feed (str): Stock data feed source ("sip" for all exchanges, "iex" for IEX only)
+        feed (str): "sip" (consolidated tape, default) or "boats" (overnight session).
+            Uses bb-stream-hub when it is running and can serve the request;
+            otherwise opens a direct Alpaca websocket.
         duration_seconds (Optional[int]): How long to run the stock stream in seconds. None = run indefinitely
         buffer_size_per_symbol (Optional[int]): Max items per stock symbol/data_type buffer.
                                                None = unlimited (recommended for active stocks)
@@ -214,8 +217,9 @@ Options:
         if invalid_types:
             return f"Invalid data types: {invalid_types}. Valid options: {valid_data_types}"
 
-        if feed.lower() not in ["sip", "iex"]:
-            return "Feed must be 'sip' or 'iex'"
+        feed = feed.lower()
+        if feed not in ["sip", "boats"]:
+            return "Feed must be 'sip' (consolidated tape) or 'boats' (overnight session); IEX is not used"
 
         # Convert symbols to uppercase
         symbols = [s.upper() for s in symbols]
@@ -229,23 +233,37 @@ Options:
             }
         )
 
-        # Create data feed enum
-        feed_enum = DataFeed.SIP if feed.lower() == "sip" else DataFeed.IEX
-
-        # Get API credentials directly from environment
-        api_key = os.getenv("APCA_API_KEY_ID") or os.getenv("ALPACA_API_KEY")
-        api_secret = os.getenv("APCA_API_SECRET_KEY") or os.getenv("ALPACA_SECRET_KEY")
-
-        if not api_key or not api_secret:
-            return "Error: Alpaca API credentials not found in environment variables. Please set APCA_API_KEY_ID and APCA_API_SECRET_KEY."
-
-        # Create the single global stock stream
-        _settings_module._global_stock_stream = StockDataStream(  # type: ignore[attr-defined]
-            api_key=api_key,
-            secret_key=api_secret,
-            feed=feed_enum,
-            raw_data=False,
+        # Alpaca allows ONE market-data socket per account. When bb-stream-hub is
+        # running it owns that socket, so attach to it as an ordinary client; open a
+        # direct socket only when the hub is absent or cannot serve the request
+        # (it transports trades/quotes/bars/statuses on the feed it was started with).
+        hub_feed = os.getenv("BB_STREAM_HUB_FEED", "sip").lower()
+        use_hub = (
+            set(data_types) <= set(HUB_TYPES)
+            and feed == hub_feed
+            and await hub_available()
         )
+        if use_hub:
+            _settings_module._global_stock_stream = HubStream()  # type: ignore[attr-defined]
+            source = f"bb-stream-hub ({hub_url()}) — shared with the Rust consumers"
+        else:
+            api_key = os.getenv("APCA_API_KEY_ID") or os.getenv("ALPACA_API_KEY")
+            api_secret = os.getenv("APCA_API_SECRET_KEY") or os.getenv("ALPACA_SECRET_KEY")
+            if not api_key or not api_secret:
+                return "Error: Alpaca API credentials not found (the server reads them from ~/.secrets)."
+            _settings_module._global_stock_stream = StockDataStream(  # type: ignore[attr-defined]
+                api_key=api_key,
+                secret_key=api_secret,
+                feed=DataFeed.SIP if feed == "sip" else DataFeed.BOATS,
+                raw_data=False,
+            )
+            why = (
+                "hub not running"
+                if set(data_types) <= set(HUB_TYPES) and feed == hub_feed
+                else f"hub serves {', '.join(HUB_TYPES)} on {hub_feed.upper()} only"
+            )
+            source = f"direct Alpaca websocket ({why}) — takes the account's one market-data socket"
+        _settings_module._stock_stream_config["source"] = source
 
         # Subscribe to requested stock data types
         if "trades" in data_types:
@@ -318,9 +336,10 @@ Options:
 └── Symbols: {", ".join(symbols)} ({len(symbols)} stock symbols)
 └── Data Types: {", ".join(data_types)}
 └── Feed: {feed.upper()}
+└── Source: {source}
 └── Duration: {duration_info}
 └── Buffer Size per Symbol: {buffer_info}
-└── Start Time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+└── Start Time: {fmt_et()}
 
 💾 Stock Data Access:
 └── get_stock_stream_data("AAPL", "trades") - Recent stock trades
@@ -709,10 +728,9 @@ async def get_stock_stream_data(
                 else:
                     # Unix timestamp: convert to readable time
                     try:
-                        from datetime import datetime
 
                         ts = float(timestamp_str)
-                        time_part = datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")[:12]
+                        time_part = to_et(ts).strftime("%H:%M:%S.%f")[:12] + " ET"
                     except (ValueError, OSError):
                         time_part = timestamp_str[-12:]  # fallback
                 result += f"  {i:2d}. ${trade['price']:8.4f} x {trade['size']:,} @ {time_part}\n"
@@ -730,10 +748,9 @@ async def get_stock_stream_data(
                 else:
                     # Unix timestamp: convert to readable time
                     try:
-                        from datetime import datetime
 
                         ts = float(timestamp_str)
-                        time_part = datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")[:12]
+                        time_part = to_et(ts).strftime("%H:%M:%S.%f")[:12] + " ET"
                     except (ValueError, OSError):
                         time_part = timestamp_str[-12:]  # fallback
                 result += f"  {i:2d}. {bid} x {ask} @ {time_part}\n"
@@ -899,7 +916,7 @@ async def get_stock_stream_buffer_stats() -> str:
         for buffer_key, buffer in sorted(_settings_module._stock_data_buffers.items()):
             stats = buffer.get_stats()
             last_update = (
-                datetime.fromtimestamp(stats["last_update"]).strftime("%H:%M:%S")
+                fmt_et(stats["last_update"], "%H:%M:%S %Z")
                 if stats["last_update"]
                 else "Never"
             )

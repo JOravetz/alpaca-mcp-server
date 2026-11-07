@@ -1,10 +1,12 @@
 """Market information and calendar tools."""
 
-from datetime import datetime
+from datetime import date, datetime
 
 import pytz
+from alpaca.trading.requests import GetCalendarRequest
 
 from ..config.settings import get_trading_client
+from ..utils.timezone_utils import fmt_et
 
 
 async def get_market_clock() -> str:
@@ -52,10 +54,10 @@ async def get_market_clock() -> str:
         return f"""
 Market Status:
 -------------
-Current Time: {clock.timestamp}
+Current Time: {fmt_et(clock.timestamp)}
 Is Open: {"Yes" if is_open else "No"}
-Next Open: {clock.next_open}
-Next Close: {clock.next_close}
+Next Open: {fmt_et(clock.next_open)}
+Next Close: {fmt_et(clock.next_close)}
 """
     except Exception as e:
         return f"Error fetching market clock: {str(e)}"
@@ -74,15 +76,11 @@ async def get_market_calendar(start_date: str, end_date: str) -> str:
     """
     try:
         client = get_trading_client()
-        # Different API versions may use different parameter names
-        try:
-            calendar = client.get_calendar(start=start_date, end=end_date)  # type: ignore[call-arg]
-        except TypeError:
-            # Try alternative parameter names
-            try:
-                calendar = client.get_calendar(start_date=start_date, end_date=end_date)  # type: ignore[call-arg]
-            except TypeError:
-                calendar = client.get_calendar()
+        calendar = client.get_calendar(
+            filters=GetCalendarRequest(
+                start=date.fromisoformat(start_date), end=date.fromisoformat(end_date)
+            )
+        )
         result = f"Market Calendar ({start_date} to {end_date}):\n----------------------------\n"
         for day in calendar:
             result += f"Date: {day.date}, Open: {day.open}, Close: {day.close}\n"  # type: ignore[union-attr]

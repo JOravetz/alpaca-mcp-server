@@ -180,3 +180,8 @@ user_data/
 .cache
 nosetests.xml
 coverage
+
+# Local backups (may hold credentials, e.g. .mcp.json.bak-* with old API keys)
+*.bak-*
+*.bak.*
+*.pre-echarts-*

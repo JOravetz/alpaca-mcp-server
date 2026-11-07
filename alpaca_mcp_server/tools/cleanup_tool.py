@@ -2,8 +2,9 @@
 
 import logging
 import shutil
-from datetime import datetime
 from pathlib import Path
+
+from ..utils.timezone_utils import fmt_et
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +152,7 @@ async def cleanup_server(
     report = f"""# 🧹 MCP Server Cleanup Report
 
 **Mode:** {mode_text}
-**Time:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+**Time:** {fmt_et()}
 **Total Space {'To Be Freed' if dry_run else 'Freed'}:** {format_size(total_size)}
 
 ## 📊 Summary

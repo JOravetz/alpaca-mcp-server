@@ -44,21 +44,29 @@ def peakdetect(
     if len(y_values) < lookahead * 2 + 1:
         return peaks, troughs
 
-    for i in range(lookahead, len(y_values) - lookahead):
+    # delta is the minimum SWING from the opposite extreme since the last turn of
+    # this kind (it was measured against the previous turn of the same kind, which
+    # kept only ever-higher peaks / ever-lower troughs). Same rule as
+    # peak_trough_analysis_tool._fallback_peakdetect.
+    low_since_peak = high_since_trough = y_values[0]
+    n = len(y_values)
+    for i in range(n):
+        low_since_peak = min(low_since_peak, y_values[i])
+        high_since_trough = max(high_since_trough, y_values[i])
+        if i < lookahead or i >= n - lookahead:
+            continue
         is_peak = True
         is_trough = True
-
-        # Compare with all neighbors within lookahead range
         for j in range(1, lookahead + 1):
             if y_values[i] <= y_values[i - j] or y_values[i] <= y_values[i + j]:
                 is_peak = False
             if y_values[i] >= y_values[i - j] or y_values[i] >= y_values[i + j]:
                 is_trough = False
-
-        # Apply delta threshold
-        if is_peak and (not peaks or y_values[i] - peaks[-1][1] >= delta):
+        if is_peak and y_values[i] - low_since_peak >= delta:
             peaks.append((x_values[i], y_values[i]))
-        elif is_trough and (not troughs or troughs[-1][1] - y_values[i] >= delta):
+            low_since_peak = y_values[i]
+        elif is_trough and high_since_trough - y_values[i] >= delta:
             troughs.append((x_values[i], y_values[i]))
+            high_since_trough = y_values[i]
 
     return peaks, troughs

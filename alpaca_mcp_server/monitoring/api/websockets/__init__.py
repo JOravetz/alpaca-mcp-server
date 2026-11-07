@@ -8,7 +8,7 @@ from typing import Any
 
 from fastapi import WebSocket, WebSocketDisconnect
 
-from ...utils.timezone_utils import get_eastern_time_string  # type: ignore[import-not-found]
+from ....utils.timezone_utils import get_eastern_time_string
 
 
 class WebSocketManager:

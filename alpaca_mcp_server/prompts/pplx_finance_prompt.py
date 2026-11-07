@@ -64,7 +64,7 @@ async def pplx_finance(symbol: str) -> str:
 
         return output
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return f"Timeout: Exceeded 120 seconds fetching {symbol}"
     except FileNotFoundError:
         return "Error: 'uv' command not found. Make sure uv is installed."

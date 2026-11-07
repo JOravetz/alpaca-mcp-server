@@ -18,10 +18,7 @@ async def get_account_status() -> dict:
             "account_id": account.id,  # type: ignore[union-attr]
             "buying_power": float(account.buying_power),  # type: ignore[union-attr]
             "cash": float(account.cash),  # type: ignore[union-attr]
-            "portfolio_value": float(account.portfolio_value),  # type: ignore[union-attr]
             "equity": float(account.equity),  # type: ignore[union-attr]
-            "day_trades_remaining": getattr(account, "daytrade_count", "Unknown"),
-            "pattern_day_trader": account.pattern_day_trader,  # type: ignore[union-attr]
             "positions_count": len(positions),
             "account_status": account.status,  # type: ignore[union-attr]
             "currency": account.currency,  # type: ignore[union-attr]

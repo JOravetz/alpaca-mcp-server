@@ -1,11 +1,17 @@
 """Enhanced market clock with extended hours awareness."""
 
-from datetime import time
+from datetime import datetime, time
+from typing import Any
 
 from alpaca.trading.requests import GetCalendarRequest
 
 from ..config.settings import get_trading_client
-from ..utils.timezone_utils import get_eastern_time
+from ..utils.timezone_utils import fmt_et, get_eastern_time
+
+
+def _as_time(value: datetime | time) -> time:
+    """The time-of-day part of a calendar open/close (datetime or time)."""
+    return value.time() if isinstance(value, datetime) else value
 
 
 async def get_extended_market_clock() -> str:
@@ -43,18 +49,20 @@ async def get_extended_market_clock() -> str:
         )
         try:
             calendar = client.get_calendar(
-                filters=GetCalendarRequest(
-                    start=today.isoformat(), end=today.isoformat()
-                )
+                filters=GetCalendarRequest(start=today, end=today)
             )
-            today_entry = next(
-                (d for d in calendar if str(d.date)[:10] == today.isoformat()),
+            # Duck-typed on .date: entries may be Calendar models or ISO-dated stand-ins.
+            today_entry: Any = next(
+                (d for d in calendar if str(getattr(d, "date", ""))[:10] == today.isoformat()),
                 None,
             )
             if today_entry is not None:
                 is_trading_day = True
-                market_open = today_entry.open
-                market_close = today_entry.close
+                # alpaca-py's Calendar.open/close are full datetimes; the session
+                # comparisons below are against now_et.time(), so keep the time part
+                # (a value that is already a time is used as-is).
+                market_open = _as_time(today_entry.open)
+                market_close = _as_time(today_entry.close)
             elif calendar:
                 # Calendar returned but today is absent -> not a trading day.
                 is_trading_day = False
@@ -169,8 +177,8 @@ Time Remaining: {hours}h {minutes}m
 
 Alpaca API Status:
 • Market Open: {clock.is_open}
-• Next Open: {clock.next_open.strftime("%Y-%m-%d %H:%M:%S %Z")}
-• Next Close: {clock.next_close.strftime("%Y-%m-%d %H:%M:%S %Z")}
+• Next Open: {fmt_et(clock.next_open)}
+• Next Close: {fmt_et(clock.next_close)}
 
 Trading Recommendations:
 {chr(10).join(trading_recommendations[session])}

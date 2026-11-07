@@ -529,14 +529,22 @@ class HelpSystem:
 
     def _categorize_tool(self, tool_name: str) -> str:
         """Categorize tools based on naming patterns."""
-        if "account" in tool_name.lower() or "position" in tool_name.lower():
+        name_lower = tool_name.lower()
+        if (
+            "perplexity" in name_lower
+            or "news" in name_lower
+            or "sentiment" in name_lower
+            or "announcement" in name_lower
+        ):
+            return "News & Sentiment Analysis"
+        if "account" in name_lower or "position" in name_lower:
             return "Account & Portfolio"
-        elif "order" in tool_name.lower():
+        elif "order" in name_lower:
             return "Order Management"
         elif (
-            "stock" in tool_name.lower()
-            or "quote" in tool_name.lower()
-            or "bar" in tool_name.lower()
+            "stock" in name_lower
+            or "quote" in name_lower
+            or "bar" in name_lower
         ):
             return "Market Data"
         elif "scan" in tool_name.lower():

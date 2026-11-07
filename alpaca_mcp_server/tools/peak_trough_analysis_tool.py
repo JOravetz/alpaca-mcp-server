@@ -29,6 +29,7 @@ from scipy.signal import filtfilt  # type: ignore[import-untyped]
 from scipy.signal.windows import hann as hanning  # type: ignore[import-untyped]
 
 from ..config import get_scanner_config, get_technical_config, get_trading_config
+from ..utils.timezone_utils import to_et
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -37,10 +38,11 @@ if TYPE_CHECKING:
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, _project_root)
 
-try:
-    from peakdetect import peakdetect
-except ImportError:
-    from .peakdetect_fallback import peakdetect
+# The vendored Billauer peakdetect (tools/peakdetect.py), imported package-relative
+# so it always resolves. The bare `from peakdetect import` it replaces needed the
+# tools/ dir on sys.path, never had it here, and silently fell back to a copy whose
+# delta test kept only ever-higher peaks / ever-lower troughs (one-sided signals).
+from .peakdetect import peakdetect
 
 logger = logging.getLogger(__name__)
 
@@ -123,29 +125,38 @@ def _fallback_peakdetect(
     else:
         x_values = list(x_axis)
 
-    for i in range(lookahead, len(y_values) - lookahead):
+    # delta is the minimum SWING. A peak's swing is its height above the lowest
+    # point since the last accepted peak; a trough's is its depth below the highest
+    # point since the last accepted trough. (It used to be measured against the
+    # previous turn of the SAME kind, so a new peak counted only if it was at least
+    # as high as the last one: a downtrend kept its first peak and every trough, an
+    # uptrend the reverse — SOXL 2026-11-05/06, 5Min: 1 peak vs 5 troughs.)
+    low_since_peak = high_since_trough = y_values[0] if y_values else 0.0
+    n = len(y_values)
+    for i in range(n):
+        low_since_peak = min(low_since_peak, y_values[i])
+        high_since_trough = max(high_since_trough, y_values[i])
+        if i < lookahead or i >= n - lookahead:
+            continue
+
         is_peak = True
         is_trough = True
-
         for j in range(1, lookahead + 1):
             if y_values[i] <= y_values[i - j] or y_values[i] <= y_values[i + j]:
                 is_peak = False
             if y_values[i] >= y_values[i - j] or y_values[i] >= y_values[i + j]:
                 is_trough = False
 
-        if is_peak and (not peaks or y_values[i] - peaks[-1][1] >= delta):
+        if is_peak and y_values[i] - low_since_peak >= delta:
             peaks.append((x_values[i], y_values[i]))
-        elif is_trough and (not troughs or troughs[-1][1] - y_values[i] >= delta):
+            low_since_peak = y_values[i]
+        elif is_trough and high_since_trough - y_values[i] >= delta:
             troughs.append((x_values[i], y_values[i]))
+            high_since_trough = y_values[i]
 
     return peaks, troughs
 
 
-# Override if import failed
-try:
-    from peakdetect import peakdetect  # noqa: F811
-except ImportError:
-    peakdetect = _fallback_peakdetect  # type: ignore[misc]
 
 
 # =============================================================================
@@ -251,10 +262,8 @@ def get_current_nyc_time() -> tuple[str, str]:
         return formatted_time, tz_name
     except Exception as e:
         logger.warning(f"Failed to format analysis time with timezone: {e}")
-        utc_now = datetime.utcnow()
-        edt_hour = (utc_now.hour - 4) % 24
-        edt_time = utc_now.replace(hour=edt_hour)
-        return edt_time.strftime("%Y-%m-%d %H:%M:%S"), "EDT"
+        now = to_et(datetime.now(pytz.UTC))
+        return now.strftime("%Y-%m-%d %H:%M:%S"), now.strftime("%Z")
 
 
 # =============================================================================
@@ -542,7 +551,11 @@ def process_bars_for_peaks(
                 )
 
         # Calculate statistics
-        noise_reduction = (close_prices.std() - filtered_prices.std()) / close_prices.std() * 100
+        # Flat prices (halted name) have zero spread: report 0% rather than NaN.
+        raw_std = float(close_prices.std())
+        noise_reduction = (
+            (raw_std - float(filtered_prices.std())) / raw_std * 100 if raw_std > 0 else 0.0
+        )
 
         return SymbolAnalysisResult(
             symbol=symbol,

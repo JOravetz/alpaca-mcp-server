@@ -199,8 +199,9 @@ class TestServerInitialization:
         def mock_get_technical_config():
             raise Exception("Config error")
 
+        # get_default_window_len imports it from ..config at call time, so patch it there.
         monkeypatch.setattr(
-            "alpaca_mcp_server.server_components.server_init.get_technical_config",
+            "alpaca_mcp_server.config.get_technical_config",
             mock_get_technical_config,
         )
 

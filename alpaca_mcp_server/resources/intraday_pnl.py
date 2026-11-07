@@ -220,8 +220,10 @@ async def get_intraday_pnl(
             current_positions_count = len(positions)
 
         # Calculate day trade limits
-        pdt_status = account.pattern_day_trader  # type: ignore[union-attr]
-        remaining_day_trades = max(0, 3 - day_trades) if not pdt_status else 999
+        # Alpaca stopped sending the PDT fields on 2026-07-06 (FINRA intraday-margin
+        # rule); alpaca-py 0.45 returns None and warns. No day-trade limit to report.
+        pdt_status = None
+        remaining_day_trades = None
 
         # Calculate performance metrics
         win_rate = (

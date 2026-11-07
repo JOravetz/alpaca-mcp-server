@@ -1,6 +1,7 @@
 """Configuration settings for Alpaca MCP Server."""
 
 import os
+import subprocess
 import threading
 import time
 from collections import defaultdict, deque
@@ -15,8 +16,72 @@ from alpaca.data.live.stock import StockDataStream
 from alpaca.trading.client import TradingClient
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables (non-credential settings; .env must not hold keys)
 load_dotenv()
+
+# ============================================================================
+# Alpaca credentials come from ~/.secrets, the operator's single source of truth
+# ============================================================================
+# The keys rotate. A copy in this repo's .env (or in an MCP config "env" block)
+# goes stale silently and 401s every call while the operator's real keys work —
+# hit 2026-05-31, 2026-10-10 and 2026-11-07. So the file wins over whatever the
+# launching process exported and over .env.
+#
+# ~/.secrets is a bash script, not a dotenv file: it defines _alpaca_paper /
+# _alpaca_live and picks one by ALPACA_MODE (default paper), so it is sourced
+# by bash in an otherwise empty environment and only the Alpaca variables are
+# read back. ALPACA_MODE inherited from the launcher (`alpaca-live`) still
+# selects live. ALPACA_SECRETS_FILE overrides the path; set it to "" to
+# disable the file and use the inherited environment as-is.
+
+SECRETS_FILE_DEFAULT = os.path.expanduser("~/.secrets")
+_SECRET_VARS = ("APCA_API_KEY_ID", "APCA_API_SECRET_KEY", "APCA_API_BASE_URL", "ALPACA_MODE")
+_SOURCE_SECRETS = (
+    '. "$1" >/dev/null 2>&1; shift; '
+    'for v in "$@"; do printf "%s\\0%s\\0" "$v" "$(printenv "$v")"; done'
+)
+
+
+def load_alpaca_secrets(path: str | None = None, mode: str | None = None) -> dict[str, str]:
+    """Return the Alpaca variables the secrets file defines ({} if unavailable).
+
+    Never raises. Adds PAPER ("true"/"false") derived from the file's base URL so
+    the trading client always targets the endpoint the keys belong to.
+    """
+    if path is None:
+        path = os.environ.get("ALPACA_SECRETS_FILE", SECRETS_FILE_DEFAULT)
+    if not path or not os.path.isfile(path):
+        return {}
+    env = {"PATH": "/usr/bin:/bin", "HOME": os.path.expanduser("~")}
+    if mode:
+        env["ALPACA_MODE"] = mode
+    try:
+        out = subprocess.run(  # noqa: S603 - fixed argv; the path is an argument, never code
+            ["/bin/bash", "-c", _SOURCE_SECRETS, "bash", path, *_SECRET_VARS],
+            env=env,
+            capture_output=True,
+            check=True,
+        ).stdout.decode()
+    except (OSError, subprocess.CalledProcessError):
+        return {}
+    parts = out.split("\0")
+    found = {k: v for k, v in zip(parts[0::2], parts[1::2], strict=False) if v}
+    if not (found.get("APCA_API_KEY_ID") and found.get("APCA_API_SECRET_KEY")):
+        return {}
+    base_url = found.get("APCA_API_BASE_URL")
+    if base_url:
+        found["PAPER"] = "true" if "paper-api" in base_url else "false"
+    return found
+
+
+def apply_alpaca_secrets() -> dict[str, str]:
+    """Overwrite os.environ's Alpaca variables from the secrets file; return them."""
+    found = load_alpaca_secrets(mode=os.environ.get("ALPACA_MODE"))
+    os.environ.update(found)
+    return found
+
+
+_secrets_applied = apply_alpaca_secrets()
 
 
 class Settings:

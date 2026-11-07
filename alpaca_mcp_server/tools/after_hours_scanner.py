@@ -4,12 +4,12 @@
 
 import contextlib
 import logging
-from datetime import datetime
 
 # Import global configuration
 from ..config import get_scanner_config, get_trading_config
 from ..tools.enhanced_market_clock import get_extended_market_clock
 from ..tools.market_data_tools import get_stock_snapshots
+from ..utils.timezone_utils import fmt_et
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +84,11 @@ async def scan_after_hours_opportunities(
         # Get market session info
         market_clock = await get_extended_market_clock()
 
+        # Outside regular hours the move that matters is the one since the regular
+        # session closed. "Reference Close" is the PRIOR day's close, so measuring
+        # from it at 17:30 ET folds the whole day's move into the "after-hours" %.
+        in_regular_session = "Regular market hours" in market_clock
+
         # Get real-time snapshots
         snapshot_data = await get_stock_snapshots(symbols)
 
@@ -100,6 +105,7 @@ async def scan_after_hours_opportunities(
                     "symbol": current_symbol,
                     "current_price": 0.0,
                     "prev_close": 0.0,
+                    "session_close": 0.0,
                     "volume": 0,
                     "high": 0.0,
                     "low": 0.0,
@@ -115,31 +121,42 @@ async def scan_after_hours_opportunities(
                 if line.startswith("• Price: $"):
                     symbol_data["current_price"] = float(line.replace("• Price: $", ""))
 
-                elif line.startswith("• Previous Close: $"):
-                    symbol_data["prev_close"] = float(line.replace("• Previous Close: $", ""))
+                # get_stock_snapshots emits "Reference Close"; the old "Previous
+                # Close" label no longer exists, so prev_close stayed 0 and this
+                # scanner could never return a result.
+                elif line.startswith(("• Reference Close: $", "• Previous Close: $")):
+                    value = line.split("$", 1)[1].split(" ", 1)[0]
+                    with contextlib.suppress(ValueError):
+                        symbol_data["prev_close"] = float(value)
 
-                elif line.startswith("• OHLC: $"):
-                    parts = line.replace("• OHLC: $", "").split(" / $")
+                # Session OHLC only: the minute bar's "• OHLC:" is one minute's range.
+                elif line.startswith(("• Session OHLC", "• Yesterday OHLC")) and ": $" in line:
+                    parts = line.split(": $", 1)[1].split(" / $")
                     if len(parts) >= 4:
                         symbol_data["open"] = float(parts[0])
                         symbol_data["high"] = float(parts[1])
                         symbol_data["low"] = float(parts[2])
-                        symbol_data["current_price"] = float(parts[3])
+                        # The latest regular-session close (the daily bar's close).
+                        # current_price stays the last trade, not this close.
+                        symbol_data["session_close"] = float(parts[3])
 
                 elif line.startswith("• Volume:"):
                     vol_text = line.replace("• Volume: ", "").replace(",", "")
                     with contextlib.suppress(ValueError, TypeError):
                         symbol_data["volume"] = int(float(vol_text))
 
-                elif line.startswith("• Bid/Ask: $"):
-                    bid_ask = line.replace("• Bid/Ask: $", "")
-                    if " / $" in bid_ask:
-                        bid_str, ask_str = bid_ask.split(" / $")
-                        symbol_data["bid"] = float(bid_str)
-                        symbol_data["ask"] = float(ask_str)
+                elif line.startswith(("• Bid: $", "• Ask: $")):
+                    side = "bid" if line.startswith("• Bid") else "ask"
+                    with contextlib.suppress(ValueError):
+                        symbol_data[side] = float(line.split("$", 1)[1].split(" ", 1)[0])
+                    if symbol_data["bid"] and symbol_data["ask"]:
                         symbol_data["spread"] = symbol_data["ask"] - symbol_data["bid"]  # type: ignore[operator]
 
                 elif line.startswith("=="):  # End of symbol data
+                    # Base for the % move: the last regular-session close outside
+                    # regular hours; the prior close during them (no AH move yet).
+                    if not in_regular_session and symbol_data["session_close"] > 0:  # type: ignore[operator]
+                        symbol_data["prev_close"] = symbol_data["session_close"]
                     if symbol_data["current_price"] > 0 and symbol_data["prev_close"] > 0:  # type: ignore[operator]
                         # Calculate metrics
                         percent_change = (
@@ -207,7 +224,7 @@ async def scan_after_hours_opportunities(
         if not opportunities:
             return f"""# 🌙 After-Hours Scanner - No Opportunities Found
 
-**Scan Time:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+**Scan Time:** {fmt_et()}
 **Market Session:** {_parse_market_session(market_clock)}
 
 **Filters Applied:**
@@ -227,7 +244,7 @@ async def scan_after_hours_opportunities(
         # Format results
         result = f"""# 🌙 After-Hours Trading Opportunities
 
-**Scan Time:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+**Scan Time:** {fmt_et()}
 **Market Session:** {_parse_market_session(market_clock)}
 **Sorted By:** {sort_by.replace("_", " ").title()}
 **Opportunities Found:** {len(opportunities)}
@@ -321,11 +338,13 @@ async def scan_after_hours_opportunities(
 def _parse_market_session(market_clock_data: str) -> str:
     """Parse market session info from extended market clock data."""
     try:
-        if "Pre-Market: OPEN" in market_clock_data:
+        # Match get_extended_market_clock's "Current Session:" wording; the old
+        # "...: OPEN" strings were never emitted, so this always said "Closed".
+        if "Pre-market trading active" in market_clock_data:
             return "🌅 Pre-Market Session"
-        elif "Regular Market: OPEN" in market_clock_data:
+        elif "Regular market hours" in market_clock_data:
             return "🔥 Regular Market Hours"
-        elif "After-Hours: OPEN" in market_clock_data:
+        elif "After-hours trading active" in market_clock_data:
             return "🌙 After-Hours Session"
         else:
             return "📴 Market Closed"
@@ -381,7 +400,7 @@ async def get_enhanced_streaming_analytics(
 
         result = f"""# 🔥 Enhanced Streaming Analytics - {symbol}
 
-**Analysis Time:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+**Analysis Time:** {fmt_et()}
 **Timeframe:** Last {analysis_minutes} minutes
 **Data Sources:** Snapshots + Streaming + Historical Bars
 

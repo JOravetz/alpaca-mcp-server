@@ -18,6 +18,15 @@ from alpaca_mcp_server.config import get_global_config, get_system_config  # noq
 from alpaca_mcp_server.monitoring.fastapi_service import MonitoringServiceAPI  # noqa: E402
 
 
+def _json_trading() -> dict:
+    """The "trading" section of config/global_config.json, which GlobalConfig.load() reads."""
+    import json
+
+    path = Path(__file__).resolve().parents[3] / "config" / "global_config.json"
+    with open(path) as f:
+        return json.load(f)["trading"]
+
+
 class TestStreamingReal:
     """REAL streaming tests - actual components, no mocking."""
 
@@ -143,8 +152,8 @@ class TestStreamingReal:
         technical_config = get_technical_config()
         scanner_config = get_scanner_config()
 
-        # Verify they all return consistent values
-        assert trading_config.trades_per_minute_threshold == 500
+        # Verify they all return the values in config/global_config.json
+        assert trading_config.trades_per_minute_threshold == _json_trading()["trades_per_minute_threshold"]
         assert technical_config.hanning_window_samples == 11
         assert technical_config.peak_trough_min_distance == 3
         assert scanner_config.max_watchlist_size == 50
@@ -232,9 +241,9 @@ class TestStreamingReal:
         trading_config = get_trading_config()
         scanner_config = get_scanner_config()
 
-        # Test that aggressive config values are in effect
-        assert trading_config.trades_per_minute_threshold == 500  # Aggressive threshold
-        assert trading_config.min_percent_change_threshold == 10.0  # High volatility
+        # The values in config/global_config.json are the ones in effect
+        assert trading_config.trades_per_minute_threshold == _json_trading()["trades_per_minute_threshold"]
+        assert trading_config.min_percent_change_threshold == _json_trading()["min_percent_change_threshold"]
         assert trading_config.never_sell_for_loss is True  # Never sell for loss
 
         # Test scanner is configured for aggressive trading

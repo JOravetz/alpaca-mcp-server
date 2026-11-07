@@ -4,6 +4,7 @@ from alpaca.trading.models import Watchlist
 from alpaca.trading.requests import CreateWatchlistRequest, UpdateWatchlistRequest
 
 from ..config.settings import get_trading_client
+from ..utils.timezone_utils import fmt_et
 
 
 async def create_watchlist(name: str, symbols: list[str]) -> str:
@@ -36,8 +37,8 @@ async def get_watchlists() -> str:
             if isinstance(wl, Watchlist):
                 result += f"Name: {wl.name}\n"
                 result += f"ID: {wl.id}\n"
-                result += f"Created: {wl.created_at}\n"
-                result += f"Updated: {wl.updated_at}\n"
+                result += f"Created: {fmt_et(wl.created_at)}\n"
+                result += f"Updated: {fmt_et(wl.updated_at)}\n"
             else:
                 result += f"Watchlist: {wl}\n"
             result += f"Symbols: {', '.join(getattr(wl, 'symbols', []) or [])}\n\n"

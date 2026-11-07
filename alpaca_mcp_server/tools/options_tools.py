@@ -8,6 +8,8 @@ from alpaca.data.models import Quote
 from alpaca.data.requests import OptionChainRequest, OptionLatestQuoteRequest, OptionSnapshotRequest
 from alpaca.trading.enums import AssetStatus, ContractType
 
+from ..utils.timezone_utils import fmt_et
+
 
 async def test_option_client_basic(underlying_symbol: str) -> str:
     """Test basic option client functionality."""
@@ -193,7 +195,7 @@ Bid Price: ${bid_price}
 Bid Size: {bid_size}
 Ask Exchange: {q.ask_exchange}
 Bid Exchange: {q.bid_exchange}
-Timestamp: {q.timestamp}
+Timestamp: {fmt_et(q.timestamp)}
 """
         else:
             return f"No quote data found for {symbol}"
@@ -227,17 +229,13 @@ async def get_option_snapshot(symbol: str) -> str:
         # ValidationError, which the previous TypeError-only handler missed.
         request = OptionSnapshotRequest(symbol_or_symbols=symbol)
 
-        snapshot = client.get_option_snapshot(request)
-
-        if not snapshot:
-            return f"No snapshot data found for {symbol}"
+        snapshots = client.get_option_snapshot(request)
 
         # alpaca-py returns {symbol: OptionsSnapshot} rather than a bare
         # snapshot object. Unwrap it before reading attributes.
-        if isinstance(snapshot, dict):
-            snapshot = snapshot.get(symbol)
-            if snapshot is None:
-                return f"No snapshot data found for {symbol}"
+        snapshot = snapshots.get(symbol) if isinstance(snapshots, dict) else snapshots
+        if not snapshot:
+            return f"No snapshot data found for {symbol}"
 
         # Open Interest lives on the Trading API's OptionContract model,
         # not on the historical-data OptionsSnapshot. Fetch it separately

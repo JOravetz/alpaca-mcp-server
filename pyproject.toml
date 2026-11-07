@@ -23,7 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "alpaca-py>=0.40.1",
+    "alpaca-py>=0.45.0",
     "alpaca-trade-api>=3.2.0",
     "mcp>=1.9.3",
     "python-dotenv>=1.1.0",
@@ -50,7 +50,16 @@ dependencies = [
     "selenium-wire>=5.1.0",
     "nodriver>=0.38.post1",
     "drissionpage>=4.1.1.2",
+    "kokoro-onnx>=0.4.9",
+    "beautifulsoup4>=4.14.3",
+    "lxml>=6.0.2",
+    "camoufox[geoip]>=0.4.11",
+    "curl-cffi>=0.14.0",
+    "perplexity-client",
 ]
+
+[tool.uv.sources]
+perplexity-client = { path = "/home/jjoravet/perplexity_client", editable = true }
 
 [project.scripts]
 alpaca-mcp-server = "alpaca_mcp_server.main:main"
@@ -164,6 +173,10 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "peakdetect"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "perplexity_client"
 ignore_missing_imports = true
 
 [tool.bandit]

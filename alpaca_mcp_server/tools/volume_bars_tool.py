@@ -10,12 +10,19 @@ volume-based sampling as an alternative to time-based bars.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime
+from typing import Any, cast
 
+from alpaca.common.enums import Sort
+from alpaca.data.enums import Adjustment, DataFeed
+from alpaca.data.models import BarSet, TradeSet
 from alpaca.data.requests import StockBarsRequest, StockTradesRequest
-from alpaca.data.timeframe import TimeFrame
+from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 
 from ..config.settings import get_stock_historical_client
+from ..utils.timezone_utils import fmt_et
+from ..utils.trading_calendar import trading_days_window_start
+from .market_data_tools import _px
 from .volume_bars import MultiSymbolVolumeBarAggregator, VolumeBar, VolumeBarAggregator
 
 
@@ -74,18 +81,25 @@ async def get_volume_bars_from_history(
 
     try:
         # Calculate date range
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
+        end_date = datetime.now(UTC)  # aware: naive local now() is sent as UTC (5-6 h stale)
+        start_date = trading_days_window_start(days)  # trading days, not sequential
 
         # First, get daily bars to estimate volume if needed
         if volume_threshold is None and auto_calculate_threshold:
             bars_request = StockBarsRequest(
-                symbol_or_symbols=symbol, start=start_date, end=end_date, timeframe=TimeFrame.Day
+                symbol_or_symbols=symbol,
+                start=start_date,
+                end=end_date,
+                timeframe=TimeFrame.Day,
+                adjustment=Adjustment.ALL,  # a split in the window would skew mean volume
+                feed=DataFeed.SIP,
             )
-            daily_bars = market_data_client.get_stock_bars(bars_request)
+            daily_bars = cast(BarSet, market_data_client.get_stock_bars(bars_request))
 
-            if symbol in daily_bars:
-                bars_df = daily_bars[symbol]
+            # BarSet has no __contains__: `symbol in daily_bars` was always False,
+            # so the auto threshold silently fell back to 10,000 every time.
+            if symbol in daily_bars.data and daily_bars.data[symbol]:
+                bars_df = daily_bars.df.xs(symbol, level=0)
                 if not bars_df.empty:
                     avg_daily_volume = bars_df["volume"].mean()
                     volume_threshold = avg_daily_volume / target_bars_per_day
@@ -110,9 +124,9 @@ async def get_volume_bars_from_history(
             # Parse timeframe
             timeframe_map = {
                 "1Min": TimeFrame.Minute,
-                "5Min": TimeFrame(5, "Min"),
-                "15Min": TimeFrame(15, "Min"),
-                "30Min": TimeFrame(30, "Min"),
+                "5Min": TimeFrame(5, TimeFrameUnit.Minute),
+                "15Min": TimeFrame(15, TimeFrameUnit.Minute),
+                "30Min": TimeFrame(30, TimeFrameUnit.Minute),
                 "1Hour": TimeFrame.Hour,
                 "Day": TimeFrame.Day,
             }
@@ -120,15 +134,27 @@ async def get_volume_bars_from_history(
             timeframe = timeframe_map.get(bar_timeframe, TimeFrame.Minute)
 
             bars_request = StockBarsRequest(
-                symbol_or_symbols=symbol, start=start_date, end=end_date, timeframe=timeframe
+                symbol_or_symbols=symbol,
+                start=start_date,
+                end=end_date,
+                timeframe=timeframe,
+                adjustment=Adjustment.SPLIT,
+                feed=DataFeed.SIP,
             )
 
             bars_response = market_data_client.get_stock_bars(bars_request)
 
-            if symbol not in bars_response:
-                return f"No bar data available for {symbol}"
-
-            bars_df = bars_response[symbol]
+            # Alpaca SDK returns a BarSet; access via .df or .data depending on shape
+            if hasattr(bars_response, "df"):
+                df_all = bars_response.df
+                if df_all.empty or symbol not in df_all.index.get_level_values(0):
+                    return f"No bar data available for {symbol}"
+                bars_df = df_all.xs(symbol, level=0)
+            else:
+                bars_dict = bars_response.data if hasattr(bars_response, "data") else bars_response
+                if symbol not in bars_dict:
+                    return f"No bar data available for {symbol}"
+                bars_df = bars_dict[symbol]
 
             if bars_df.empty:
                 return f"No {bar_timeframe} bars found for {symbol} in the last {days} days"
@@ -164,14 +190,18 @@ async def get_volume_bars_from_history(
                 start=start_date,
                 end=end_date,
                 limit=10000,  # Adjust based on needs
+                feed=DataFeed.SIP,
+                # newest 10k, not the oldest 10k in the window; re-sorted below
+                sort=Sort.DESC,
             )
 
-            trades_response = market_data_client.get_stock_trades(trades_request)
+            trades_response = cast(TradeSet, market_data_client.get_stock_trades(trades_request))
 
-            if symbol not in trades_response:
+            # TradeSet has no __contains__ and indexing yields a list (no .empty)
+            if not trades_response.data.get(symbol):
                 return f"No trade data available for {symbol}"
 
-            trades = trades_response[symbol]
+            trades = trades_response.df.xs(symbol, level=0).sort_index()
 
             if trades.empty:
                 return f"No trades found for {symbol} in the last {days} days"
@@ -253,13 +283,13 @@ async def get_volume_bars_from_history(
 
             for _, bar_row in df.tail(5).iterrows():
                 output.append(
-                    f"  {bar_row.name.strftime('%H:%M:%S')}: "  # type: ignore[attr-defined]
-                    f"OHLC=[{bar_row['open']:.2f}, {bar_row['high']:.2f}, "
-                    f"{bar_row['low']:.2f}, {bar_row['close']:.2f}]"
+                    f"  {fmt_et(cast(datetime, bar_row.name), '%H:%M:%S %Z')}: "  # type: ignore[attr-defined]
+                    f"OHLC=[{_px(bar_row['open'])}, {_px(bar_row['high'])}, "
+                    f"{_px(bar_row['low'])}, {_px(bar_row['close'])}]"
                 )
                 output.append(
                     f"    Volume: {format_number(bar_row['volume'])} | "
-                    f"VWAP: ${bar_row['vwap']:.2f} | "
+                    f"VWAP: {_px(bar_row['vwap'])} | "
                     f"Imbalance: {format_percentage(bar_row['volume_imbalance'])}"
                 )
 
@@ -293,7 +323,9 @@ async def start_volume_bar_streaming(
     Returns:
         Status message
     """
-    from ..utils.alpaca_stream import _stock_stream_active  # type: ignore[attr-defined]
+    import sys
+
+    _settings_module = sys.modules["alpaca_mcp_server.config.settings"]
 
     symbol_list = [s.strip().upper() for s in symbols.split(",")]
 
@@ -318,21 +350,23 @@ async def start_volume_bar_streaming(
         market_data_client = get_stock_historical_client()
         for symbol in symbol_list:
             if symbol not in threshold_dict:
-                # Fetch recent daily volume
-                end_date = datetime.now()
-                start_date = end_date - timedelta(days=20)
+                # Fetch recent daily volume (trading days, not sequential)
+                end_date = datetime.now(UTC)  # aware: naive local now() is sent as UTC
+                start_date = trading_days_window_start(20)
 
                 bars_request = StockBarsRequest(
                     symbol_or_symbols=symbol,
                     start=start_date,
                     end=end_date,
                     timeframe=TimeFrame.Day,
+                    adjustment=Adjustment.ALL,
+                    feed=DataFeed.SIP,
                 )
 
                 try:
-                    daily_bars = market_data_client.get_stock_bars(bars_request)
-                    if symbol in daily_bars:
-                        bars_df = daily_bars[symbol]
+                    daily_bars = cast(BarSet, market_data_client.get_stock_bars(bars_request))
+                    if symbol in daily_bars.data and daily_bars.data[symbol]:
+                        bars_df = daily_bars.df.xs(symbol, level=0)
                         if not bars_df.empty:
                             avg_daily_volume = bars_df["volume"].mean()
                             threshold_dict[symbol] = avg_daily_volume / target_bars_per_day
@@ -361,7 +395,7 @@ async def start_volume_bar_streaming(
 
         logger.info(
             f"Volume bar completed for {bar.symbol}: "
-            f"Close=${bar.close:.2f}, Volume={bar.volume:,.0f}, "
+            f"Close={_px(bar.close)}, Volume={bar.volume:,.0f}, "
             f"Imbalance={bar.volume_imbalance:.2%}"
         )
 
@@ -374,7 +408,7 @@ async def start_volume_bar_streaming(
         _volume_bar_aggregators[symbol] = aggregator.aggregators[symbol]
 
     # Check if stream is active
-    if not _stock_stream_active:
+    if not _settings_module._stock_stream_active:
         return (
             "⚠️ Stock stream is not active. Please start it first with:\n"
             "start_global_stock_stream(symbols='"
@@ -456,8 +490,8 @@ async def get_volume_bar_stats(symbol: str | None = None) -> str:
                 output.append("  Recent Bars:")
                 for bar in recent_bars:
                     output.append(
-                        f"    {bar.timestamp_close.strftime('%H:%M:%S')}: "
-                        f"${bar.close:.2f} | Vol: {format_number(bar.volume)} | "
+                        f"    {fmt_et(bar.timestamp_close, '%H:%M:%S %Z')}: "
+                        f"{_px(bar.close)} | Vol: {format_number(bar.volume)} | "
                         f"Imb: {format_percentage(bar.volume_imbalance)}"
                     )
 
@@ -485,35 +519,53 @@ async def compare_bar_types(
     market_data_client = get_stock_historical_client()
 
     try:
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
+        end_date = datetime.now(UTC)  # aware: naive local now() is sent as UTC (5-6 h stale)
+        start_date = trading_days_window_start(days)  # trading days, not sequential
 
         # Get time bars
         timeframe_map = {
             1: TimeFrame.Minute,
-            5: TimeFrame(5, "Min"),
-            15: TimeFrame(15, "Min"),
-            30: TimeFrame(30, "Min"),
+            5: TimeFrame(5, TimeFrameUnit.Minute),
+            15: TimeFrame(15, TimeFrameUnit.Minute),
+            30: TimeFrame(30, TimeFrameUnit.Minute),
             60: TimeFrame.Hour,
         }
 
-        timeframe = timeframe_map.get(time_bars_minutes, TimeFrame(time_bars_minutes, "Min"))
+        timeframe = timeframe_map.get(
+            time_bars_minutes, TimeFrame(time_bars_minutes, TimeFrameUnit.Minute)
+        )
 
         bars_request = StockBarsRequest(
-            symbol_or_symbols=symbol, start=start_date, end=end_date, timeframe=timeframe
+            symbol_or_symbols=symbol,
+            start=start_date,
+            end=end_date,
+            timeframe=timeframe,
+            adjustment=Adjustment.SPLIT,
+            feed=DataFeed.SIP,
         )
 
         time_bars_response = market_data_client.get_stock_bars(bars_request)
 
-        if symbol not in time_bars_response:
-            return f"No data available for {symbol}"
-
-        time_bars_df = time_bars_response[symbol]
+        # Alpaca SDK returns a BarSet wrapper; use .df for DataFrame access
+        if hasattr(time_bars_response, "df"):
+            df_all = time_bars_response.df
+            if df_all.empty or symbol not in df_all.index.get_level_values(0):
+                return f"No data available for {symbol}"
+            time_bars_df = df_all.xs(symbol, level=0).copy()  # own copy: we add a column below
+        else:
+            bars_dict = (
+                time_bars_response.data
+                if hasattr(time_bars_response, "data")
+                else time_bars_response
+            )
+            if symbol not in bars_dict:
+                return f"No data available for {symbol}"
+            time_bars_df = bars_dict[symbol]
 
         # Calculate time bar statistics
         time_bars_df["returns"] = time_bars_df["close"].pct_change()
 
-        time_stats = {
+        time_stats: dict[str, Any] = {
             "count": len(time_bars_df),
             "returns_mean": time_bars_df["returns"].mean(),
             "returns_std": time_bars_df["returns"].std(),
@@ -534,6 +586,7 @@ async def compare_bar_types(
         )
 
         # Get volume bar stats from aggregator
+        volume_stats: dict[str, Any]
         if symbol in _volume_bar_aggregators:
             volume_stats = _volume_bar_aggregators[symbol].get_statistics()
         else:

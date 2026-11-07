@@ -315,7 +315,7 @@ class TestStreamManagement:
             )
 
             # Should return error about invalid feed
-            assert "Feed must be 'sip' or 'iex'" in result
+            assert "Feed must be 'sip'" in result and "'boats'" in result
 
     @pytest.mark.asyncio
     async def test_start_global_stock_stream_missing_credentials(self):

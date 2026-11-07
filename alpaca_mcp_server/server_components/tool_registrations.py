@@ -1035,7 +1035,7 @@ def register_plotting_tools(mcp):
         """
         Generate professional peak/trough analysis plots with zero-phase filtering.
 
-        Creates publication-quality technical analysis plots showing:
+        Creates interactive ECharts charts (HTML + PNG snapshot) showing:
         - Original and filtered price data using Hanning window
         - Peak/trough detection with actual price annotations
         - Multiple plotting modes: single, combined, overlay
@@ -1057,8 +1057,8 @@ def register_plotting_tools(mcp):
             window_len: Hanning filter window length (3-101, must be odd). Uses global config if None.
             lookahead: Peak detection sensitivity (1-50, higher=more sensitive). Uses global config if None.
             plot_mode: "single", "combined", "overlay", or "all"
-            display_plots: Show plots via ImageMagick display (default: False)
-            dpi: Plot resolution/quality (default: 100)
+            display_plots: Open the HTML chart in the default browser (default: False)
+            dpi: Accepted for compatibility (PNG renders at 2x device scale)
 
         Returns:
             Comprehensive analysis with plot locations and trading signals
@@ -1088,44 +1088,50 @@ def register_plotting_tools(mcp):
         feed: str = "sip",
         no_plot: bool = False,
         verbose: bool = False,
+        plot_mode: str = "single",
+        open_in_browser: bool = False,
     ) -> str:
         """
-        Generate stock analysis plots using the plot.py script with ImageMagick display.
+        Interactive peak/trough charts: ECharts HTML plus a PNG snapshot.
 
-        This tool integrates the standalone plot.py script as an MCP tool, providing
-        professional technical analysis plots with automatic ImageMagick display.
+        Per symbol: a price panel (raw close, zero-phase Hanning filter, peaks ▼ and
+        troughs ▲ with the latest prices labelled) over a separate volume panel, with
+        crosshair tooltip, zoom, dark/light toggle, ET time axis and a table of every
+        turning point. Nothing opens on screen unless open_in_browser=True.
 
-        This tool will use the global config parameters when window/lookahead are not specified:
-        - window defaults to global_config.technical_analysis.hanning_window_samples
-        - lookahead defaults to global_config.technical_analysis.peak_trough_lookahead
-
-        Features:
-        - Zero-phase Hanning filtering for noise reduction
-        - Peak/trough detection with precise price annotations
-        - Real-time market data from Alpaca API
-        - Professional styling with NYC/EDT timezone
-        - Automatic plot display via ImageMagick
-        - Multi-symbol support in single API call
+        Uses the global config when window/lookahead are not given
+        (technical_analysis.hanning_window_samples / peak_trough_lookahead).
 
         Args:
-            symbols: Comma-separated stock symbols (e.g., "AAPL,MSFT,TSLA")
+            symbols: Comma-separated stock symbols (e.g., "AAPL,MSFT,TSLA"), at most 10
             timeframe: Bar timeframe - "1Min", "5Min", "15Min", "30Min", "1Hour", "1Day"
-            days: Number of trading days to analyze (1-30 for intraday, 1-2520 for daily)
-            window: Hanning filter window length (3-101, must be odd). Uses global config if None.
-            lookahead: Peak detection sensitivity (1-50, higher = more sensitive). Uses global config if None.
-            feed: Data feed - "sip", "iex", or "otc"
-            no_plot: Skip plotting and only show analysis (useful for batch processing)
-            verbose: Enable detailed logging output
+            days: Trading days (1-30 intraday, 1-90 hourly, 1-2520 daily)
+            window: Hanning window length (3-101; even values rounded up). Global config if None.
+            lookahead: Peak detection lookahead (1-50). Global config if None.
+            feed: "sip" (default) or "boats" (overnight session)
+            no_plot: Analysis only; write no chart files
+            verbose: Accepted for compatibility
+            plot_mode: "single" (file per symbol), "combined" (one page), "overlay"
+                (symbols indexed to % change on one axis), or "all"
+            open_in_browser: Open the HTML chart in the default browser
 
         Returns:
-            Comprehensive analysis results with plot locations and trading signals
+            Analysis summary, latest signal levels, and the HTML/PNG file paths
         """
         from ..tools.plot_py_tool import generate_stock_plot as plot_py_func
 
         return await plot_py_func(
-            symbols, timeframe, days, window, lookahead, feed, no_plot, verbose
+            symbols,
+            timeframe,
+            days,
+            window,
+            lookahead,
+            feed,
+            no_plot,
+            verbose,
+            plot_mode=plot_mode,
+            open_in_browser=open_in_browser,
         )
-
 
 def register_help_tools(mcp):
     """Register help system tools."""

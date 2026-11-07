@@ -57,7 +57,7 @@ async def market_overview() -> str:
 
         return output
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return "Timeout: Exceeded 120 seconds fetching market overview"
     except FileNotFoundError:
         return "Error: 'uv' command not found. Make sure uv is installed."

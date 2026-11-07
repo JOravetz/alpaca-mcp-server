@@ -66,7 +66,7 @@ async def finance(articles: int = 200) -> str:
 
         return output
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return f"Timeout: Exceeded 180 seconds fetching {articles} articles from finance page"
     except FileNotFoundError:
         return "Error: 'uv' command not found. Make sure uv is installed."

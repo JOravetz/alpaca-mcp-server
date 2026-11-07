@@ -6,6 +6,7 @@ from typing import Any
 from alpaca.trading.models import Position
 
 from ..config.settings import get_trading_client
+from ..utils.timezone_utils import fmt_et
 
 
 def format_price_for_alpaca(
@@ -194,10 +195,10 @@ Type: {order.type}
 Side: {order.side}
 Quantity: {order.qty}
 Status: {order.status}
-Submitted At: {order.submitted_at}"""
+Submitted At: {fmt_et(order.submitted_at) if order.submitted_at else "N/A"}"""
 
             if order.filled_at:
-                result += f"\nFilled At: {order.filled_at}"
+                result += f"\nFilled At: {fmt_et(order.filled_at)}"
 
             if order.filled_avg_price:
                 filled_price = float(order.filled_avg_price)

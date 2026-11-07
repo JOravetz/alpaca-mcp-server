@@ -23,7 +23,7 @@ async def account_analysis() -> str:
         positions = client.get_all_positions()
 
         # 3. Calculate key metrics
-        total_portfolio_value = float(account.portfolio_value)  # type: ignore[union-attr]
+        total_portfolio_value = float(account.equity)  # type: ignore[union-attr]
         cash_balance = float(account.cash)  # type: ignore[union-attr]
         buying_power = float(account.buying_power)  # type: ignore[union-attr]
         equity = float(account.equity)  # type: ignore[union-attr]

@@ -247,9 +247,8 @@ async def stream_concurrent_monitoring_cycle(symbols: str = "AUTO") -> str:
     """
     try:
         # Import monitoring tools
-        from alpaca_mcp_server.tools.account_portfolio_tools import (
-            get_positions,  # type: ignore[import-not-found]
-        )
+        # account_portfolio_tools never existed: this prompt raised ImportError.
+        from alpaca_mcp_server.tools.account_tools import get_positions
         from alpaca_mcp_server.tools.peak_trough_analysis_tool import analyze_peaks_and_troughs
         from alpaca_mcp_server.tools.streaming_tools import stream_aware_price_monitor
 
